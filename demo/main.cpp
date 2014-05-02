@@ -21,7 +21,7 @@ void initMaps()
 int main(int argc, char* argv[])
 {
 	MPI_Init(&argc, &argv);
-    assert(argc == 7);
+    assert(argc == 6);
     // two maps for inputs
     initMaps();
 	// Yay~ MPI
