@@ -267,149 +267,6 @@ vis_ray_clip_box(int id, ray_t *ray, double sampling_spacing,
     *pnlast = nend;
     return HPGV_TRUE;
     
-    // /* if nstart is equal to nend, it's only possible when there is only
-    //    one sampling point in the domain */    
-    // if (nstart == nend) {
-    //     /* Find the entry position */
-    //     real_sample.x3d 
-    //         = ray->start.x3d + ray->dir.x3d * sampling_spacing * nstart;
-    //     real_sample.y3d 
-    //         = ray->start.y3d + ray->dir.y3d * sampling_spacing * nstart;
-    //     real_sample.z3d 
-    //         = ray->start.z3d + ray->dir.z3d * sampling_spacing * nstart;
-        
-    //     if (INBOX(real_sample, ll, ur)) {
-    //         *pnfirst = nstart;
-    //         *pnlast = nend + 1;
-    //         return HPGV_TRUE;
-    //     } else {
-    //         return HPGV_FALSE;
-    //     }
-    // }
-    
-    /* Now check the normal case */
-    
-    /* Find the entry position */
-    // real_sample.x3d  = ray->start.x3d + ray->dir.x3d * sampling_spacing * nstart;
-    // real_sample.y3d  = ray->start.y3d + ray->dir.y3d * sampling_spacing * nstart;
-    // real_sample.z3d  = ray->start.z3d + ray->dir.z3d * sampling_spacing * nstart;
-
-    // if (INBOX(real_sample, ll, ur)) {
-    //     /* probe backward */
-    //     sample_pos = nstart;
-        
-    //     while (1) {
-    //         real_sample.x3d  = ray->start.x3d +
-    //             ray->dir.x3d * sampling_spacing * (sample_pos - 1);
-    //         real_sample.y3d  = ray->start.y3d +
-    //             ray->dir.y3d * sampling_spacing * (sample_pos - 1);
-    //         real_sample.z3d  = ray->start.z3d +
-    //             ray->dir.z3d * sampling_spacing * (sample_pos - 1);
-
-    //         /* INBOX test will fail sooner or later. So there will not
-    //            be an infinite loop */
-    //         if (INBOX(real_sample, ll, ur) && sample_pos > 0) {
-    //             sample_pos--;
-    //         } else {
-    //             break;
-    //         }
-    //     }
-
-    //     /* sample_pos is inside the domain while sample_pos - 1 is outside */
-    //     *pnfirst = sample_pos;
-        
-    // } else {
-    //     /* probe forward */
-    //     sample_pos = nstart;
-        
-    //     /* might loop forever if being stubborn unwisely */
-    //     do {
-    //         sample_pos++;
-
-    //         real_sample.x3d  = ray->start.x3d +
-    //             ray->dir.x3d * sampling_spacing * sample_pos;
-    //         real_sample.y3d  = ray->start.y3d +
-    //             ray->dir.y3d * sampling_spacing * sample_pos;
-    //         real_sample.z3d  = ray->start.z3d +
-    //             ray->dir.z3d * sampling_spacing * sample_pos;
-
-    //         if (INBOX(real_sample, ll, ur)) {
-    //             break;
-    //         }
-    //     } while (sample_pos <= nend);
-
-    //     if (sample_pos <= nend) {
-    //         *pnfirst = sample_pos;
-    //     } else {
-    //         /* start and end are all out of domain */
-    //         return HPGV_FALSE;
-    //     }
-    // }
-
-
-    // /* Now check the last position. */
-    
-    //  Check the nend position first 
-    // real_sample.x3d =  ray->start.x3d + ray->dir.x3d * sampling_spacing * nend;
-    // real_sample.y3d  = ray->start.y3d + ray->dir.y3d * sampling_spacing * nend;
-    // real_sample.z3d  = ray->start.z3d + ray->dir.z3d * sampling_spacing * nend;
-        
-    // if (INBOX(real_sample, ll, ur)) {
-    //     /* probe forward */
-    //     sample_pos = nend;
-    //     while (1) {
-    //         // sample_pos++;
-
-    //         real_sample.x3d  = ray->start.x3d +
-    //             ray->dir.x3d * sampling_spacing * sample_pos;
-    //         real_sample.y3d  = ray->start.y3d +
-    //             ray->dir.y3d * sampling_spacing * sample_pos;
-    //         real_sample.z3d  = ray->start.z3d +
-    //             ray->dir.z3d * sampling_spacing * sample_pos;
-
-    //         /* The ray will sooner or later shoot out of the box. No
-    //            infinite loop possible */
-    //         if (!INBOX(real_sample, ll, ur)) {
-    //             break;
-    //         } else {
-    //             sample_pos++;
-    //         }
-    //     }
-
-    //     /* sample_pos is outside the domain. sample_pos - 1 is inside
-    //        the domain */
-    //     *pnlast = sample_pos;
-
-    // } else {
-    //     /* probe backward */
-    //     sample_pos = nend;
-
-    //     /* might loop forever if being stubborn unwisely */
-    //     do {
-    //         sample_pos--;
-
-    //         real_sample.x3d  = ray->start.x3d +
-    //             ray->dir.x3d * sampling_spacing * (sample_pos - 1);
-    //         real_sample.y3d  = ray->start.y3d +
-    //             ray->dir.y3d * sampling_spacing * (sample_pos - 1);
-    //         real_sample.z3d  = ray->start.z3d +
-    //             ray->dir.z3d * sampling_spacing * (sample_pos - 1);
-        
-    //         if (INBOX(real_sample, ll, ur)) {
-    //             break;
-    //         }
-    //     } while (sample_pos > *pnfirst);
-
-    //     if (sample_pos > *pnfirst) {
-    //         /* sample_pos is outside the domain, sample_pos - 1 is inside
-    //            the domain */
-    //         *pnlast = sample_pos;
-    //     } else {
-    //         return HPGV_FALSE;
-    //     }
-    // }
-    
-    
     HPGV_ASSERT_P(id, 
                   *pnlast - *pnfirst >= 1,
                   "ray_clip_box: fatal internal error. Abort!", 
@@ -804,27 +661,27 @@ vis_render_pos(vis_control_t    *visctl,
 
             // basic way
             //======================================
-            histogram->raf[bin] += attenuation;
+            // histogram->raf[bin] += attenuation;
             // better method
             //======================================            
-            // float dx = sample * binsize - bin;
-            // float factor;
+            float dx = sample * binsize - bin;
+            float factor;
 
-            // if (dx < 0.5f) {
-            //     factor = pow((0.5f - dx), 3.0f);
-            //     histogram->raf[bin] += (1.0f - factor) * attenuation;
+            if (dx < 0.5f) {
+                factor = pow((0.5f - dx), 3.0f);
+                histogram->raf[bin] += (1.0f - factor) * attenuation;
                  
-            //     if (bin > 0) {
-            //         histogram->raf[bin - 1] += factor * attenuation;
-            //     }
-            // } else {
-            //     factor = pow((dx - 0.5f), 3.0f);
-            //     histogram->raf[bin] += (1.0f - factor) * attenuation;
+                if (bin > 0) {
+                    histogram->raf[bin - 1] += factor * attenuation;
+                }
+            } else {
+                factor = pow((dx - 0.5f), 3.0f);
+                histogram->raf[bin] += (1.0f - factor) * attenuation;
                  
-            //     if (bin < binsize - 1) {
-            //         histogram->raf[bin + 1] += factor * attenuation;
-            //     }
-            // }
+                if (bin < binsize - 1) {
+                    histogram->raf[bin + 1] += factor * attenuation;
+                }
+            }
 
         } else {
             HPGV_ABORT("Unsupported format", HPGV_ERROR);
