@@ -4,18 +4,18 @@
 #
 #
 set (SOURCES
-		hpgv_block.c
-		hpgv_composite.c
-		hpgv_gl.c
-		hpgv_render.cpp
-		hpgv_socket.c
-		hpgv_util.c
-		hpgv_utilmath.c
-		oo/parameter.cpp
-		oo/hpgvis.cpp
-		oo/image.cpp
-		oo/imageraf.cpp
-	    oo/imagergba.cpp)
+        hpgv_block.c
+        hpgv_composite.c
+        hpgv_gl.c
+        hpgv_render.cpp
+        hpgv_socket.c
+        hpgv_util.c
+        hpgv_utilmath.c
+        oo/parameter.cpp
+        oo/hpgvis.cpp
+        oo/image.cpp
+        oo/imageraf.cpp
+        oo/imagergba.cpp)
 
 #
 #

@@ -7,7 +7,10 @@ namespace hpgv
 
 ImageRAF::ImageRAF()
 {
+}
 
+ImageRAF::~ImageRAF()
+{
 }
 
 void ImageRAF::setRafs(const void *buffer, int nBytes)

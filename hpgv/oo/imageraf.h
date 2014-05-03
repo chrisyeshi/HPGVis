@@ -14,7 +14,7 @@ class ImageRAF : public Image
 {
 public:
     ImageRAF();
-    virtual ~ImageRAF() {};
+    virtual ~ImageRAF();
 
     void setNBins(unsigned int nBins) { alphas.resize(nBins); }
     void setRafs(boost::shared_ptr<float[]> rafs) { this->rafs = rafs; }
