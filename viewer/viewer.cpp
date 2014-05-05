@@ -12,6 +12,7 @@ Viewer::Viewer(QWidget *parent) :
     texRaf0(NULL), texRaf1(NULL), texRaf2(NULL), texRaf3(NULL),
     texDep0(NULL), texDep1(NULL), texDep2(NULL), texDep3(NULL)
 {
+    setFocusPolicy(Qt::StrongFocus);
 }
 
 Viewer::~Viewer()
@@ -43,37 +44,37 @@ void Viewer::renderRAF(const hpgv::ImageRAF &image)
     // texRaf0
     for (int i = 0; i < w * h; ++i)
     {
-        temp[4 * i + 0] = imageRaf.getRafs()[i + w* h * 0];
-        temp[4 * i + 1] = imageRaf.getRafs()[i + w* h * 1];
-        temp[4 * i + 2] = imageRaf.getRafs()[i + w* h * 2];
-        temp[4 * i + 3] = imageRaf.getRafs()[i + w* h * 3];
+        temp[4 * i + 0] = imageRaf.getRafs()[i + w * h * 0];
+        temp[4 * i + 1] = imageRaf.getRafs()[i + w * h * 1];
+        temp[4 * i + 2] = imageRaf.getRafs()[i + w * h * 2];
+        temp[4 * i + 3] = imageRaf.getRafs()[i + w * h * 3];
     }
     updateRAF(texRaf0, temp.get(), w, h);
     // texRaf1
     for (int i = 0; i < w * h; ++i)
     {
-        temp[4 * i + 0] = imageRaf.getRafs()[i + w* h * 4];
-        temp[4 * i + 1] = imageRaf.getRafs()[i + w* h * 5];
-        temp[4 * i + 2] = imageRaf.getRafs()[i + w* h * 6];
-        temp[4 * i + 3] = imageRaf.getRafs()[i + w* h * 7];
+        temp[4 * i + 0] = imageRaf.getRafs()[i + w * h * 4];
+        temp[4 * i + 1] = imageRaf.getRafs()[i + w * h * 5];
+        temp[4 * i + 2] = imageRaf.getRafs()[i + w * h * 6];
+        temp[4 * i + 3] = imageRaf.getRafs()[i + w * h * 7];
     }
     updateRAF(texRaf1, temp.get(), w, h);
     // texRaf2
     for (int i = 0; i < w * h; ++i)
     {
-        temp[4 * i + 0] = imageRaf.getRafs()[i + w* h * 8];
-        temp[4 * i + 1] = imageRaf.getRafs()[i + w* h * 9];
-        temp[4 * i + 2] = imageRaf.getRafs()[i + w* h * 10];
-        temp[4 * i + 3] = imageRaf.getRafs()[i + w* h * 11];
+        temp[4 * i + 0] = imageRaf.getRafs()[i + w * h * 8];
+        temp[4 * i + 1] = imageRaf.getRafs()[i + w * h * 9];
+        temp[4 * i + 2] = imageRaf.getRafs()[i + w * h * 10];
+        temp[4 * i + 3] = imageRaf.getRafs()[i + w * h * 11];
     }
     updateRAF(texRaf2, temp.get(), w, h);
     // texRaf3
     for (int i = 0; i < w * h; ++i)
     {
-        temp[4 * i + 0] = imageRaf.getRafs()[i + w* h * 12];
-        temp[4 * i + 1] = imageRaf.getRafs()[i + w* h * 13];
-        temp[4 * i + 2] = imageRaf.getRafs()[i + w* h * 14];
-        temp[4 * i + 3] = imageRaf.getRafs()[i + w* h * 15];
+        temp[4 * i + 0] = imageRaf.getRafs()[i + w * h * 12];
+        temp[4 * i + 1] = imageRaf.getRafs()[i + w * h * 13];
+        temp[4 * i + 2] = imageRaf.getRafs()[i + w * h * 14];
+        temp[4 * i + 3] = imageRaf.getRafs()[i + w * h * 15];
     }
     updateRAF(texRaf3, temp.get(), w, h);
     // texAlpha
@@ -150,7 +151,7 @@ void Viewer::snapshot(const std::string &filename)
 void Viewer::initializeGL()
 {
     initQuadVbo();
-    initProgram();
+    updateProgram();
     initTF();
     qglClearColor(QColor(0, 0, 0, 0));
     glEnable(GL_BLEND);
@@ -204,18 +205,31 @@ void Viewer::resizeGL(int width, int height)
 
 void Viewer::mouseMoveEvent(QMouseEvent *e)
 {
-    int x = e->x();
-    int y = height() - e->y();
+    int wx = e->x();
+    int wy = height() - e->y();
+    int x = double(wx) / double(width()) * double(imageRaf.getWidth());
+    int y = double(wy) / double(height()) * double(imageRaf.getHeight());
     if (x < 0 || x >= imageRaf.getWidth() || y < 0 || y >= imageRaf.getHeight())
         return;
     std::cout << "[" << x << "," << y << "]: value: ";
-    for (int i = 0; i < imageRaf.getNAlphaBins(); ++i)
-        std::cout << imageRaf.getRafs()[2 * nAlphaBins * (y * width() + x) + nAlphaBins * 0 + i] << ", ";
+    for (int i = 0; i < imageRaf.getNBins(); ++i)
+        std::cout << imageRaf.getRafs()[imageRaf.getWidth() * imageRaf.getHeight() * i + (y * imageRaf.getWidth() + x)] << ", ";
     std::cout << std::endl;
     std::cout << "[" << x << "," << y << "]: depth: ";
-    for (int i = 0; i < imageRaf.getNAlphaBins(); ++i)
-        std::cout << imageRaf.getRafs()[2 * nAlphaBins * (y * width() + x) + nAlphaBins * 1 + i] << ", ";
+    for (int i = 0; i < imageRaf.getNBins(); ++i)
+        std::cout << imageRaf.getDepths()[imageRaf.getWidth() * imageRaf.getHeight() * i + (y * imageRaf.getWidth() + x)] << ", ";
     std::cout << std::endl;
+}
+
+void Viewer::keyPressEvent(QKeyEvent *e)
+{
+    switch (e->key())
+    {
+    case Qt::Key_F5:
+        std::cout << "F5: update shader program." << std::endl;
+        updateProgram();
+        updateGL();
+    }
 }
 
 //
@@ -237,11 +251,11 @@ void Viewer::initQuadVbo()
     vboQuad.release();
 }
 
-void Viewer::initProgram()
+void Viewer::updateProgram()
 {
     progRaf.removeAllShaders();
-    progRaf.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/raf.vert");
-    progRaf.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/raf.frag");
+    assert(progRaf.addShaderFromSourceFile(QOpenGLShader::Vertex, "../../viewer/shaders/raf.vert"));
+    assert(progRaf.addShaderFromSourceFile(QOpenGLShader::Fragment, "../../viewer/shaders/raf.frag"));
     progRaf.link();
     progRaf.bind();
     progRaf.setUniformValue("nBins", nBins);

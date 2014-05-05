@@ -369,6 +369,18 @@ int hpgv_gl_clear_databuf()
     memset(theGLContext->databuf, 0,
            sizeof(hpgv_raf_t) * theGLContext->framebuf_size);
 
+    int i, j;
+    for (i = 0; i < theGLContext->framebuf_size; ++i)
+    {
+        int formatsize = hpgv_formatsize(theGLContext->databuf_format);
+        float* fptr = (float*)(theGLContext->databuf);
+        hpgv_raf_t* raf = (hpgv_raf_t*)(&fptr[formatsize * i]);
+        for (j = 0; j < HPGV_RAF_ALPHA_BIN_NUM; ++j)
+        {
+            raf->depths[j] = 1.f;
+        }
+    }
+
     return HPGV_TRUE;
 }
 
@@ -682,7 +694,6 @@ int hpgv_gl_fragcolor(int x, int y, float r, float g, float b, float a)
     
     return HPGV_TRUE;        
 }
-
 
 /**
  * hpgv_gl_fragdata

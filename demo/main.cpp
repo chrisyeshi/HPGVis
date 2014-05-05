@@ -40,7 +40,7 @@ int main(int argc, char* argv[])
 	hpgv::Parameter para;
 	assert(para.open("supernova_600.hp"));
 	para.setFormat(formats[argv[4]]);
-	para.rImages()[0].sampleSpacing = 1.0;
+    para.rImages()[0].sampleSpacing = 1.0;
 	// vis
 	HPGVis vis;
 	vis.initialize();

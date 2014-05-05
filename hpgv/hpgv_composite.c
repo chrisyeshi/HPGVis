@@ -1221,9 +1221,12 @@ swap_control_rafseg_float(swap_control_t *swapctrl, swap_schedule_t *schedule)
                 // depth
                 float comp_depth = compositecolor[id + HPGV_RAF_SEG_NUM * 1 + k];
                 float part_depth = partialcolor[id + HPGV_RAF_SEG_NUM * 1 + k];
-                if (part_depth < comp_depth)
+//                printf("%.2lf,%.2lf :: ", comp_depth, part_depth);
+                if (part_depth > comp_depth)
                     compositecolor[id + HPGV_RAF_SEG_NUM * 1 + k] = part_depth;
+//                printf("%.2lf, ", compositecolor[id + HPGV_RAF_SEG_NUM * 1 + k]);
             }
+//            printf("\n");
 
         }
         
@@ -1723,7 +1726,8 @@ swap_control_update(swap_control_t *swapctrl,
     int t_workernum = 0;
     int totalprocnum = 0;
     int roothasimage = HPGV_FALSE; 
-    int pixelsize = 0;    
+    int pixelsize = 0;
+    int i, j;
     
     update_t lu, gu;
     memset(&lu, 0, sizeof(update_t));
@@ -1823,7 +1827,6 @@ swap_control_update(swap_control_t *swapctrl,
          memcpy(swapctrl->partial_image[0], partialpixels, 
                 swapctrl->totalpixelbytes);
          memset(swapctrl->partial_image[1], 0, swapctrl->totalpixelbytes);
-         
      }
     if (mpiid == root) {
         

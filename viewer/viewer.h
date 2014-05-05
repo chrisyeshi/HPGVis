@@ -43,6 +43,7 @@ protected:
     virtual void paintGL();
     virtual void resizeGL(int width, int height);
     virtual void mouseMoveEvent(QMouseEvent *e);
+    virtual void keyPressEvent(QKeyEvent *e);
 
     //
     //
@@ -50,7 +51,7 @@ protected:
     //
     //
     void initQuadVbo();
-    void initProgram();
+    void updateProgram();
     void initTF();
     void updateRAF(QOpenGLTexture*& tex, float* data, int width, int height);
 
