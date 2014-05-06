@@ -2,6 +2,8 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QDir>
+#include <QStringList>
 
 class HPGVRender;
 
@@ -19,11 +21,15 @@ public:
 
 public slots:
     void open();
+    void timeChanged();
 
 protected:
 
 private:
     Ui::MainWindow *ui;
+    QDir parentDir;
+    QStringList files;
+
 };
 
 #endif // MAINWINDOW_H

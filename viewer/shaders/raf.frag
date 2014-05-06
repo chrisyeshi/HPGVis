@@ -187,6 +187,7 @@ void main()
     normalValue[14] = estimateNormal(vec3(FragIn.texCoord, depthValue[14]), vec3(xLess, xDepthLess.z), vec3(xPlus, xDepthPlus.z), vec3(yLess, yDepthLess.z), vec3(yPlus, yDepthPlus.z));
     normalValue[15] = estimateNormal(vec3(FragIn.texCoord, depthValue[15]), vec3(xLess, xDepthLess.w), vec3(xPlus, xDepthPlus.w), vec3(yLess, yDepthLess.w), vec3(yPlus, yDepthPlus.w));
 
+    //Uncomment to get normal representation...
 //    fragColor = vec4(normalValue[7], 1.0);
 //    return;
 

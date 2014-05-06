@@ -31,7 +31,18 @@
      <number>0</number>
     </property>
     <item>
-     <widget class="Viewer" name="viewer" native="true"/>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="Viewer" name="viewer" native="true"/>
+      </item>
+      <item>
+       <widget class="QSlider" name="timeSlider">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </item>
     <item>
      <layout class="QVBoxLayout" name="verticalLayout_3">
