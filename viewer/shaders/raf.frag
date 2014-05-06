@@ -20,7 +20,7 @@ in VertexData {
 
 out vec4 fragColor;
 
-float step;
+float stepp;
 float intensity[16];
 vec3 colors[16];
 float binValue[16];
@@ -90,11 +90,11 @@ void main()
     invVP.y = 1.0 / viewport.y;
     nBins = 16;
     K = 1.0;
-    step = 1.0 / nBins;
+    stepp = 1.0 / nBins;
     // colors
     for (int i = 0; i < 16; ++i)
     {
-        intensity[i] = step * (i + 0.5);
+        intensity[i] = stepp * (i + 0.5);
         vec4 temp = texture(tf, intensity[i]);
         colors[i] = temp.rgb;
         newA[i] = temp.a;
