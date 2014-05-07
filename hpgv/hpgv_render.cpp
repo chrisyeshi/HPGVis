@@ -834,7 +834,7 @@ vis_ray_render_positions(vis_control_t  *visctl,
     
     int format = visctl->format;
     
-    for (pos = firstpos; pos <= lastpos; pos++) {
+    for (pos = firstpos; pos < lastpos; pos++) {
     
         real_sample.x3d
             = ray->start.x3d + ray->dir.x3d * sampling_spacing * pos;

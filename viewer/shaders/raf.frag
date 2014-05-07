@@ -18,7 +18,7 @@ in VertexData {
     vec2 texCoord;
 } FragIn;
 
-out vec4 fragColor;
+layout(location = 0, index = 0) out vec4 fragColor;
 
 float stepp;
 float intensity[16];
@@ -144,7 +144,7 @@ void main()
     depthValue[14] = temp.z;
     depthValue[15] = temp.w;
 
-//    fragColor = vec4(vec3(depthValue[12]), 1.0);
+//    fragColor = vec4(vec3(depthValue[6]), 1.0);
 //    return;
 
     vec2 xDelta = vec2(invVP.x, 0.0);

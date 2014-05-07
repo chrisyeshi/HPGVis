@@ -12,6 +12,7 @@ Viewer::Viewer(QWidget *parent) :
     texRaf0(NULL), texRaf1(NULL), texRaf2(NULL), texRaf3(NULL),
     texDep0(NULL), texDep1(NULL), texDep2(NULL), texDep3(NULL)
 {
+    std::cout << "OpenGL Version: " << this->context()->format().majorVersion() << "." << this->context()->format().minorVersion() << std::endl;
     setFocusPolicy(Qt::StrongFocus);
 }
 
@@ -152,6 +153,7 @@ void Viewer::initializeGL()
 {
     initQuadVbo();
     updateProgram();
+    updateVAO();
     initTF();
     qglClearColor(QColor(0, 0, 0, 0));
     glEnable(GL_BLEND);
@@ -163,8 +165,7 @@ void Viewer::paintGL()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     if (!texRaf0) return;
 
-    progRaf.bind();
-    vboQuad.bind();
+    vao.bind();
     texTf.bind(0);
     texRaf0->bind(1);
     texRaf1->bind(2);
@@ -177,12 +178,8 @@ void Viewer::paintGL()
     texDep3->bind(9);
 
     progRaf.setUniformValue("viewport", float(width()), float(height()));
-    progRaf.enableAttributeArray("vertex");
-    progRaf.setAttributeBuffer("vertex", GL_FLOAT, 0, nFloatsPerVertQuad);
-    progRaf.enableAttributeArray("texCoord");
-    progRaf.setAttributeBuffer("texCoord", GL_FLOAT, nBytesQuad(), nFloatsPerVertQuad);
 
-    glDrawArrays(GL_QUADS, 0, nVertsQuad);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, nVertsQuad);
 
     texDep3->release();
     texDep2->release();
@@ -194,8 +191,7 @@ void Viewer::paintGL()
     texRaf1->release();
     texRaf0->release();
     texTf.release();
-    vboQuad.release();
-    progRaf.release();
+    vao.release();
 }
 
 void Viewer::resizeGL(int width, int height)
@@ -228,6 +224,7 @@ void Viewer::keyPressEvent(QKeyEvent *e)
     case Qt::Key_F5:
         std::cout << "F5: update shader program." << std::endl;
         updateProgram();
+        updateVAO();
         updateGL();
     }
 }
@@ -254,8 +251,8 @@ void Viewer::initQuadVbo()
 void Viewer::updateProgram()
 {
     progRaf.removeAllShaders();
-    assert(progRaf.addShaderFromSourceFile(QOpenGLShader::Vertex, "../../viewer/shaders/raf.vert"));
-    assert(progRaf.addShaderFromSourceFile(QOpenGLShader::Fragment, "../../viewer/shaders/raf.frag"));
+    assert(progRaf.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/raf.vert"));
+    assert(progRaf.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/raf.frag"));
     progRaf.link();
     progRaf.bind();
     progRaf.setUniformValue("nBins", nBins);
@@ -271,6 +268,19 @@ void Viewer::updateProgram()
     progRaf.setUniformValue("dep2", 8);
     progRaf.setUniformValue("dep3", 9);
     progRaf.release();
+}
+
+void Viewer::updateVAO()
+{
+    vao.create();
+    vao.bind();
+    vboQuad.bind();
+    progRaf.bind();
+    progRaf.enableAttributeArray("vertex");
+    progRaf.setAttributeBuffer("vertex", GL_FLOAT, 0, nFloatsPerVertQuad);
+    progRaf.enableAttributeArray("texCoord");
+    progRaf.setAttributeBuffer("texCoord", GL_FLOAT, nBytesQuad(), nFloatsPerVertQuad);
+    vao.release();
 }
 
 void Viewer::initTF()

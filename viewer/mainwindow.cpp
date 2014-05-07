@@ -31,7 +31,7 @@ void MainWindow::open()
 {
     QString qfilename = QFileDialog::getOpenFileName(this,
             tr("Open RAF file"), QString(), tr("Explorable Images (*.raf)"));
-    std::string filename = qfilename.toUtf8().constData();
+//    std::string filename = qfilename.toUtf8().constData();
 
     QFileInfo qfi(qfilename);
 
