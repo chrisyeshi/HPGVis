@@ -856,44 +856,6 @@ vis_ray_render_positions(vis_control_t  *visctl,
                  &prev_depth,
                  image);
 
-//        // depth -- isosurface
-//        if (format == HPGV_RAF) {
-//            hpgv_raf_t *raf = (hpgv_raf_t*)(pixel_data);
-//            point_3d_t screen;
-//            hpgv_gl_project(real_sample.x3d, real_sample.y3d, real_sample.z3d,
-//                            &screen.x3d, &screen.y3d, &screen.z3d);
-//            double curr_depth = screen.z3d;
-//            if (prev_value < 0.0) {
-//                prev_value = curr_value;
-//                prev_depth = curr_depth;
-//            } else {
-//                double left_value, rite_value, left_depth, rite_depth;
-//                if (prev_value <= curr_value) {
-//                    left_value = prev_value;
-//                    rite_value = curr_value;
-//                    left_depth = prev_depth;
-//                    rite_depth = curr_depth;
-//                } else {
-//                    left_value = curr_value;
-//                    rite_value = prev_value;
-//                    left_depth = curr_depth;
-//                    rite_depth = prev_depth;
-//                }
-//                for (int binId = 0; binId < HPGV_RAF_BIN_NUM; ++binId)
-//                {
-//                    double binAvg = (double(binId) + 0.5) / double(HPGV_RAF_BIN_NUM);
-//                    if (left_value <= binAvg && binAvg < rite_value) {
-//                        float depth = (binAvg - left_value) / (rite_value - left_value) * (rite_depth - left_depth) + left_depth;
-//                        if (depth < raf->depths[binId]) {
-//                            raf->depths[binId] = depth;
-//                        }
-//                    }
-//                }
-//                prev_value = curr_value;
-//                prev_depth = curr_depth;
-//            }
-//        }
-
         // early ray termination
         if (format == HPGV_RGBA) {
             rgba_t * color = (rgba_t *)pixel_data;
@@ -911,20 +873,6 @@ vis_ray_render_positions(vis_control_t  *visctl,
             HPGV_ABORT("Unsupported format", HPGV_ERROR);
         }
     }
-
-   // if (frag_x == 300 && frag_y == 300)
-   // {
-   //     hpgv_raf_t *raf = (hpgv_raf_t*)(pixel_data);
-   //     std::cout << "values: ";
-   //     for (int i = 0; i < HPGV_RAF_ALPHA_BIN_NUM; ++i)
-   //         std::cout << raf->raf[i] << ",";
-   //     std::cout << std::endl;
-   //     std::cout << "depths: ";
-   //     for (int i = 0; i < HPGV_RAF_ALPHA_BIN_NUM; ++i)
-   //         std::cout << raf->depths[i] << ",";
-   //     std::cout << std::endl;
-   // }
-    
     return;
 }
 
@@ -1698,134 +1646,60 @@ hpgv_vis_render_multi_composite(block_t *block, int root, MPI_Comm comm)
             HPGV_TIMING_BARRIER(theVisControl->comm);
             HPGV_TIMING_BEGIN(MY_STEP_MULTI_COMPOSE_TIME);
 
-
             /* === split RAF into 4 segments and composite them individually */
             /* ============================================================= */
-            static float *raf_seg = NULL;
-            static float *raf_collect = NULL;
-            
-            if (raf_seg == NULL) {
-                raf_seg = (float *)realloc(raf_seg, 
-                        framebuf_size_x * framebuf_size_y *
-                        hpgv_typesize(HPGV_FLOAT) *
-                        hpgv_formatsize(HPGV_RAF_SEG));
-            }
-
-            if (theVisControl->id == theVisControl->root) {
-                if (raf_collect == NULL) {
-                    raf_collect = (float *)realloc(raf_collect, 
-                            framebuf_size_x * framebuf_size_y *
-                            hpgv_typesize(HPGV_FLOAT) *
-                            hpgv_formatsize(HPGV_RAF_SEG));
-                }
-            }
-
-            float *tempimage = (float *)(desimage);
-            int totalpixel = framebuf_size_x * framebuf_size_y;
-
-            int s, m, n;            
-            int total_seg 
-            = (HPGV_RAF_ALPHA_BIN_NUM - 1) / (HPGV_RAF_SEG_NUM - 1);
-
-            /* 
-             *            HPGV_ASSERT_P(theVisControl->id, total_seg == 4, 
-             *                          "the total_seg should be 2.", HPGV_ERR_MEM);
-             */
-            
-            for (s = 0; s < total_seg; s++) {
-                for (m = 0; m < totalpixel; m++) {
-
-
-// std::cout << "raf: [";
-// for (int i = 0; i < HPGV_RAF_BIN_NUM; ++i)
-//     std::cout << tempimage[m * HPGV_RAF_ALPHA_BIN_NUM * 2 + HPGV_RAF_ALPHA_BIN_NUM * 1 + i] << ", ";
-// std::cout << "]" << std::endl;
-
-
-                    for (n = 0; n <  HPGV_RAF_SEG_NUM - 1; n++) {
-                        // raf
-                        raf_seg[m * HPGV_RAF_SEG_NUM * 2 + HPGV_RAF_SEG_NUM * 0 + n]
-                        = tempimage[m * HPGV_RAF_ALPHA_BIN_NUM * 2 + HPGV_RAF_ALPHA_BIN_NUM * 0
-                        + s * (HPGV_RAF_SEG_NUM - 1) + n];
-                        // depth
-                        raf_seg[m * HPGV_RAF_SEG_NUM * 2 + HPGV_RAF_SEG_NUM * 1 + n]
-                        = 1.0 - tempimage[m * HPGV_RAF_ALPHA_BIN_NUM * 2 + HPGV_RAF_ALPHA_BIN_NUM * 1
-                        + s * (HPGV_RAF_SEG_NUM - 1) + n];
-                        // raf_seg[m * HPGV_RAF_SEG_NUM * 2 + HPGV_RAF_SEG_NUM * 1 + n]
-                        // = 1.0 - double(n + 1) / double(HPGV_RAF_SEG_NUM);
+            static hpgv_raf_seg_t* raf_seg = NULL;
+            static hpgv_raf_seg_t* raf_collect = NULL;
+            // allocate memory
+            assert(framebuf_size == framebuf_size_x * framebuf_size_y);
+            if (!raf_seg)
+                raf_seg = (hpgv_raf_seg_t*)realloc(raf_seg, framebuf_size * sizeof(hpgv_raf_seg_t));
+            if (theVisControl->id == theVisControl->root && !raf_collect)
+                raf_collect = (hpgv_raf_seg_t*)realloc(raf_collect, framebuf_size * sizeof(hpgv_raf_seg_t));
+            // local raf
+            hpgv_raf_t* raf_local = (hpgv_raf_t*)desimage;
+            // split raf_local into raf_seg;
+            int total_seg = HPGV_RAF_BIN_NUM / (HPGV_RAF_SEG_NUM - 1);
+            for (int s = 0; s < total_seg; ++s)
+            { // for each raf_seg
+                for (int m = 0; m < framebuf_size; ++m)
+                {
+                    for (int n = 0; n < HPGV_RAF_SEG_NUM - 1; ++n)
+                    {
+                        raf_seg[m].raf[n] = raf_local[m].raf[s * (HPGV_RAF_SEG_NUM - 1) + n];
+                        raf_seg[m].depths[n] = 1.f - raf_local[m].depths[s * (HPGV_RAF_SEG_NUM - 1) + n];
                     }
-                    // raf
-                    raf_seg[m * HPGV_RAF_SEG_NUM * 2 + HPGV_RAF_SEG_NUM * 0 + HPGV_RAF_SEG_NUM - 1]
-                    = tempimage[m * HPGV_RAF_ALPHA_BIN_NUM * 2 + HPGV_RAF_ALPHA_BIN_NUM * 0 + HPGV_RAF_ALPHA_BIN_NUM - 1];
-                    // depth
-                    raf_seg[m * HPGV_RAF_SEG_NUM * 2 + HPGV_RAF_SEG_NUM * 1 + HPGV_RAF_SEG_NUM - 1]
-                    = 1.0 - tempimage[m * HPGV_RAF_ALPHA_BIN_NUM * 2 + HPGV_RAF_ALPHA_BIN_NUM * 1 + HPGV_RAF_ALPHA_BIN_NUM - 1];
+                    raf_seg[m].raf[HPGV_RAF_SEG_NUM - 1] = raf_local[m].raf[HPGV_RAF_ALPHA_BIN_NUM - 1];
+                    raf_seg[m].depths[HPGV_RAF_SEG_NUM - 1] = 1.f - raf_local[m].depths[HPGV_RAF_ALPHA_BIN_NUM - 1];
                 }
-
-                hpgv_composite(framebuf_size_x,
-                               framebuf_size_y,
-                               HPGV_RAF_SEG,
-                               HPGV_FLOAT,
-                               raf_seg,
-                               raf_collect,                           
-                               theVisControl->block_depth,
-                               theVisControl->root,
-                               theVisControl->comm,
-                               HPGV_TTSWAP);
-                
-                if (theVisControl->id == theVisControl->root) {        
-                    float *collectimage 
-                    = (float *)theVisControl->databuf_collect;    
-                    
-                    for (m = 0; m < totalpixel; m++) {
-                        for (n = 0; n < HPGV_RAF_SEG_NUM - 1; n++) {
-                            // raf
-                            collectimage[m * HPGV_RAF_ALPHA_BIN_NUM * 2
-                            + HPGV_RAF_ALPHA_BIN_NUM * 0
-                            + s * (HPGV_RAF_SEG_NUM - 1) + n]
-                            = raf_collect[m * HPGV_RAF_SEG_NUM * 2
-                            + HPGV_RAF_SEG_NUM * 0 + n];
-                            // depth
-                            collectimage[m * HPGV_RAF_ALPHA_BIN_NUM * 2
-                            + HPGV_RAF_ALPHA_BIN_NUM * 1
-                            + s * (HPGV_RAF_SEG_NUM - 1) + n]
-                            = 1.0 - (raf_collect[m * HPGV_RAF_SEG_NUM * 2
-                            + HPGV_RAF_SEG_NUM * 1 + n]);
+                // composite with others
+                hpgv_composite(
+                        framebuf_size_x,
+                        framebuf_size_y,
+                        HPGV_RAF_SEG,
+                        HPGV_FLOAT,
+                        raf_seg,
+                        raf_collect,                           
+                        theVisControl->block_depth,
+                        theVisControl->root,
+                        theVisControl->comm,
+                        HPGV_TTSWAP);
+                // collect if I'm root
+                if (theVisControl->id == theVisControl->root)
+                {
+                    hpgv_raf_t* raf_global = (hpgv_raf_t*)theVisControl->databuf_collect;
+                    for (int m = 0; m < framebuf_size; ++m)
+                    {
+                        for (int n = 0; n < HPGV_RAF_SEG_NUM - 1; ++n)
+                        {
+                            raf_global[m].raf[s * (HPGV_RAF_SEG_NUM - 1) + n] = raf_collect[m].raf[n];
+                            raf_global[m].depths[s * (HPGV_RAF_SEG_NUM - 1) + n] = 1.f - raf_collect[m].depths[n];
                         }
-                        // raf
-                        collectimage[m * HPGV_RAF_ALPHA_BIN_NUM * 2
-                        + HPGV_RAF_ALPHA_BIN_NUM * 0
-                        + HPGV_RAF_ALPHA_BIN_NUM - 1] 
-                        = raf_collect[m * HPGV_RAF_SEG_NUM * 2
-                        + HPGV_RAF_SEG_NUM * 0
-                        + HPGV_RAF_SEG_NUM - 1];
-                        // depth
-                        collectimage[m * HPGV_RAF_ALPHA_BIN_NUM * 2
-                        + HPGV_RAF_ALPHA_BIN_NUM * 1
-                        + HPGV_RAF_ALPHA_BIN_NUM - 1]
-                        = 1.0 - (raf_collect[m * HPGV_RAF_SEG_NUM * 2
-                        + HPGV_RAF_SEG_NUM * 1
-                        + HPGV_RAF_SEG_NUM - 1]);
-
-//                        if (m == 192900)
-//                        {
-//                            std::cout << "composite: ";
-//                            hpgv_raf_t *raf = (hpgv_raf_t*)(&collectimage[m * HPGV_RAF_ALPHA_BIN_NUM * 2]);
-//                            std::cout << "values: ";
-//                            for (int i = 0; i < HPGV_RAF_ALPHA_BIN_NUM; ++i)
-//                                std::cout << raf->raf[i] << ",";
-//                            std::cout << std::endl;
-//                            std::cout << "depths: ";
-//                            for (int i = 0; i < HPGV_RAF_ALPHA_BIN_NUM; ++i)
-//                                std::cout << raf->depths[i] << ",";
-//                            std::cout << std::endl;
-//                        }
+                        raf_global[m].raf[HPGV_RAF_ALPHA_BIN_NUM - 1] = raf_collect[m].raf[HPGV_RAF_SEG_NUM - 1];
+                        raf_global[m].depths[HPGV_RAF_ALPHA_BIN_NUM - 1] = 1.f - raf_collect[m].depths[HPGV_RAF_SEG_NUM - 1];
                     }
                 }
             }
-            
-            /* ============================================================= */
-            
             HPGV_TIMING_END(MY_STEP_MULTI_COMPOSE_TIME);
         } else {
             HPGV_ABORT("Unsupported format", HPGV_ERROR);
