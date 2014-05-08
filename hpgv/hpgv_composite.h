@@ -45,37 +45,41 @@ typedef enum composite_t {
  */
 int  
 hpgv_composite(
-               /* dimnsions of pixel rectangle */
-               int width,                   
-               int height,              
+        /* dimnsions of pixel rectangle */
+        int width,
+        int height,
+
+        /* format of pixels data. Must be one 
+           of GL_RGBA, GL_RGB, HPGV_RGBA, HPGV_RGB, HPGV_RAF */
+        int format,
+
+        /* data type of pixel data. Must be one
+          of GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT, GL_FLOAT,
+          HPGV_UNSIGNED_BYTE, HPGV_UNSIGNED_SHORT, HPGV_FLOAT */
+        int type,
+
+        /* address of partial iamge */
+        void *partialpixels,
+
+        /* address of final image (significant only at root) */
+        void *finalpixels,
+
+        /* visibility order */
+        float depth,
+
+        /* rank of root process */
+        int root,
+
+        /* communicator */
+        MPI_Comm comm,
+
+        /* transfer function */
+        float* tf,
+        int tfsize,
                
-                /* format of pixels data. Must be one 
-                   of GL_RGBA, GL_RGB, HPGV_RGBA, HPGV_RGB, HPGV_RAF */
-               int format,                  
-               
-               /* data type of pixel data. Must be one
-                  of GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT, GL_FLOAT,
-                  HPGV_UNSIGNED_BYTE, HPGV_UNSIGNED_SHORT, HPGV_FLOAT */
-               int type,                    
-               
-               /* address of partial iamge */
-               void *partialpixels,         
-               
-                /* address of final image (significant only at root) */
-               void *finalpixels,           
-                
-               /* visibility order */
-               float depth,                 
-               
-               /* rank of root process */
-               int root,                    
-               
-               /* communicator */
-               MPI_Comm comm,               
-                       
-               /* composite method */ 
-               composite_t composite_type
-              );
+        /* composite method */ 
+        composite_t composite_type
+        );
          
          
 /**

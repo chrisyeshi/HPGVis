@@ -1152,7 +1152,8 @@ swap_control_raf_float(swap_control_t *swapctrl, swap_schedule_t *schedule)
  *
  */
 static void
-swap_control_rafseg_float(swap_control_t *swapctrl, swap_schedule_t *schedule)
+swap_control_rafseg_float(swap_control_t *swapctrl, swap_schedule_t *schedule,
+                          float* tf, int tfsize)
 {
     swap_message_t *inmessage;
     uint64_t offset, recordcount, i, k;
@@ -1191,6 +1192,10 @@ swap_control_rafseg_float(swap_control_t *swapctrl, swap_schedule_t *schedule)
         partialcolor = (hpgv_raf_seg_t*)inimage;
         
         for (i = 0; i < recordcount; i++) {
+            // integrate the missing segment
+            float left_value = compositecolor[i].val_tail;
+            float rite_value = partialcolor[i].val_head;
+            // ray attenuation function
             alphafactor = compositecolor[i].raf[HPGV_RAF_SEG_NUM - 1];
             for (k = 0; k < HPGV_RAF_SEG_NUM; k++) {
                 compositecolor[i].raf[k] += (1.f - alphafactor) * partialcolor[i].raf[k];
@@ -1524,7 +1529,7 @@ swap_control_gather(swap_control_t *swapctrl)
  *
  */
 static void
-swap_control_composite(swap_control_t *swapctrl)
+swap_control_composite(swap_control_t *swapctrl, float* tf, int tfsize)
 {
     
     uint32_t stage;
@@ -1615,7 +1620,8 @@ swap_control_composite(swap_control_t *swapctrl)
             switch(swapctrl->imagetype) {
                 case HPGV_FLOAT:
                     swap_control_rafseg_float(swapctrl,
-                                              swapctrl->schedule[stage]);
+                                              swapctrl->schedule[stage],
+                                              tf, tfsize);
                     break;
                 default:                
                     HPGV_ABORT_P(swapctrl->mpiid, "Unsupported pixel type.", 
@@ -1990,7 +1996,8 @@ hpgv_composite_valid()
 int  
 hpgv_composite(int width, int height, int format, int type, 
                void *partialpixels, void *finalpixels, float depth,
-               int root, MPI_Comm mpicomm, composite_t composite_type)
+               int root, MPI_Comm mpicomm, float* tf, int tfsize,
+               composite_t composite_type)
 {
     
     
@@ -2068,7 +2075,7 @@ hpgv_composite(int width, int height, int format, int type,
     HPGV_TIMING_CONTEXTGLOBAL(context);         
 
     /* compositing */
-    swap_control_composite(theSwapControl);
+    swap_control_composite(theSwapControl, tf, tfsize);
     
     return HPGV_SUCCESS;
 }

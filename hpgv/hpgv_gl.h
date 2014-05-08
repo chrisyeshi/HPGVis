@@ -73,6 +73,7 @@ typedef struct hpgv_raf_t {
     float depths[HPGV_RAF_BIN_NUM];
     float attenuation;
     float val_head, val_tail;
+    float dep_head, dep_tail;
 } hpgv_raf_t;
 
 /**
@@ -90,6 +91,7 @@ typedef struct hpgv_raf_seg_t {
     float depths[HPGV_RAF_SEG_NUM];
     float attenuation;
     float val_head, val_tail;
+    float dep_head, dep_tail;
 } hpgv_raf_seg_t;
     
 /**

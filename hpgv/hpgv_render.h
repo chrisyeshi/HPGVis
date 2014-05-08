@@ -24,7 +24,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "hpgv_gl.h"    
+#include "hpgv_gl.h"
+#include "hpgv_tf.h"  
 #include "hpgv_block.h"
 #include "hpgv_utilmath.h"
 #include "hpgv_util.h"

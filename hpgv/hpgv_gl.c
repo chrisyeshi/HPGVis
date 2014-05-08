@@ -76,6 +76,8 @@ void hpgv_raf_reset(hpgv_raf_t* raf)
     raf->attenuation = 0.f;
     raf->val_head = 0.f;
     raf->val_tail = 0.f;
+    raf->dep_head = 0.f;
+    raf->dep_tail = 0.f;
 }
 
 
@@ -907,8 +909,8 @@ int hpgv_formatsize(int format)
     switch (format) {        
         case HPGV_RGB : return 3;
         case HPGV_RGBA : return 4;   
-        case HPGV_RAF : return HPGV_RAF_BIN_NUM * 2 + 3;
-        case HPGV_RAF_SEG : return HPGV_RAF_SEG_NUM * 2 + 3;
+        case HPGV_RAF : return HPGV_RAF_BIN_NUM * 2 + 5;
+        case HPGV_RAF_SEG : return HPGV_RAF_SEG_NUM * 2 + 5;
         default : HPGV_ABORT("Unsupported format!", HPGV_ERROR);
     }    
     return 0;    
