@@ -22,7 +22,6 @@ public:
     void setAlphas(const std::vector<float>& a);
 
     unsigned int getNBins() const { return nBins(); }
-    unsigned int getNAlphaBins() const { return nAlphaBins(); }
     boost::shared_ptr<float[]> getRafs() const { return rafs; }
     boost::shared_ptr<float[]> getDepths() const { return depths; }
     std::vector<float> getAlphas() const { return alphas; }
@@ -43,7 +42,6 @@ private:
     //
     //
     unsigned int nBins() const { return alphas.size(); }
-    unsigned int nAlphaBins() const { return nBins() + 1; }
     int nFloatsSlice() const { return width * height; }
     int nBytesSlice() const { return nFloatsSlice() * sizeof(float); }
     int nFloatsRafs() const { return width * height * nBins(); }

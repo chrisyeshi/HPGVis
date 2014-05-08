@@ -165,7 +165,7 @@ void HPGVis::updateImage()
 	if (para.getFormat() == HPGV_RAF)
     {
     	// raf
-    	int nBins = 16;
+    	int nBins = HPGV_RAF_BIN_NUM;
     	std::vector<float> alphas(nBins);
         for (int i = 0; i < nBins; ++i)
         {
@@ -182,7 +182,8 @@ void HPGVis::updateImage()
     	raf->setNBins(nBins);
     	raf->setAlphas(alphas);
         raf->setRafs(hpgv_vis_get_databufptr(),
-                para.getView().width * para.getView().height * (nBins + 1) * 2 * sizeof(float));
+                para.getView().width * para.getView().height
+                * hpgv_formatsize(para.getFormat()) * sizeof(float));
     	// pointer
     	image = raf;
 

@@ -63,6 +63,23 @@ hpgv_gl_context_t *theGLContext = NULL;
 
 
 /**
+ * hpgv_raf_reset
+ *
+ */
+void hpgv_raf_reset(hpgv_raf_t* raf)
+{
+    int i;
+    for (i = 0; i < HPGV_RAF_BIN_NUM; ++i) {
+        raf->raf[i] = 0.f;
+        raf->depths[i] = 1.f;
+    }
+    raf->attenuation = 0.f;
+    raf->val_head = 0.f;
+    raf->val_tail = 0.f;
+}
+
+
+/**
  * hpgv_gl_init
  *
  */
@@ -366,8 +383,8 @@ int hpgv_gl_clear_databuf()
     if (!theGLContext->databuf)
         return HPGV_FALSE;
 
-    memset(theGLContext->databuf, 0,
-           sizeof(hpgv_raf_t) * theGLContext->framebuf_size);
+    // memset(theGLContext->databuf, 0,
+    //        sizeof(hpgv_raf_t) * theGLContext->framebuf_size);
 
     int i, j;
     for (i = 0; i < theGLContext->framebuf_size; ++i)
@@ -375,10 +392,7 @@ int hpgv_gl_clear_databuf()
         int formatsize = hpgv_formatsize(theGLContext->databuf_format);
         float* fptr = (float*)(theGLContext->databuf);
         hpgv_raf_t* raf = (hpgv_raf_t*)(&fptr[formatsize * i]);
-        for (j = 0; j < HPGV_RAF_ALPHA_BIN_NUM; ++j)
-        {
-            raf->depths[j] = 1.f;
-        }
+        hpgv_raf_reset(raf);
     }
 
     return HPGV_TRUE;
@@ -723,11 +737,13 @@ int hpgv_gl_fragdata(int x, int y, int format, void *data)
         hpgv_raf_t * in  = (hpgv_raf_t *)(data);
         
         int i = 0;
-        for (i = 0; i < HPGV_RAF_ALPHA_BIN_NUM; i++) {
-//            printf("offset %d, i %d, value %lf\n", offset, i, in->raf[i]);
+        for (i = 0; i < HPGV_RAF_BIN_NUM; i++) {
             raf[offset].raf[i] = in->raf[i];
             raf[offset].depths[i] = in->depths[i];
         }
+        raf[offset].attenuation = in->attenuation;
+        raf[offset].val_head = in->val_head;
+        raf[offset].val_tail = in->val_tail;
     }
     return HPGV_TRUE;        
 }
@@ -891,8 +907,8 @@ int hpgv_formatsize(int format)
     switch (format) {        
         case HPGV_RGB : return 3;
         case HPGV_RGBA : return 4;   
-        case HPGV_RAF : return HPGV_RAF_ALPHA_BIN_NUM * 2;
-        case HPGV_RAF_SEG : return HPGV_RAF_SEG_NUM * 2;
+        case HPGV_RAF : return HPGV_RAF_BIN_NUM * 2 + 3;
+        case HPGV_RAF_SEG : return HPGV_RAF_SEG_NUM * 2 + 3;
         default : HPGV_ABORT("Unsupported format!", HPGV_ERROR);
     }    
     return 0;    

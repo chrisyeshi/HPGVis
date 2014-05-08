@@ -1096,25 +1096,18 @@ static void
 swap_control_raf_float(swap_control_t *swapctrl, swap_schedule_t *schedule)
 {
     swap_message_t *inmessage;
-    uint64_t offset, recordcount, i, k, id;
+    uint64_t offset, recordcount, i, k;
     int mpiid = swapctrl->mpiid;
     uint32_t pixelsize = swapctrl->pixelsize;
     int curstage = schedule->curstage;
     
     float *outimage = (float *)(swapctrl->partial_image[1 - curstage % 2]);
-    
     float *myimage = (float *)(swapctrl->partial_image[curstage % 2]);
-    
     float *inimage = NULL;
-    
-    float *compositecolor = NULL;
-    
-    float *partialcolor = NULL;
-    
+    hpgv_raf_t *compositecolor = NULL;
+    hpgv_raf_t *partialcolor = NULL;
     float alphafactor = 0;
-    
     int formatsize = hpgv_formatsize(HPGV_RAF);
-    
     inmessage = schedule->first_recv;
     
     memset(&(outimage[schedule->bldoffset * formatsize]), 0,
@@ -1135,25 +1128,19 @@ swap_control_raf_float(swap_control_t *swapctrl, swap_schedule_t *schedule)
             inimage = &(myimage[offset * formatsize]);
         }
         
-        compositecolor = &(outimage[offset * formatsize]);
-        partialcolor = inimage;
+        compositecolor = (hpgv_raf_t*)(&outimage[offset * formatsize]);
+        partialcolor = (hpgv_raf_t*)inimage;
         
-        id = 0;
         for (i = 0; i < recordcount; i++) {
-            
-            alphafactor = compositecolor[id + HPGV_RAF_ALPHA_BIN_NUM * 0 + HPGV_RAF_ALPHA_BIN_NUM - 1];
-            
-            for (k = 0; k < HPGV_RAF_ALPHA_BIN_NUM; k++) {
-                // raf
-                compositecolor[id + HPGV_RAF_ALPHA_BIN_NUM * 0 + k] += (1.0 - alphafactor)*(partialcolor[id + HPGV_RAF_ALPHA_BIN_NUM * 0 + k]);
-                // depth
-                float comp_depth = compositecolor[id + HPGV_RAF_ALPHA_BIN_NUM * 1 + k];
-                float part_depth = partialcolor[id + HPGV_RAF_ALPHA_BIN_NUM * 1 + k];
-                if (part_depth < comp_depth)
-                    compositecolor[id + HPGV_RAF_ALPHA_BIN_NUM * 1 + k] = part_depth;
+            alphafactor = compositecolor[i].attenuation;
+            for (k = 0; k < HPGV_RAF_BIN_NUM; k++) {
+                compositecolor[i].raf[k] = (1.f - alphafactor) * partialcolor[i].raf[k];
+                float comp_depth = compositecolor[i].depths[k];
+                float part_depth = partialcolor[i].depths[k];
+                if (part_depth > comp_depth)
+                    compositecolor[i].depths[k] = part_depth;
             }
-            
-            id += formatsize;
+            compositecolor[i].attenuation = (1.f - alphafactor) * partialcolor[i].attenuation;
         }
         
         inmessage = inmessage->next;
@@ -1168,7 +1155,7 @@ static void
 swap_control_rafseg_float(swap_control_t *swapctrl, swap_schedule_t *schedule)
 {
     swap_message_t *inmessage;
-    uint64_t offset, recordcount, i, k, id;
+    uint64_t offset, recordcount, i, k;
     int mpiid = swapctrl->mpiid;
     uint32_t pixelsize = swapctrl->pixelsize;
     int curstage = schedule->curstage;
@@ -1212,6 +1199,7 @@ swap_control_rafseg_float(swap_control_t *swapctrl, swap_schedule_t *schedule)
                 if (part_depth > comp_depth)
                     compositecolor[i].depths[k] = part_depth;
             }
+            compositecolor[i].attenuation += (1.f - alphafactor) * partialcolor[i].attenuation;
         }
         
         inmessage = inmessage->next;
