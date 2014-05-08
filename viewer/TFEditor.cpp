@@ -688,7 +688,7 @@ void TFDrawArea::paintEvent(QPaintEvent *e)
     // semi-transparent area
     painter.setPen(Qt::NoPen);
     painter.setBrush(QBrush(QColor(255, 255, 255, 96), Qt::SolidPattern));
-    painter.drawPolygon(points, size * 2 + 4);
+    painter.drawPolygon(points, size * 2 + 2);
 
     QPen pen;
     pen.setWidth(0);
