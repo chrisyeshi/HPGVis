@@ -1174,19 +1174,12 @@ swap_control_rafseg_float(swap_control_t *swapctrl, swap_schedule_t *schedule)
     int curstage = schedule->curstage;
     
     float *outimage = (float *)(swapctrl->partial_image[1 - curstage % 2]);
-    
     float *myimage = (float *)(swapctrl->partial_image[curstage % 2]);
-    
     float *inimage = NULL;
-    
-    float *compositecolor = NULL;
-    
-    float *partialcolor = NULL;
-    
-    float alphafactor = 0;
-    
+    hpgv_raf_seg_t *compositecolor = NULL;
+    hpgv_raf_seg_t *partialcolor = NULL;
+    float alphafactor = 0.f;
     int formatsize = hpgv_formatsize(HPGV_RAF_SEG);
-    
     inmessage = schedule->first_recv;
     
     memset(&(outimage[schedule->bldoffset * formatsize]), 0,
@@ -1207,27 +1200,18 @@ swap_control_rafseg_float(swap_control_t *swapctrl, swap_schedule_t *schedule)
             inimage = &(myimage[offset * formatsize]);
         }
         
-        compositecolor = &(outimage[offset * formatsize]);
-        partialcolor = inimage;
+        compositecolor = (hpgv_raf_seg_t*)(&outimage[offset * formatsize]);
+        partialcolor = (hpgv_raf_seg_t*)inimage;
         
         for (i = 0; i < recordcount; i++) {
-            id = i * formatsize;
-            
-            alphafactor = compositecolor[id + HPGV_RAF_SEG_NUM - 1];
-            
+            alphafactor = compositecolor[i].raf[HPGV_RAF_SEG_NUM - 1];
             for (k = 0; k < HPGV_RAF_SEG_NUM; k++) {
-                // raf
-                compositecolor[id + HPGV_RAF_SEG_NUM * 0 + k] += (1.0 - alphafactor)*(partialcolor[id + HPGV_RAF_SEG_NUM * 0 + k]);
-                // depth
-                float comp_depth = compositecolor[id + HPGV_RAF_SEG_NUM * 1 + k];
-                float part_depth = partialcolor[id + HPGV_RAF_SEG_NUM * 1 + k];
-//                printf("%.2lf,%.2lf :: ", comp_depth, part_depth);
+                compositecolor[i].raf[k] += (1.f - alphafactor) * partialcolor[i].raf[k];
+                float comp_depth = compositecolor[i].depths[k];
+                float part_depth = partialcolor[i].depths[k];
                 if (part_depth > comp_depth)
-                    compositecolor[id + HPGV_RAF_SEG_NUM * 1 + k] = part_depth;
-//                printf("%.2lf, ", compositecolor[id + HPGV_RAF_SEG_NUM * 1 + k]);
+                    compositecolor[i].depths[k] = part_depth;
             }
-//            printf("\n");
-
         }
         
         inmessage = inmessage->next;
