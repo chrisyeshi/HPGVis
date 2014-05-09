@@ -33,7 +33,7 @@ int main(int argc, char* argv[])
     int mypx = (rank - mypz * npx * npy) % npx;
     int mypy = (rank - mypz * npx * npy) / npx;
     // volume
-	hpgv::H5Reader reader("/home/chrisyeshi/Dropbox/supernova_600_1580.h5", "/entropy");
+    hpgv::H5Reader reader("/home/chrisyeshi/Dropbox/supernova_600_1580.h5", "/entropy");
 	reader.configure(MPI_COMM_WORLD, mypx, mypy, mypz, npx, npy, npz);
 	assert(reader.read());
 	// parameter
@@ -44,7 +44,7 @@ int main(int argc, char* argv[])
     para.rView().height = 1024;
     para.rView().viewport[2] = 1024;
     para.rView().viewport[3] = 1024;
-    para.rImages()[0].sampleSpacing = 1.0;
+    para.rImages()[0].sampleSpacing = 0.1;
 	// vis
 	HPGVis vis;
 	vis.initialize();

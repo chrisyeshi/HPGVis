@@ -5,6 +5,7 @@
 #include <QOpenGLTexture>
 #include <QOpenGLBuffer>
 #include <QOpenGLShaderProgram>
+#include <QOpenGLVertexArrayObject>
 #include "TF.h"
 #include "imageraf.h"
 
@@ -52,6 +53,7 @@ protected:
     //
     void initQuadVbo();
     void updateProgram();
+    void updateVAO();
     void initTF();
     void updateRAF(QOpenGLTexture*& tex, float* data, int width, int height);
 
@@ -77,6 +79,7 @@ private:
     QOpenGLTexture *texRaf0, *texRaf1, *texRaf2, *texRaf3;
     QOpenGLTexture *texDep0, *texDep1, *texDep2, *texDep3;
     QOpenGLShaderProgram progRaf;
+    QOpenGLVertexArrayObject vao;
 
     hpgv::ImageRAF imageRaf;
 

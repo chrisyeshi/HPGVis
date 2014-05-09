@@ -22,6 +22,7 @@ extern "C" {
     
 #include "hpgv_error.h"
 #include "hpgv_gl.h"
+#include "hpgv_tf.h"
 #include "hpgv_util.h"
 #include "hpgv_utilmath.h"
 #include "hpgv_utiltiming.h"

@@ -15,7 +15,7 @@ ImageRAF::~ImageRAF()
 
 void ImageRAF::setRafs(const void *buffer, int nBytes)
 {
-    assert(nBytes == nBytesRafs() + nBytesDepths() + 2 * nBytesSlice());
+    assert(nBytes == nBytesRafs() + nBytesDepths() + 5 * nBytesSlice());
     const float* inBuf = reinterpret_cast<const float*>(buffer);
     rafs = boost::shared_ptr<float[]>(new float [nFloatsRafs()]);
     depths = boost::shared_ptr<float[]>(new float [nFloatsDepths()]);
@@ -25,10 +25,10 @@ void ImageRAF::setRafs(const void *buffer, int nBytes)
         {
             // raf
             rafs[sliceId * nFloatsSlice() + i]
-                    = inBuf[nAlphaBins() * 2 * i + nAlphaBins() * 0 + sliceId];
+                    = inBuf[(nBins() * 2 + 5) * i + nBins() * 0 + sliceId];
             // depth
             depths[sliceId * nFloatsSlice() + i]
-                    = inBuf[nAlphaBins() * 2 * i + nAlphaBins() * 1 + sliceId];
+                    = inBuf[(nBins() * 2 + 5) * i + nBins() * 1 + sliceId];
         }
     }
 }

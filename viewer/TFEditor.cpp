@@ -673,22 +673,11 @@ void TFDrawArea::paintEvent(QPaintEvent *e)
         points[2 * i + 2] = QPointF(double(i+1) / double(size), atoy(tf().alphaArray()[i]));
     }
     points[2 * size + 1] = QPointF(1.0, 0.0);
-
-//    points[0] = QPointF(0.0, 0.0);
-//    points[size + 3] = QPointF(1.0, 0.0);
-
-//    // hand-drawn curve
-//    points[1] = QPointF(0.0, atoy(tf().alphaArray()[0]));
-//    for (int i = 0; i < size; i++)
-//    {
-//        points[i + 2] = QPointF(indexToValue(i, size), atoy(tf().alphaArray()[i]));
-//    }
-//    points[size + 2] = QPointF(1.0, atoy(tf().alphaArray()[size - 1]));
     
     // semi-transparent area
     painter.setPen(Qt::NoPen);
     painter.setBrush(QBrush(QColor(255, 255, 255, 96), Qt::SolidPattern));
-    painter.drawPolygon(points, size * 2 + 4);
+    painter.drawPolygon(points, size * 2 + 2);
 
     QPen pen;
     pen.setWidth(0);

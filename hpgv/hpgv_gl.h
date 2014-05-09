@@ -54,10 +54,10 @@ extern "C"
 /*==== RAF ====*/
 #define HPGV_RAF                0x201001
 #define HPGV_RAF_BIN_NUM        16
-#define HPGV_RAF_ALPHA_BIN_NUM  17
+// #define HPGV_RAF_ALPHA_BIN_NUM  17
     
 #define HPGV_RAF_SEG            0x201002
-#define HPGV_RAF_SEG_NUM        5    
+#define HPGV_RAF_SEG_NUM        4
 /*==== RAF ====*/
 
 #define HPGV_BIND_COLORBUF 0x10000
@@ -69,9 +69,36 @@ extern "C"
  *
  */
 typedef struct hpgv_raf_t {
-    float raf[HPGV_RAF_ALPHA_BIN_NUM];
-    float depths[HPGV_RAF_ALPHA_BIN_NUM];
+    float raf[HPGV_RAF_BIN_NUM];
+    float depths[HPGV_RAF_BIN_NUM];
+    float attenuation;
+    float val_head, val_tail;
+    float dep_head, dep_tail;
 } hpgv_raf_t;
+
+/**
+ * hpgv_raf_reset
+ *
+ */
+void hpgv_raf_reset(hpgv_raf_t* raf);
+
+/**
+ * hpgv_raf_seg_t
+ *
+ */
+typedef struct hpgv_raf_seg_t {
+    float raf[HPGV_RAF_SEG_NUM];
+    float depths[HPGV_RAF_SEG_NUM];
+    float attenuation;
+    float val_head, val_tail;
+    float dep_head, dep_tail;
+} hpgv_raf_seg_t;
+
+/**
+ * hpgv_raf_seg_reset
+ *
+ */
+void hpgv_raf_seg_reset(hpgv_raf_seg_t* raf);
     
 /**
  * hpgv_gl_valid

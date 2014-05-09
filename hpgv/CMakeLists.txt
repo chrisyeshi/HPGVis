@@ -7,6 +7,7 @@ set (SOURCES
         hpgv_block.c
         hpgv_composite.c
         hpgv_gl.c
+        hpgv_tf.c
         hpgv_render.cpp
         hpgv_socket.c
         hpgv_util.c

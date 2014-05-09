@@ -9,7 +9,7 @@ bool Image::open(const std::string& filename)
 {
 	std::ifstream fin(filename.c_str(), std::ios::binary);
 	if (!fin) return false;
-	this->read(fin);
+    return this->read(fin);
 }
 
 void Image::save(const std::string& filename) const
