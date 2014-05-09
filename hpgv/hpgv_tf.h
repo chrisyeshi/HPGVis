@@ -6,18 +6,22 @@ extern "C"
 {
 #endif
 
+#include "assert.h"
 #include "hpgv_gl.h"
 #include "hpgv_utilmath.h"
 #include "hpgv_util.h"
+
+typedef struct tf_color_t tf_color_t;
+
+tf_color_t hpgv_tf_sample(float* tf, int tfsize, float val);
 
 void hpgv_tf_raf_integrate(float* tf, int tfsize,
 		float left_value, float rite_value, float left_depth, float rite_depth,
 		float sampling_spacing, hpgv_raf_t* histogram);
 
 void hpgv_tf_raf_seg_integrate(float* tf, int tfsize,
-		float valbeg, float valend,
-		float depbeg, float depend,
-		int segid, hpgv_raf_seg_t* seg);
+        float left_value, float rite_value, float left_depth, float rite_depth,
+        float sampling_spacing, hpgv_raf_seg_t* seg, int segid);
 
 #ifdef __cplusplus
 }

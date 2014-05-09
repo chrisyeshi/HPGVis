@@ -44,12 +44,11 @@ typedef enum composite_t {
  *
  */
 int  
-hpgv_composite(
-        /* dimnsions of pixel rectangle */
+hpgv_composite(/* dimnsions of pixel rectangle */
         int width,
         int height,
 
-        /* format of pixels data. Must be one 
+        /* format of pixels data. Must be one
            of GL_RGBA, GL_RGB, HPGV_RGBA, HPGV_RGB, HPGV_RAF */
         int format,
 
@@ -76,8 +75,10 @@ hpgv_composite(
         /* transfer function */
         float* tf,
         int tfsize,
-               
-        /* composite method */ 
+        float sampling_spacing,
+        int segid,
+
+        /* composite method */
         composite_t composite_type
         );
          

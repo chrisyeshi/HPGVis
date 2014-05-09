@@ -74,10 +74,29 @@ void hpgv_raf_reset(hpgv_raf_t* raf)
         raf->depths[i] = 1.f;
     }
     raf->attenuation = 0.f;
-    raf->val_head = 0.f;
-    raf->val_tail = 0.f;
-    raf->dep_head = 0.f;
-    raf->dep_tail = 0.f;
+    raf->val_head = -1.f;
+    raf->val_tail = -1.f;
+    raf->dep_head = 1.f;
+    raf->dep_tail = 1.f;
+}
+
+
+/**
+ * hpgv_raf_seg_reset
+ *
+ */
+void hpgv_raf_seg_reset(hpgv_raf_seg_t* seg)
+{
+    int i;
+    for (i = 0; i < HPGV_RAF_SEG_NUM; ++i) {
+        seg->raf[i] = 0.f;
+        seg->depths[i] = 0.f;
+    }
+    seg->attenuation = 0.f;
+    seg->val_head = -1.f;
+    seg->val_tail = -1.f;
+    seg->dep_head = 0.f;
+    seg->dep_tail = 0.f;
 }
 
 
@@ -746,6 +765,8 @@ int hpgv_gl_fragdata(int x, int y, int format, void *data)
         raf[offset].attenuation = in->attenuation;
         raf[offset].val_head = in->val_head;
         raf[offset].val_tail = in->val_tail;
+        raf[offset].dep_head = in->dep_head;
+        raf[offset].dep_tail = in->dep_tail;
     }
     return HPGV_TRUE;        
 }

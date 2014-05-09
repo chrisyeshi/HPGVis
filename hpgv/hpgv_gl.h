@@ -80,7 +80,7 @@ typedef struct hpgv_raf_t {
  * hpgv_raf_reset
  *
  */
- void hpgv_raf_reset(hpgv_raf_t* raf);
+void hpgv_raf_reset(hpgv_raf_t* raf);
 
 /**
  * hpgv_raf_seg_t
@@ -93,6 +93,12 @@ typedef struct hpgv_raf_seg_t {
     float val_head, val_tail;
     float dep_head, dep_tail;
 } hpgv_raf_seg_t;
+
+/**
+ * hpgv_raf_seg_reset
+ *
+ */
+void hpgv_raf_seg_reset(hpgv_raf_seg_t* raf);
     
 /**
  * hpgv_gl_valid

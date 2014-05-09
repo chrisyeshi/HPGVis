@@ -40,11 +40,11 @@ int main(int argc, char* argv[])
 	hpgv::Parameter para;
 	assert(para.open("supernova_600.hp"));
 	para.setFormat(formats[argv[4]]);
-    para.rView().width = 512;
-    para.rView().height = 512;
-    para.rView().viewport[2] = 512;
-    para.rView().viewport[3] = 512;
-    para.rImages()[0].sampleSpacing = 10.0;
+    para.rView().width = 1024;
+    para.rView().height = 1024;
+    para.rView().viewport[2] = 1024;
+    para.rView().viewport[3] = 1024;
+    para.rImages()[0].sampleSpacing = 0.1;
 	// vis
 	HPGVis vis;
 	vis.initialize();

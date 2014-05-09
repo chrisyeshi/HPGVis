@@ -653,36 +653,36 @@ vis_render_pos(vis_control_t    *visctl,
                 bin = binsize;
             }
 
-            float intensity = image.tf[id+3];
-            // adjust step size
-            float alpha = 1.0 - pow(1.0 - intensity, sampling_spacing / stepBase);
-            float attenuation = (1.f - histogram->attenuation) * alpha;
-            histogram->attenuation += attenuation;
+//            float intensity = image.tf[id+3];
+//            // adjust step size
+//            float alpha = 1.0 - pow(1.0 - intensity, sampling_spacing / stepBase);
+//            float attenuation = (1.f - histogram->attenuation) * alpha;
+//            histogram->attenuation += attenuation;
 
-            // intensity
-            // basic way
-            //======================================
-            // histogram->raf[bin] += attenuation;
-            // better method
-            //======================================
-            float dx = sample * binsize - bin;
-            float factor;
+//            // intensity
+//            // basic way
+//            //======================================
+//            // histogram->raf[bin] += attenuation;
+//            // better method
+//            //======================================
+//            float dx = sample * binsize - bin;
+//            float factor;
 
-            if (dx < 0.5f) {
-                factor = pow((0.5f - dx), 3.0f);
-                histogram->raf[bin] += (1.0f - factor) * attenuation;
+//            if (dx < 0.5f) {
+//                factor = pow((0.5f - dx), 3.0f);
+//                histogram->raf[bin] += (1.0f - factor) * attenuation;
 
-                if (bin > 0) {
-                    histogram->raf[bin - 1] += factor * attenuation;
-                }
-            } else {
-                factor = pow((dx - 0.5f), 3.0f);
-                histogram->raf[bin] += (1.0f - factor) * attenuation;
+//                if (bin > 0) {
+//                    histogram->raf[bin - 1] += factor * attenuation;
+//                }
+//            } else {
+//                factor = pow((dx - 0.5f), 3.0f);
+//                histogram->raf[bin] += (1.0f - factor) * attenuation;
 
-                if (bin < binsize - 1) {
-                    histogram->raf[bin + 1] += factor * attenuation;
-                }
-            }
+//                if (bin < binsize - 1) {
+//                    histogram->raf[bin + 1] += factor * attenuation;
+//                }
+//            }
 
             // depth -- isosurface
             point_3d_t screen;
@@ -701,79 +701,6 @@ vis_render_pos(vis_control_t    *visctl,
                 hpgv_tf_raf_integrate(image.tf.get(), visctl->colormapsize,
                         left_value, rite_value, left_depth, rite_depth,
                         sampling_spacing, histogram);
-
-                // int binBeg = CLAMP(left_value * HPGV_RAF_BIN_NUM, 0, HPGV_RAF_BIN_NUM - 1);
-                // int binEnd = CLAMP(rite_value * HPGV_RAF_BIN_NUM, 0, HPGV_RAF_BIN_NUM - 1);
-                // int dir = 0;
-                // if (binBeg != binEnd)
-                //     dir = (binEnd - binBeg) / abs(binEnd - binBeg);
-                // double valBeg, valEnd;
-                // double length;
-                // float intenBeg, intenEnd, intensity;
-                // float alpha, attenuation;
-                // // if binBeg == binEnd
-                // if (binBeg == binEnd)
-                // {
-                //     valBeg = left_value;
-                //     valEnd = rite_value;
-                //     float intenBeg = image.tf[CLAMP(visctl->colormapsize * valBeg, 0, HPGV_RAF_BIN_NUM - 1) * 4 + 3];
-                //     float intenEnd = image.tf[CLAMP(visctl->colormapsize * valEnd, 0, HPGV_RAF_BIN_NUM - 1) * 4 + 3];
-                //     float intensity = (intenBeg + intenEnd) * 0.5;
-                //     float alpha = 1.0 - pow(1.0 - intensity, length / stepBase);
-                //     float attenuation = (1.f - histogram->attenuation) * alpha;
-                //     histogram->attenuation += attenuation;
-                //     histogram->raf[binBeg] += attenuation;
-                //     histogram->depths[binBeg] = std::min(float(left_depth), histogram->depths[binBeg]);
-                // } else
-                // {
-                //     assert(dir != 0);
-                //     // the beginning bin, which is partially included
-                //     valBeg = left_value;
-                //     if (dir > 0)
-                //         valEnd = double(binBeg + 1) / double(HPGV_RAF_BIN_NUM);
-                //     else
-                //         valEnd = double(binBeg) / double(HPGV_RAF_BIN_NUM);
-                //     length = (valEnd - valBeg) / (rite_value - left_value) * sampling_spacing;
-                //     intenBeg = image.tf[CLAMP(visctl->colormapsize * valBeg, 0, HPGV_RAF_BIN_NUM - 1) * 4 + 3];
-                //     intenEnd = image.tf[CLAMP(visctl->colormapsize * valEnd, 0, HPGV_RAF_BIN_NUM - 1) * 4 + 3];
-                //     intensity = (intenBeg + intenEnd) * 0.5;
-                //     alpha = 1.0 - pow(1.0 - intensity, length / stepBase);
-                //     attenuation = (1.f - histogram->attenuation) * alpha;
-                //     histogram->attenuation += attenuation;
-                //     histogram->raf[binBeg] += attenuation;
-                //     histogram->depths[binBeg] = std::min(float(left_depth), histogram->depths[binBeg]);
-                //     // the bins in between
-                //     for (int binId = binBeg + dir; binId != binEnd; binId += dir)
-                //     {
-                //         valBeg = double(binBeg) / double(HPGV_RAF_BIN_NUM);
-                //         valEnd = double(binEnd) / double(HPGV_RAF_BIN_NUM);
-                //         length = (valEnd - valBeg) / (rite_value - left_value) * sampling_spacing;
-                //         intenBeg = image.tf[CLAMP(visctl->colormapsize * valBeg, 0, HPGV_RAF_BIN_NUM - 1) * 4 + 3];
-                //         intenEnd = image.tf[CLAMP(visctl->colormapsize * valEnd, 0, HPGV_RAF_BIN_NUM - 1) * 4 + 3];
-                //         intensity = (intenBeg + intenEnd) * 0.5;
-                //         alpha = 1.0 - pow(1.0 - intensity, length / stepBase);
-                //         attenuation = (1.f - histogram->attenuation) * alpha;
-                //         histogram->attenuation += attenuation;
-                //         histogram->raf[binId] += attenuation;
-                //         float depth = (valBeg - left_value) / (rite_value - left_value) * (rite_depth - left_depth) + left_depth;
-                //         histogram->depths[binId] = std::min(depth, histogram->depths[binId]);
-                //     }
-                //     // the end bin, which is also partially included
-                //     if (dir > 0)
-                //         valBeg = double(binEnd) / double(HPGV_RAF_BIN_NUM);
-                //     else
-                //         valBeg = double(binEnd + 1) / double(HPGV_RAF_BIN_NUM);
-                //     length = (valEnd - valBeg) / (rite_value - left_value) * sampling_spacing;
-                //     intenBeg = image.tf[CLAMP(visctl->colormapsize * valBeg, 0, HPGV_RAF_BIN_NUM - 1) * 4 + 3];
-                //     intenEnd = image.tf[CLAMP(visctl->colormapsize * valEnd, 0, HPGV_RAF_BIN_NUM - 1) * 4 + 3];
-                //     intensity = (intenBeg + intenEnd) * 0.5;
-                //     alpha = 1.0 - pow(1.0 - intensity, length / stepBase);
-                //     attenuation = (1.f - histogram->attenuation) * alpha;
-                //     histogram->attenuation += attenuation;
-                //     histogram->raf[binEnd] += attenuation;
-                //     float depth = (valBeg - left_value) / (rite_value - left_value) * (rite_depth - left_depth) + left_depth;
-                //     histogram->depths[binEnd] = std::min(depth, histogram->depths[binEnd]);
-                // }
 
                 *prev_value = sample;
                 *prev_depth = curr_depth;
@@ -909,7 +836,7 @@ vis_render_volume(vis_control_t *visctl, const hpgv::Parameter::Image& image)
     /* clear the color buffer */
     hpgv_vis_clear_color(visctl);
     hpgv_gl_clear_databuf();
-    
+
     for (index = 0; index < visctl->castcount; index++) {
 
         if (visctl->format == HPGV_RAF)
@@ -945,6 +872,9 @@ vis_render_volume(vis_control_t *visctl, const hpgv::Parameter::Image& image)
             hpgv_gl_fragcolor(pixel->x, pixel->y, 
                               color.red, color.green, color.blue, color.alpha);
         } else if (visctl->format == HPGV_RAF) {
+//            printf("val: {%lf, %lf}\n", raf.val_head, raf.val_tail);
+//            std::cout << "val: {" << raf.val_head << ", " << raf.val_tail << "} ";
+//            std::cout << "dep: {" << raf.dep_head << ", " << raf.dep_tail << "}" << std::endl;
             hpgv_gl_fragdata(pixel->x, pixel->y, visctl->format, &raf);
         } else {
             HPGV_ABORT("Unsupported format", HPGV_ERROR);
@@ -970,8 +900,8 @@ void vis_raf_to_seg(int seg_id, hpgv_raf_t* raf, hpgv_raf_seg_t* seg)
     seg->attenuation = raf->attenuation;
     seg->val_head = raf->val_head;
     seg->val_tail = raf->val_tail;
-    seg->dep_head = raf->dep_head;
-    seg->dep_tail = raf->dep_tail;
+    seg->dep_head = 1.f - raf->dep_head;
+    seg->dep_tail = 1.f - raf->dep_tail;
 }
 
 
@@ -990,8 +920,8 @@ void vis_seg_to_raf(int seg_id, hpgv_raf_seg_t* seg, hpgv_raf_t* raf)
     raf->attenuation = seg->attenuation;
     raf->val_head = seg->val_head;
     raf->val_tail = seg->val_tail;
-    raf->dep_head = seg->dep_head;
-    raf->dep_tail = seg->dep_tail;
+    raf->dep_head = 1.f - seg->dep_head;
+    raf->dep_tail = 1.f - seg->dep_tail;
 }
 
 
@@ -1464,6 +1394,8 @@ hpgv_vis_render_one_composite(block_t *block, int root, MPI_Comm comm)
             theVisControl->comm,
             NULL,
             theVisControl->colormapsize,
+            theVisControl->sampling_spacing,
+            0,
             HPGV_TTSWAP);
 
     HPGV_TIMING_END(MY_STEP_MULTI_COMPOSE_TIME);
@@ -1656,6 +1588,8 @@ hpgv_vis_render_multi_composite(block_t *block, int root, MPI_Comm comm)
                            theVisControl->comm,
                            image.tf.get(),
                            theVisControl->colormapsize,
+                           theVisControl->sampling_spacing,
+                           0,
                            HPGV_TTSWAP);
             
             HPGV_TIMING_END(MY_STEP_MULTI_COMPOSE_TIME);
@@ -1692,7 +1626,10 @@ hpgv_vis_render_multi_composite(block_t *block, int root, MPI_Comm comm)
             for (int s = 0; s < nSeg; ++s)
             { // for each raf_seg
                 for (int m = 0; m < framebuf_size; ++m)
+                {
                     vis_raf_to_seg(s, &raf_local[m], &raf_seg[m]);
+//                    printf("val: [%lf, %lf]\n", raf_seg[m].val_head, raf_seg[m].val_tail);
+                }
                 // composite with others
                 hpgv_composite(
                         framebuf_size_x,
@@ -1706,6 +1643,8 @@ hpgv_vis_render_multi_composite(block_t *block, int root, MPI_Comm comm)
                         theVisControl->comm,
                         image.tf.get(),
                         theVisControl->colormapsize,
+                        theVisControl->sampling_spacing,
+                        s,
                         HPGV_TTSWAP);
                 // collect if I'm root
                 if (theVisControl->id == theVisControl->root)

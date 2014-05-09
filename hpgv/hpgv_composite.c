@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include "hpgv_tf.h"
 
 #define PARTIAL_IMAGE_MSG   100
 #define FULL_IMAGE_MSG      101
@@ -1153,7 +1154,7 @@ swap_control_raf_float(swap_control_t *swapctrl, swap_schedule_t *schedule)
  */
 static void
 swap_control_rafseg_float(swap_control_t *swapctrl, swap_schedule_t *schedule,
-                          float* tf, int tfsize)
+                          float* tf, int tfsize, float sampling_spacing, int segid)
 {
     swap_message_t *inmessage;
     uint64_t offset, recordcount, i, k;
@@ -1170,8 +1171,12 @@ swap_control_rafseg_float(swap_control_t *swapctrl, swap_schedule_t *schedule,
     int formatsize = hpgv_formatsize(HPGV_RAF_SEG);
     inmessage = schedule->first_recv;
     
-    memset(&(outimage[schedule->bldoffset * formatsize]), 0,
-           schedule->bldcount * pixelsize);
+    hpgv_raf_seg_t* reset = (hpgv_raf_seg_t*)(&(outimage[schedule->bldoffset * formatsize]));
+    for (i = 0; i < schedule->bldcount; ++i) {
+        hpgv_raf_seg_reset(&reset[i]);
+    }
+//    memset(&(outimage[schedule->bldoffset * formatsize]), 0,
+//           schedule->bldcount * pixelsize);
     
     while (inmessage != NULL) {
         
@@ -1192,17 +1197,33 @@ swap_control_rafseg_float(swap_control_t *swapctrl, swap_schedule_t *schedule,
         partialcolor = (hpgv_raf_seg_t*)inimage;
         
         for (i = 0; i < recordcount; i++) {
+            if (partialcolor[i].val_head < 0.f) {
+                continue;
+            }
+            if (compositecolor[i].val_head < 0.f) {
+                // from empty compositecolor to composite first subimage
+                compositecolor[i] = partialcolor[i];
+                continue;
+            }
             // integrate the missing segment
             float left_value = compositecolor[i].val_tail;
             float rite_value = partialcolor[i].val_head;
+            float left_depth = compositecolor[i].dep_tail;
+            float rite_depth = partialcolor[i].dep_head;
+            hpgv_tf_raf_seg_integrate(tf, tfsize,
+                    left_value, rite_value, left_depth, rite_depth,
+                    sampling_spacing, &compositecolor[i], segid);
+            compositecolor[i].val_tail = partialcolor[i].val_tail;
+            compositecolor[i].dep_tail = partialcolor[i].dep_tail;
             // ray attenuation function
-            alphafactor = compositecolor[i].raf[HPGV_RAF_SEG_NUM - 1];
+            alphafactor = compositecolor[i].attenuation;
             for (k = 0; k < HPGV_RAF_SEG_NUM; k++) {
                 compositecolor[i].raf[k] += (1.f - alphafactor) * partialcolor[i].raf[k];
                 float comp_depth = compositecolor[i].depths[k];
                 float part_depth = partialcolor[i].depths[k];
                 if (part_depth > comp_depth)
                     compositecolor[i].depths[k] = part_depth;
+//                compositecolor[i].depths[k] = 1.f;
             }
             compositecolor[i].attenuation += (1.f - alphafactor) * partialcolor[i].attenuation;
         }
@@ -1529,7 +1550,7 @@ swap_control_gather(swap_control_t *swapctrl)
  *
  */
 static void
-swap_control_composite(swap_control_t *swapctrl, float* tf, int tfsize)
+swap_control_composite(swap_control_t *swapctrl, float* tf, int tfsize, float sampling_spacing, int segid)
 {
     
     uint32_t stage;
@@ -1621,7 +1642,7 @@ swap_control_composite(swap_control_t *swapctrl, float* tf, int tfsize)
                 case HPGV_FLOAT:
                     swap_control_rafseg_float(swapctrl,
                                               swapctrl->schedule[stage],
-                                              tf, tfsize);
+                                              tf, tfsize, sampling_spacing, segid);
                     break;
                 default:                
                     HPGV_ABORT_P(swapctrl->mpiid, "Unsupported pixel type.", 
@@ -1781,7 +1802,7 @@ swap_control_update(swap_control_t *swapctrl,
             
             HPGV_ASSERT_P(mpiid, partialpixels, 
                           "There are no input pixels.", HPGV_ERR_MEM);
-            
+
             swapctrl->partial_image[0]
             = (uint8_t *)realloc(swapctrl->partial_image[0], 
                                  swapctrl->totalpixelbytes);
@@ -1789,7 +1810,7 @@ swap_control_update(swap_control_t *swapctrl,
             swapctrl->partial_image[1]
             = (uint8_t *)realloc(swapctrl->partial_image[1],
                                  swapctrl->totalpixelbytes);
-            
+
             HPGV_ASSERT_P(mpiid,
                           swapctrl->partial_image[0] &&
                           swapctrl->partial_image[1],
@@ -1997,6 +2018,7 @@ int
 hpgv_composite(int width, int height, int format, int type, 
                void *partialpixels, void *finalpixels, float depth,
                int root, MPI_Comm mpicomm, float* tf, int tfsize,
+               float sampling_spacing, int segid,
                composite_t composite_type)
 {
     
@@ -2075,7 +2097,7 @@ hpgv_composite(int width, int height, int format, int type,
     HPGV_TIMING_CONTEXTGLOBAL(context);         
 
     /* compositing */
-    swap_control_composite(theSwapControl, tf, tfsize);
+    swap_control_composite(theSwapControl, tf, tfsize, sampling_spacing, segid);
     
     return HPGV_SUCCESS;
 }
