@@ -21,7 +21,7 @@ void initMaps()
 int main(int argc, char* argv[])
 {
 	MPI_Init(&argc, &argv);
-    assert(argc == 6);
+    assert(argc == 7);
     // two maps for inputs
     initMaps();
 	// Yay~ MPI
@@ -33,12 +33,12 @@ int main(int argc, char* argv[])
     int mypx = (rank - mypz * npx * npy) % npx;
     int mypy = (rank - mypz * npx * npy) / npx;
     // volume
-    hpgv::H5Reader reader("/home/chrisyeshi/Dropbox/supernova_600_1580.h5", "/entropy");
+    hpgv::H5Reader reader(argv[6], "/qcr");
 	reader.configure(MPI_COMM_WORLD, mypx, mypy, mypz, npx, npy, npz);
 	assert(reader.read());
 	// parameter
 	hpgv::Parameter para;
-	assert(para.open("supernova_600.hp"));
+    assert(para.open("../../jet_slope.hp"));
 	para.setFormat(formats[argv[4]]);
     para.rView().width = 1024;
     para.rView().height = 1024;

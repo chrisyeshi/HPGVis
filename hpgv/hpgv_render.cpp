@@ -684,7 +684,8 @@ vis_render_pos(vis_control_t    *visctl,
 //                }
 //            }
 
-            // depth -- isosurface
+            // even better method
+            //=========================================
             point_3d_t screen;
             hpgv_gl_project(pos->x3d, pos->y3d, pos->z3d, &screen.x3d, &screen.y3d, &screen.z3d);
             double curr_depth = screen.z3d;

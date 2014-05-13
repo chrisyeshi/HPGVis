@@ -80,7 +80,7 @@ hpgv::Volume H5Reader::volume() const
     std::vector<double> xCoords(x.get(), x.get() + nx);
     std::vector<double> yCoords(y.get(), y.get() + ny);
     std::vector<double> zCoords(z.get(), z.get() + nz);
-    return hpgv::Volume(data.get(), xCoords, yCoords, zCoords);
+    return hpgv::Volume(data, xCoords, yCoords, zCoords);
 }
 
 } // namespace hpgv

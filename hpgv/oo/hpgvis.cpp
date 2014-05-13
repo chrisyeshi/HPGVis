@@ -15,7 +15,7 @@ static double theValueMin = 0;
 static double theValueMax = 0;
 float data_quantize(float value, int varname)
 {
-    float v = (value - theValueMin) / (theValueMax - theValueMin);
+    float v = (value - 0.0) / (1.0 - 0.0);
     if (v < 0.0) v = 0.0;
     if (v >= 1.0) v = 1.0 - FLT_EPSILON;
     return v;
@@ -95,7 +95,7 @@ void HPGVis::setVolume(const hpgv::Volume& volume)
 			volume.xCoords.size(), volume.yCoords.size(), volume.zCoords.size(),
 			npx, npy, npz,
 			&block->blk_header);
-	block_set_volume(block, 0, HPGV_DOUBLE, volume.data, 0);
+    block_set_volume(block, 0, HPGV_DOUBLE, volume.data.get(), 0);
 }
 
 void HPGVis::render()

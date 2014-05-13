@@ -1,7 +1,7 @@
 //
 //
 // This is a small object to encapsulates a volume pointer.
-// WARNING: It doesn't take care of the memory deallocation.
+// Changed from raw pointer to shared_ptr, so it actually cares about memory.
 //
 //
 
@@ -9,21 +9,22 @@
 #define __hpgv_volume__
 
 #include <vector>
+#include "boost/shared_ptr.hpp"
 
 namespace hpgv
 {
 
 struct Volume
 {
-	Volume() : data(NULL) {}
-	Volume(double* data,
+    Volume() {}
+    Volume(boost::shared_ptr<double[]> data,
 			const std::vector<double>& xCoords, 
 			const std::vector<double>& yCoords,
 			const std::vector<double>& zCoords)
 	  : data(data), xCoords(xCoords), yCoords(yCoords), zCoords(zCoords)
 	{}
 
-	double* data;
+    boost::shared_ptr<double[]> data;
 	std::vector<double> xCoords, yCoords, zCoords;
 };
 

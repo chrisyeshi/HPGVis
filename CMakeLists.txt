@@ -49,3 +49,10 @@ add_subdirectory(demo)
 #
 #
 add_subdirectory(viewer)
+
+#
+#
+# controlelr
+#
+#
+add_subdirectory(controller)

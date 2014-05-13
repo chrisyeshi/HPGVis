@@ -16,7 +16,8 @@ set (SOURCES
         oo/hpgvis.cpp
         oo/image.cpp
         oo/imageraf.cpp
-        oo/imagergba.cpp)
+        oo/imagergba.cpp
+        oo/volume.h)
 
 #
 #
