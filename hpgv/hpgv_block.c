@@ -1407,6 +1407,10 @@ void block_header_new(int id, MPI_Comm mpicomm, int groupsize,
     int mypz = id /(npx * npy);
     int mypx = (id - mypz * npx * npy) % npx;
     int mypy = (id - mypz * npx * npy) / npx;
+    /* another way of partitioning */
+    // int mypx = id / (npy * npz);
+    // int mypy = (id - mypx * npy * npz) / npz;
+    // int mypz = (id - mypx * npy * npz) % npz;
     
     header->blk_id[0]      = mypx;
     header->blk_id[1]      = mypy;

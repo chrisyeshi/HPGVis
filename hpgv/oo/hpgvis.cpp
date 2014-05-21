@@ -15,7 +15,7 @@ static double theValueMin = 0;
 static double theValueMax = 0;
 float data_quantize(float value, int varname)
 {
-    float v = (value - 0.0) / (1.0 - 0.0);
+    float v = (value - 0.0) / (0.125 - 0.0);
     if (v < 0.0) v = 0.0;
     if (v >= 1.0) v = 1.0 - FLT_EPSILON;
     return v;
@@ -102,8 +102,9 @@ void HPGVis::render()
 {
     block_exchange_boundary(block, para.getImages()[0].volumes[0].id);
 	computeMinMax();
-	hpgv_vis_render(block, rank, comm, 0);
-	updateImage();
+//    std::cout << theValueMin << " :::: " << theValueMax << std::endl;
+    hpgv_vis_render(block, rank, comm, 0);
+    updateImage();
 }
 
 void HPGVis::render(const hpgv::Volume& volume)

@@ -188,7 +188,7 @@ void main()
     normalValue[15] = estimateNormal(vec3(FragIn.texCoord, depthValue[15]), vec3(xLess, xDepthLess.w), vec3(xPlus, xDepthPlus.w), vec3(yLess, yDepthLess.w), vec3(yPlus, yDepthPlus.w));
 
     //Uncomment to get normal representation...
-//    fragColor = vec4(normalValue[7], 1.0);
+//    fragColor = vec4(normalValue[15], 1.0);
 //    return;
 
     //In the Phong lighting model, we have four constants: ambient, specular, and diffuse reflections, and shininess (hardcoded)
