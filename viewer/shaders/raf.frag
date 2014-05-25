@@ -84,10 +84,115 @@ vec3 estimateNormal(vec3 d11, vec3 d01, vec3 d21, vec3 d10, vec3 d12)
 //    return vec3(0.0, 0.0, 0.0);
 }
 
+
+vec3[16] FullEstimateNormal(vec2 coord)
+{
+    vec2 xDelta = vec2(invVP.x, 0.0);
+    vec2 yDelta = vec2(0.0, invVP.y);
+    vec2 xPlus = coord + xDelta;
+    vec2 xLess = coord - xDelta;
+    vec2 yPlus = coord + yDelta;
+    vec2 yLess = coord - yDelta;
+    vec4 xDepthLess, xDepthPlus, yDepthLess, yDepthPlus;
+    vec3 outNormal[16];
+
+    float CutOff = 1000;
+
+    for(int iCtr = 0; iCtr < 16 / 4; iCtr++)
+    {
+        switch(iCtr)
+	{
+        case 0:
+	        xDepthLess = texture(dep0, xLess);
+	        xDepthPlus = texture(dep0, xPlus);
+	        yDepthLess = texture(dep0, yLess);
+	        yDepthPlus = texture(dep0, yPlus);
+                break;
+        case 1:
+	        xDepthLess = texture(dep1, xLess);
+	        xDepthPlus = texture(dep1, xPlus);
+	        yDepthLess = texture(dep1, yLess);
+	        yDepthPlus = texture(dep1, yPlus);
+                break;
+        case 2:
+	        xDepthLess = texture(dep2, xLess);
+	        xDepthPlus = texture(dep2, xPlus);
+	        yDepthLess = texture(dep2, yLess);
+	        yDepthPlus = texture(dep2, yPlus);
+                break;
+        case 3:
+	        xDepthLess = texture(dep3, xLess);
+	        xDepthPlus = texture(dep3, xPlus);
+	        yDepthLess = texture(dep3, yLess);
+	        yDepthPlus = texture(dep3, yPlus);
+                break;
+        }
+
+        vec4 xDiff = abs(xDepthPlus - xDepthLess);
+        vec4 yDiff = abs(yDepthPlus - yDepthLess);
+        if(xDiff.x + yDiff.x < CutOff)
+        {
+            outNormal[iCtr * 4 + 0] = estimateNormal(vec3(FragIn.texCoord, depthValue[0]), vec3(xLess, xDepthLess.x), vec3(xPlus, xDepthPlus.x), vec3(yLess, yDepthLess.x), vec3(yPlus, yDepthPlus.x));
+        }
+        else outNormal[iCtr * 4 + 0] = vec3(0);
+        if(xDiff.y + yDiff.y < CutOff)
+        {
+            outNormal[iCtr * 4 + 1] = estimateNormal(vec3(FragIn.texCoord, depthValue[1]), vec3(xLess, xDepthLess.y), vec3(xPlus, xDepthPlus.y), vec3(yLess, yDepthLess.y), vec3(yPlus, yDepthPlus.y));
+        }
+        else outNormal[iCtr * 4 + 1] = vec3(0);
+        if(xDiff.z + yDiff.z < CutOff)
+        {
+            outNormal[iCtr * 4 + 2] = estimateNormal(vec3(FragIn.texCoord, depthValue[2]), vec3(xLess, xDepthLess.z), vec3(xPlus, xDepthPlus.z), vec3(yLess, yDepthLess.z), vec3(yPlus, yDepthPlus.z));
+        }
+        else outNormal[iCtr * 4 + 2] = vec3(0);
+        if(xDiff.w + yDiff.w < CutOff)
+        {
+            outNormal[iCtr * 4 + 3] = estimateNormal(vec3(FragIn.texCoord, depthValue[3]), vec3(xLess, xDepthLess.w), vec3(xPlus, xDepthPlus.w), vec3(yLess, yDepthLess.w), vec3(yPlus, yDepthPlus.w));
+        }
+        else outNormal[iCtr * 4 + 3] = vec3(0);
+    }
+    return outNormal;
+}
+
+
+vec3[16] BlurredEstimateNormal(vec2 coord)
+{
+    //Inverse distance sampling near coordinate:
+    //Don't add samples from ridiculous distances (except for the sample right at this coord).
+
+    vec3 SummedNormals[16];
+
+    //Add the sample from this point:
+    int MaxSamples = 20;
+    int Wraps = 3;
+    float MinRadius = 1 * invVP.x;
+    float MaxRadius = 4 * invVP.x;
+    SummedNormals = FullEstimateNormal(coord);
+
+    //Spiral out, testing local normals.
+    for(int iCtr = 0; iCtr < MaxSamples; iCtr++)
+    {
+        float frac =  float(iCtr) / float(MaxSamples - 1);
+        float Radius = mix(MinRadius, MaxRadius, frac);
+        float Angle = mix(0, Wraps * 3.14159 * 2, frac); 
+        vec2 vec = Radius * vec2(cos(Angle), sin(Angle));
+        vec2 newCoord = coord + vec;
+        vec3 newNormals[16] = FullEstimateNormal(newCoord);
+        for(int jCtr = 0; jCtr < 16; jCtr++)
+            SummedNormals[jCtr] += newNormals[jCtr]; 
+    }
+
+    for(int iCtr = 0; iCtr < 16; iCtr++)
+        SummedNormals[iCtr] = normalize(SummedNormals[iCtr]);
+
+    return SummedNormals;
+}
+
+
 void main()
 {
-    invVP.x = 1.0 / viewport.x;
-    invVP.y = 1.0 / viewport.y;
+    invVP.x = 1.1 / viewport.x;
+    invVP.y = 1.1 / viewport.x;
     nBins = 16;
     K = 1.0;
     stepp = 1.0 / nBins;
@@ -144,51 +249,13 @@ void main()
     depthValue[14] = temp.z;
     depthValue[15] = temp.w;
 
-//    fragColor = vec4(vec3(depthValue[15]), 1.0);
+    normalValue = BlurredEstimateNormal(FragIn.texCoord);
+
+//    fragColor = vec4(vec3(depthValue[8]), 1.0);
 //    return;
 
-    vec2 xDelta = vec2(invVP.x, 0.0);
-    vec2 yDelta = vec2(0.0, invVP.y);
-    vec2 xPlus = FragIn.texCoord + xDelta;
-    vec2 xLess = FragIn.texCoord - xDelta;
-    vec2 yPlus = FragIn.texCoord + yDelta;
-    vec2 yLess = FragIn.texCoord - yDelta;
-    vec4 xDepthLess, xDepthPlus, yDepthLess, yDepthPlus;
-    xDepthLess = texture(dep0, xLess);
-    xDepthPlus = texture(dep0, xPlus);
-    yDepthLess = texture(dep0, yLess);
-    yDepthPlus = texture(dep0, yPlus);
-    normalValue[0] = estimateNormal(vec3(FragIn.texCoord, depthValue[0]), vec3(xLess, xDepthLess.x), vec3(xPlus, xDepthPlus.x), vec3(yLess, yDepthLess.x), vec3(yPlus, yDepthPlus.x));
-    normalValue[1] = estimateNormal(vec3(FragIn.texCoord, depthValue[1]), vec3(xLess, xDepthLess.y), vec3(xPlus, xDepthPlus.y), vec3(yLess, yDepthLess.y), vec3(yPlus, yDepthPlus.y));
-    normalValue[2] = estimateNormal(vec3(FragIn.texCoord, depthValue[2]), vec3(xLess, xDepthLess.z), vec3(xPlus, xDepthPlus.z), vec3(yLess, yDepthLess.z), vec3(yPlus, yDepthPlus.z));
-    normalValue[3] = estimateNormal(vec3(FragIn.texCoord, depthValue[3]), vec3(xLess, xDepthLess.w), vec3(xPlus, xDepthPlus.w), vec3(yLess, yDepthLess.w), vec3(yPlus, yDepthPlus.w));
-    xDepthLess = texture(dep1, xLess);
-    xDepthPlus = texture(dep1, xPlus);
-    yDepthLess = texture(dep1, yLess);
-    yDepthPlus = texture(dep1, yPlus);
-    normalValue[4] = estimateNormal(vec3(FragIn.texCoord, depthValue[4]), vec3(xLess, xDepthLess.x), vec3(xPlus, xDepthPlus.x), vec3(yLess, yDepthLess.x), vec3(yPlus, yDepthPlus.x));
-    normalValue[5] = estimateNormal(vec3(FragIn.texCoord, depthValue[5]), vec3(xLess, xDepthLess.y), vec3(xPlus, xDepthPlus.y), vec3(yLess, yDepthLess.y), vec3(yPlus, yDepthPlus.y));
-    normalValue[6] = estimateNormal(vec3(FragIn.texCoord, depthValue[6]), vec3(xLess, xDepthLess.z), vec3(xPlus, xDepthPlus.z), vec3(yLess, yDepthLess.z), vec3(yPlus, yDepthPlus.z));
-    normalValue[7] = estimateNormal(vec3(FragIn.texCoord, depthValue[7]), vec3(xLess, xDepthLess.w), vec3(xPlus, xDepthPlus.w), vec3(yLess, yDepthLess.w), vec3(yPlus, yDepthPlus.w));
-    xDepthLess = texture(dep2, xLess);
-    xDepthPlus = texture(dep2, xPlus);
-    yDepthLess = texture(dep2, yLess);
-    yDepthPlus = texture(dep2, yPlus);
-    normalValue[8]  = estimateNormal(vec3(FragIn.texCoord, depthValue[8]),  vec3(xLess, xDepthLess.x), vec3(xPlus, xDepthPlus.x), vec3(yLess, yDepthLess.x), vec3(yPlus, yDepthPlus.x));
-    normalValue[9]  = estimateNormal(vec3(FragIn.texCoord, depthValue[9]),  vec3(xLess, xDepthLess.y), vec3(xPlus, xDepthPlus.y), vec3(yLess, yDepthLess.y), vec3(yPlus, yDepthPlus.y));
-    normalValue[10] = estimateNormal(vec3(FragIn.texCoord, depthValue[10]), vec3(xLess, xDepthLess.z), vec3(xPlus, xDepthPlus.z), vec3(yLess, yDepthLess.z), vec3(yPlus, yDepthPlus.z));
-    normalValue[11] = estimateNormal(vec3(FragIn.texCoord, depthValue[11]), vec3(xLess, xDepthLess.w), vec3(xPlus, xDepthPlus.w), vec3(yLess, yDepthLess.w), vec3(yPlus, yDepthPlus.w));
-    xDepthLess = texture(dep3, xLess);
-    xDepthPlus = texture(dep3, xPlus);
-    yDepthLess = texture(dep3, yLess);
-    yDepthPlus = texture(dep3, yPlus);
-    normalValue[12] = estimateNormal(vec3(FragIn.texCoord, depthValue[12]), vec3(xLess, xDepthLess.x), vec3(xPlus, xDepthPlus.x), vec3(yLess, yDepthLess.x), vec3(yPlus, yDepthPlus.x));
-    normalValue[13] = estimateNormal(vec3(FragIn.texCoord, depthValue[13]), vec3(xLess, xDepthLess.y), vec3(xPlus, xDepthPlus.y), vec3(yLess, yDepthLess.y), vec3(yPlus, yDepthPlus.y));
-    normalValue[14] = estimateNormal(vec3(FragIn.texCoord, depthValue[14]), vec3(xLess, xDepthLess.z), vec3(xPlus, xDepthPlus.z), vec3(yLess, yDepthLess.z), vec3(yPlus, yDepthPlus.z));
-    normalValue[15] = estimateNormal(vec3(FragIn.texCoord, depthValue[15]), vec3(xLess, xDepthLess.w), vec3(xPlus, xDepthPlus.w), vec3(yLess, yDepthLess.w), vec3(yPlus, yDepthPlus.w));
-
     //Uncomment to get normal representation...
-//    fragColor = vec4(normalValue[15], 1.0);
+//    fragColor = vec4(normalValue[8], 1.0);
 //    return;
 
     //In the Phong lighting model, we have four constants: ambient, specular, and diffuse reflections, and shininess (hardcoded)
