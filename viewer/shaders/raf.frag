@@ -14,6 +14,11 @@ uniform sampler2D dep1;
 uniform sampler2D dep2;
 uniform sampler2D dep3;
 
+uniform sampler2D featureID;
+
+uniform float selectedID;
+uniform int featureHighlight;
+
 in VertexData {
     vec2 texCoord;
 } FragIn;
@@ -33,7 +38,6 @@ float newA[16];
 float K;
 int nBins;
 vec2 invVP;
-
 //
 //
 // d02 d12 d22
@@ -166,8 +170,8 @@ vec3[16] BlurredEstimateNormal(vec2 coord)
     vec3 SummedNormals[16];
 
     //Add the sample from this point:
-    int MaxSamples = 16;
-    int Wraps = 3;
+    int MaxSamples = 7;
+    int Wraps = 2;
     float MinRadius = 0 * invVP.x;
     float MaxRadius = 4 * invVP.x;
     SummedNormals = FullEstimateNormal(coord);
@@ -194,6 +198,13 @@ vec3[16] BlurredEstimateNormal(vec2 coord)
 
 void main()
 {
+    vec4 ID = texture(featureID, FragIn.texCoord);
+    if(ID.x != selectedID)
+    {
+        //If we're not on the feature of interest, don't draw it...
+        fragColor = vec4(0, 0, 0, 1);
+        return;
+    }
     invVP.x = 1.0 / viewport.x;
     invVP.y = 1.0 / viewport.x;
     nBins = 16;

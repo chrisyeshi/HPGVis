@@ -77,7 +77,7 @@ private:
     QOpenGLBuffer vboQuad;
     QOpenGLTexture texTf, texAlpha;
     QOpenGLTexture *texRaf0, *texRaf1, *texRaf2, *texRaf3;
-    QOpenGLTexture *texDep0, *texDep1, *texDep2, *texDep3;
+    QOpenGLTexture *texDep0, *texDep1, *texDep2, *texDep3, *texFeature;
     QOpenGLShaderProgram progRaf;
     QOpenGLVertexArrayObject vao;
 

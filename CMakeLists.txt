@@ -55,4 +55,4 @@ add_subdirectory(viewer)
 # controlelr
 #
 #
-add_subdirectory(controller)
+#add_subdirectory(controller)

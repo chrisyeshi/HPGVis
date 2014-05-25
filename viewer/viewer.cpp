@@ -10,7 +10,7 @@ Viewer::Viewer(QWidget *parent) :
     texTf(QOpenGLTexture::Target1D),
     texAlpha(QOpenGLTexture::Target1D),
     texRaf0(NULL), texRaf1(NULL), texRaf2(NULL), texRaf3(NULL),
-    texDep0(NULL), texDep1(NULL), texDep2(NULL), texDep3(NULL)
+    texDep0(NULL), texDep1(NULL), texDep2(NULL), texDep3(NULL), texFeature(NULL)
 {
     std::cout << "OpenGL Version: " << this->context()->format().majorVersion() << "." << this->context()->format().minorVersion() << std::endl;
     setFocusPolicy(Qt::StrongFocus);
@@ -26,6 +26,7 @@ Viewer::~Viewer()
     if (texDep1) delete texDep1;
     if (texDep2) delete texDep2;
     if (texDep3) delete texDep3;
+    if (texFeature) delete texFeature;
 }
 
 //
@@ -118,6 +119,18 @@ void Viewer::renderRAF(const hpgv::ImageRAF &image)
         temp[4 * i + 3] = imageRaf.getDepths()[i + w* h * 15];
     }
     updateRAF(texDep3, temp.get(), w, h);
+    
+    // texFeature
+    for (int i = 0; i < w * h; ++i)
+    {
+        //Get feature image here!!!!
+        temp[4 * i + 0] = float(i % 4) / 3; 
+        temp[4 * i + 1] = float(i % 4) / 3; 
+        temp[4 * i + 2] = float(i % 4) / 3; 
+        temp[4 * i + 3] = float(i % 4) / 3;
+    }
+    updateRAF(texFeature, temp.get(), w, h);
+    texFeature->setMinMagFilters(QOpenGLTexture::Nearest, QOpenGLTexture::Nearest);
 
     updateGL();
 }
@@ -176,11 +189,19 @@ void Viewer::paintGL()
     texDep1->bind(7);
     texDep2->bind(8);
     texDep3->bind(9);
+    texFeature->bind(10);
 
     progRaf.setUniformValue("viewport", float(width()), float(height()));
+    
+    //Select feature of interest here!
+    progRaf.setUniformValue("selectedID", float(1) / 3);
+
+    //Enable/Disable feature highlighting here!
+    progRaf.setUniformValue("featureHighlight", int(1));
 
     glDrawArrays(GL_TRIANGLE_FAN, 0, nVertsQuad);
 
+    texFeature->release();
     texDep3->release();
     texDep2->release();
     texDep1->release();
@@ -257,6 +278,8 @@ void Viewer::updateProgram()
     progRaf.bind();
     progRaf.setUniformValue("nBins", nBins);
     progRaf.setUniformValue("mvp", mvp());
+
+
     progRaf.setUniformValue("tf", 0);
     progRaf.setUniformValue("raf0", 1);
     progRaf.setUniformValue("raf1", 2);
@@ -267,6 +290,7 @@ void Viewer::updateProgram()
     progRaf.setUniformValue("dep1", 7);
     progRaf.setUniformValue("dep2", 8);
     progRaf.setUniformValue("dep3", 9);
+    progRaf.setUniformValue("featureID", 10);
     progRaf.release();
 }
 
