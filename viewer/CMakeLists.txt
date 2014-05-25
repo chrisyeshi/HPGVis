@@ -8,6 +8,7 @@ project(viewer)
 #
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
+set(CMAKE_CXX_FLAGS "-std=c++11")
 
 find_package(OpenGL REQUIRED)
 find_package(Qt5Core REQUIRED)
@@ -33,7 +34,9 @@ set(SOURCES
         main.cpp
         mainwindow.cpp
         mainwindow.ui
-        viewer.cpp)
+        viewer.cpp
+        featuretracker.cpp
+        )
 
 #
 #

@@ -8,6 +8,7 @@
 #include <QOpenGLVertexArrayObject>
 #include "TF.h"
 #include "imageraf.h"
+#include "featuretracker.h"
 
 class Viewer : public QGLWidget
 {
@@ -23,6 +24,7 @@ public:
     //
     void renderRAF(const hpgv::ImageRAF& image);
     void snapshot(const std::string& filename);
+    void getFeatureMap(const hpgv::ImageRAF& image);  // fet
 
 signals:
 
@@ -86,8 +88,12 @@ private:
 
     hpgv::ImageRAF imageRaf;
     bool HighlightFeatures;
-    float SelectedFeature;
+    int SelectedFeature;
 
+    std::vector<float> mask;
+
+    FeatureTracker featureTracker;
+    int nFeatures;
     //
     //
     // Helper functions

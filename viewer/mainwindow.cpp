@@ -47,8 +47,11 @@ void MainWindow::open()
     ui->timeSlider->setRange(0, files.size() - 1);
 
     hpgv::ImageRAF image;
-    if (image.open(parentDir.absoluteFilePath(files.front()).toUtf8().constData()))
+    if (image.open(parentDir.absoluteFilePath(files.front()).toUtf8().constData())) {
         ui->viewer->renderRAF(image);
+        ui->viewer->getFeatureMap(image);
+    }
+
 }
 
 void MainWindow::timeChanged()
@@ -58,8 +61,10 @@ void MainWindow::timeChanged()
         return;
 
     hpgv::ImageRAF image;
-    if (image.open(parentDir.absoluteFilePath(files[val]).toUtf8().constData()))
+    if (image.open(parentDir.absoluteFilePath(files[val]).toUtf8().constData())) {
         ui->viewer->renderRAF(image);
+        ui->viewer->getFeatureMap(image);
+    }
 }
 
 //

@@ -108,30 +108,30 @@ vec3[16] FullEstimateNormal(vec2 coord)
     for(int iCtr = 0; iCtr < 16 / 4; iCtr++)
     {
         switch(iCtr)
-	{
+        {
         case 0:
-	        xDepthLess = texture(dep0, xLess);
-	        xDepthPlus = texture(dep0, xPlus);
-	        yDepthLess = texture(dep0, yLess);
-	        yDepthPlus = texture(dep0, yPlus);
+                xDepthLess = texture(dep0, xLess);
+                xDepthPlus = texture(dep0, xPlus);
+                yDepthLess = texture(dep0, yLess);
+                yDepthPlus = texture(dep0, yPlus);
                 break;
         case 1:
-	        xDepthLess = texture(dep1, xLess);
-	        xDepthPlus = texture(dep1, xPlus);
-	        yDepthLess = texture(dep1, yLess);
-	        yDepthPlus = texture(dep1, yPlus);
+                xDepthLess = texture(dep1, xLess);
+                xDepthPlus = texture(dep1, xPlus);
+                yDepthLess = texture(dep1, yLess);
+                yDepthPlus = texture(dep1, yPlus);
                 break;
         case 2:
-	        xDepthLess = texture(dep2, xLess);
-	        xDepthPlus = texture(dep2, xPlus);
-	        yDepthLess = texture(dep2, yLess);
-	        yDepthPlus = texture(dep2, yPlus);
+                xDepthLess = texture(dep2, xLess);
+                xDepthPlus = texture(dep2, xPlus);
+                yDepthLess = texture(dep2, yLess);
+                yDepthPlus = texture(dep2, yPlus);
                 break;
         case 3:
-	        xDepthLess = texture(dep3, xLess);
-	        xDepthPlus = texture(dep3, xPlus);
-	        yDepthLess = texture(dep3, yLess);
-	        yDepthPlus = texture(dep3, yPlus);
+                xDepthLess = texture(dep3, xLess);
+                xDepthPlus = texture(dep3, xPlus);
+                yDepthLess = texture(dep3, yLess);
+                yDepthPlus = texture(dep3, yPlus);
                 break;
         }
 
@@ -181,12 +181,12 @@ vec3[16] BlurredEstimateNormal(vec2 coord)
     {
         float frac =  float(iCtr) / float(MaxSamples - 1);
         float Radius = mix(MinRadius, MaxRadius, frac);
-        float Angle = mix(0, Wraps * 3.14159 * 2, frac); 
+        float Angle = mix(0, Wraps * 3.14159 * 2, frac);
         vec2 vec = Radius * vec2(cos(Angle), sin(Angle));
         vec2 newCoord = coord + vec;
         vec3 newNormals[16] = FullEstimateNormal(newCoord);
         for(int jCtr = 0; jCtr < 16; jCtr++)
-            SummedNormals[jCtr] += newNormals[jCtr]; 
+            SummedNormals[jCtr] += newNormals[jCtr];
     }
 
     for(int iCtr = 0; iCtr < 16; iCtr++)
@@ -199,12 +199,15 @@ vec3[16] BlurredEstimateNormal(vec2 coord)
 void main()
 {
     vec4 ID = texture(featureID, FragIn.texCoord);
-    if(ID.x != selectedID && featureHighlight != 0)
-    {
-        //If we're not on the feature of interest, don't draw it...
-        fragColor = vec4(0, 0, 0, 1);
-        return;
-    }
+//    fragColor = vec4(vec3(ID.r), 1.0);
+//    fragColor = vec4(vec3(selectedID), 1.0);
+//    return;
+//    if(abs(ID.x - selectedID) > 1.0/150.0 && featureHighlight != 0)
+//    {
+//        //If we're not on the feature of interest, don't draw it...
+//        fragColor = vec4(0, 0, 0, 1);
+//        return;
+//    }
     invVP.x = 1.0 / viewport.x;
     invVP.y = 1.0 / viewport.x;
     nBins = 16;
@@ -292,7 +295,7 @@ void main()
 
     // propagate alphas
     for (int i = 0; i < nBins; ++i)
-    {        
+    {
         //Calculate local normal...
 
 
@@ -317,8 +320,8 @@ void main()
         //For each light, add to the light multiplier according to the Phong model.
         for(int iCtr = 0; iCtr < numLights; iCtr++)
         {
-            vec3 LM = lightPositions[iCtr] - pos;
-            vec3 RM = reflect(normalize(-LM), normalValue[i]);
+            vec3 LM = normalize(pos - lightPositions[iCtr]);
+            vec3 RM = reflect(LM, normalValue[i]);
 
             //First diffuse...
             binLightMultiplier[i] += clamp(KD * dot(LM, normalValue[i]) * lightDiffuseIntensities[iCtr], 0, 1);
@@ -349,8 +352,8 @@ void main()
         }
         binValue[i] = (newA[i] + 1.0 - pow(1.0 - newA[i], K + 1.0))
                / (oldA[i] + 1.0 - pow(1.0 - oldA[i], K + 1.0)) * binValue[i];
-//        for (int j = i + 1; j < nBins; ++j)
-//            binValue[j] = clamp(pow(1.0 - newA[i], K) / pow(1.0 - oldA[i], K) * binValue[j], 0, 1);
+        for (int j = i + 1; j < nBins; ++j)
+            binValue[j] = clamp(pow(1.0 - newA[i], K) / pow(1.0 - oldA[i], K) * binValue[j], 0, 1);
     }
 
     // sum
@@ -387,5 +390,11 @@ void main()
         //AccumulatedOpacity += abs(binValue[i] / pow((float(i) + 0.5), 1));
     }
 
-    fragColor = vec4(sum.rgb, 1);
+    if (abs(ID.x - selectedID) > 1.0/10000.0 && featureHighlight != 0) {
+        fragColor = vec4(sum.rgb, 0.6);
+    } else {
+        fragColor = vec4(sum.r, sum.g, 1.0, 1.0);
+    }
+
+
 }

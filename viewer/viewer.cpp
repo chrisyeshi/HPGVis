@@ -121,18 +121,51 @@ void Viewer::renderRAF(const hpgv::ImageRAF &image)
         temp[4 * i + 3] = imageRaf.getDepths()[i + w* h * 15];
     }
     updateRAF(texDep3, temp.get(), w, h);
-    
-    // texFeature
-    for (int i = 0; i < w * h; ++i)
-    {
-        //Get feature image here!!!!
-        temp[4 * i + 0] = float(i % 4) / 3; 
-        temp[4 * i + 1] = float(i % 4) / 3; 
-        temp[4 * i + 2] = float(i % 4) / 3; 
-        temp[4 * i + 3] = float(i % 4) / 3;
+
+//    updateGL();
+}
+
+void Viewer::getFeatureMap(const hpgv::ImageRAF &image) {
+    imageRaf = image;
+    int w = imageRaf.getWidth();
+    int h = imageRaf.getHeight();
+
+    featureTracker.setDim(w, h);
+
+    std::vector<float*> deps;
+    deps.push_back(image.getDepths().get());
+    for (int i = 1; i < nBins; ++i) {
+        deps.push_back(deps.front() + w*h*i);
     }
-    updateRAF(texFeature, temp.get(), w, h);
+
+    mask = std::vector<float>(w*h, 0.0f);
+
+//    std::vector<float> mask(w*h, 0.0f);
+    featureTracker.track(deps[8], mask.data());
+    nFeatures = featureTracker.getNumFeatures();
+
+    for (auto& p : mask) {
+        p /= (float)nFeatures;
+    }
+
+    std::cout << "nFeatures: " << nFeatures;
+
+    // clean up
+    if (texFeature) {
+        assert(!texFeature->isBound());
+        delete texFeature; texFeature = NULL;
+    }
+    // new texture
+    texFeature = new QOpenGLTexture(QOpenGLTexture::Target2D);
+    texFeature->setSize(w, h);
+    texFeature->setFormat(QOpenGLTexture::R32F);
+    texFeature->allocateStorage();
+    texFeature->setWrapMode(QOpenGLTexture::ClampToEdge);
     texFeature->setMinMagFilters(QOpenGLTexture::Nearest, QOpenGLTexture::Nearest);
+    texFeature->setData(QOpenGLTexture::Red, QOpenGLTexture::Float32, mask.data());
+
+//    updateRAF(texFeature, featureMap.get(), w, h);
+//    texFeature->setMinMagFilters(QOpenGLTexture::Nearest, QOpenGLTexture::Nearest);
 
     updateGL();
 }
@@ -194,9 +227,9 @@ void Viewer::paintGL()
     texFeature->bind(10);
 
     progRaf.setUniformValue("viewport", float(width()), float(height()));
-    
+
     //Select feature of interest here!
-    progRaf.setUniformValue("selectedID", SelectedFeature);
+    progRaf.setUniformValue("selectedID", float(SelectedFeature)/nFeatures);
 
     //Enable/Disable feature highlighting here!
     progRaf.setUniformValue("featureHighlight", int(HighlightFeatures ? 1 : 0));
@@ -226,7 +259,12 @@ void Viewer::EnableHighlighting(float x, float y)
 {
     cout << "Feature Highlighting Enabled!" << endl;
     HighlightFeatures = true;
-    SelectedFeature = float(1) / 3; // TODO: Get pixel from Yang's image.
+
+    int idx = int(x) + int(y) * imageRaf.getWidth();
+    SelectedFeature = int(mask[idx] * nFeatures + 0.5);
+
+    std::cout << "SelectedFeature: " << SelectedFeature << std::endl;
+
     update();
 }
 
@@ -239,10 +277,19 @@ void Viewer::DisableHighlighting()
 
 void Viewer::mousePressEvent(QMouseEvent *e)
 {
+    int wx = e->x();
+    int wy = height() - e->y();
+    int x = double(wx) / double(width()) * double(imageRaf.getWidth());
+    int y = double(wy) / double(height()) * double(imageRaf.getHeight());
+
+    if (x < 0 || x >= imageRaf.getWidth() || y < 0 || y >= imageRaf.getHeight())
+        return;
+
     if(e->buttons() & Qt::RightButton)
         DisableHighlighting();
     if(e->buttons() & Qt::LeftButton)
-        EnableHighlighting(e->x(), e->y());
+        EnableHighlighting(x, y);
+
 }
 
 void Viewer::mouseMoveEvent(QMouseEvent *e)
@@ -253,14 +300,15 @@ void Viewer::mouseMoveEvent(QMouseEvent *e)
     int y = double(wy) / double(height()) * double(imageRaf.getHeight());
     if (x < 0 || x >= imageRaf.getWidth() || y < 0 || y >= imageRaf.getHeight())
         return;
-    std::cout << "[" << x << "," << y << "]: value: ";
-    for (int i = 0; i < imageRaf.getNBins(); ++i)
-        std::cout << imageRaf.getRafs()[imageRaf.getWidth() * imageRaf.getHeight() * i + (y * imageRaf.getWidth() + x)] << ", ";
-    std::cout << std::endl;
-    std::cout << "[" << x << "," << y << "]: depth: ";
-    for (int i = 0; i < imageRaf.getNBins(); ++i)
-        std::cout << imageRaf.getDepths()[imageRaf.getWidth() * imageRaf.getHeight() * i + (y * imageRaf.getWidth() + x)] << ", ";
-    std::cout << std::endl;
+
+//    std::cout << "[" << x << "," << y << "]: value: ";
+//    for (int i = 0; i < imageRaf.getNBins(); ++i)
+//        std::cout << imageRaf.getRafs()[imageRaf.getWidth() * imageRaf.getHeight() * i + (y * imageRaf.getWidth() + x)] << ", ";
+//    std::cout << std::endl;
+//    std::cout << "[" << x << "," << y << "]: depth: ";
+//    for (int i = 0; i < imageRaf.getNBins(); ++i)
+//        std::cout << imageRaf.getDepths()[imageRaf.getWidth() * imageRaf.getHeight() * i + (y * imageRaf.getWidth() + x)] << ", ";
+//    std::cout << std::endl;
     if(e->buttons() & Qt::RightButton)
         DisableHighlighting();
     if(e->buttons() & Qt::LeftButton)
@@ -271,12 +319,34 @@ void Viewer::keyPressEvent(QKeyEvent *e)
 {
     switch (e->key())
     {
-    case Qt::Key_F5:
-        std::cout << "F5: update shader program." << std::endl;
-        updateProgram();
-        updateVAO();
-        updateGL();
+        case Qt::Key_F5:
+            std::cout << "F5: update shader program." << std::endl;
+            updateProgram();
+            updateVAO();
+            updateGL();
+            break;
+        case Qt::Key_Right:
+                SelectedFeature++;
+                if (SelectedFeature > nFeatures)
+                    SelectedFeature = 0;
+                std::cout << "FID: " << SelectedFeature << std::endl;
+                updateGL();
+                break;
+        case Qt::Key_Left:
+            SelectedFeature--;
+            if (SelectedFeature < 0)
+                SelectedFeature = nFeatures;
+            std::cout << "FID: " << SelectedFeature << std::endl;
+            updateGL();
+            break;
+        case Qt::Key_F:
+            if (HighlightFeatures) {
+                DisableHighlighting();
+            } else {
+                EnableHighlighting(0, 0);
+            }
     }
+
 }
 
 //
@@ -301,8 +371,8 @@ void Viewer::initQuadVbo()
 void Viewer::updateProgram()
 {
     progRaf.removeAllShaders();
-    assert(progRaf.addShaderFromSourceFile(QOpenGLShader::Vertex, "../../viewer/shaders/raf.vert"));
-    assert(progRaf.addShaderFromSourceFile(QOpenGLShader::Fragment, "../../viewer/shaders/raf.frag"));
+    assert(progRaf.addShaderFromSourceFile(QOpenGLShader::Vertex, "/Users/ywang/Dropbox/Projects/hpgvis/viewer/shaders/raf.vert"));
+    assert(progRaf.addShaderFromSourceFile(QOpenGLShader::Fragment, "/Users/ywang/Dropbox/Projects/hpgvis/viewer/shaders/raf.frag"));
     progRaf.link();
     progRaf.bind();
     progRaf.setUniformValue("nBins", nBins);
