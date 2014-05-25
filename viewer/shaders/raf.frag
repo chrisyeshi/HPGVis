@@ -54,15 +54,15 @@ vec3 estimateNormal(vec3 d11, vec3 d01, vec3 d21, vec3 d10, vec3 d12)
 //        return vec3(1.0, 0.0, 0.0);
         float delta01 = abs(d11.z - d01.z);
         float delta12 = abs(d11.z - d21.z);
-        if (delta01 > delta12)
-        {
+//        if (delta01 > delta12)
+//        {
             xLess = d11;
             xPlus = d21;
-        } else
-        {
-            xLess = d01;
-            xPlus = d11;
-        }
+//        } else
+//        {
+//            xLess = d01;
+//            xPlus = d11;
+//        }
     }
     // y
     if (dot(normalize(d10 - d11), normalize(d12 - d11)) > -0.5)
@@ -70,17 +70,20 @@ vec3 estimateNormal(vec3 d11, vec3 d01, vec3 d21, vec3 d10, vec3 d12)
 //        return vec3(0.0, 1.0, 0.0);
         float delta01 = abs(d11.z - d10.z);
         float delta12 = abs(d11.z - d12.z);
-        if (delta01 > delta12)
-        {
+//        if (delta01 > delta12)
+//        {
             yLess = d11;
             yPlus = d12;
-        } else
-        {
-            yLess = d10;
-            yPlus = d11;
-        }
+//        } else
+//        {
+//            yLess = d10;
+//            yPlus = d11;
+//        }
     }
-    return normalize(cross(xPlus - xLess, yPlus - yLess));
+    vec3 N = normalize(cross(xPlus - xLess, yPlus - yLess));
+    if(N.z > 0)
+       N = -N;
+    return N;
 //    return vec3(0.0, 0.0, 0.0);
 }
 
@@ -96,7 +99,7 @@ vec3[16] FullEstimateNormal(vec2 coord)
     vec4 xDepthLess, xDepthPlus, yDepthLess, yDepthPlus;
     vec3 outNormal[16];
 
-    float CutOff = 1000;
+    float CutOff = invVP.x * 10;
 
     for(int iCtr = 0; iCtr < 16 / 4; iCtr++)
     {
@@ -163,9 +166,9 @@ vec3[16] BlurredEstimateNormal(vec2 coord)
     vec3 SummedNormals[16];
 
     //Add the sample from this point:
-    int MaxSamples = 20;
+    int MaxSamples = 16;
     int Wraps = 3;
-    float MinRadius = 1 * invVP.x;
+    float MinRadius = 0 * invVP.x;
     float MaxRadius = 4 * invVP.x;
     SummedNormals = FullEstimateNormal(coord);
 
@@ -191,8 +194,8 @@ vec3[16] BlurredEstimateNormal(vec2 coord)
 
 void main()
 {
-    invVP.x = 1.1 / viewport.x;
-    invVP.y = 1.1 / viewport.x;
+    invVP.x = 1.0 / viewport.x;
+    invVP.y = 1.0 / viewport.x;
     nBins = 16;
     K = 1.0;
     stepp = 1.0 / nBins;
@@ -203,7 +206,7 @@ void main()
         vec4 temp = texture(tf, intensity[i]);
         colors[i] = temp.rgb;
         newA[i] = temp.a;
-        oldA[i] = 1.0 / 2.0; //texture(rafa, intensity[i]).r;
+        oldA[i] = texture(rafa, intensity[i]).r;
     }
     // binValues
     vec4 temp;
@@ -261,7 +264,7 @@ void main()
     //In the Phong lighting model, we have four constants: ambient, specular, and diffuse reflections, and shininess (hardcoded)
 
     float KA = 0.1; //Ambient reflection
-    float KS = 0.5; //Specular reflection
+    float KS = 0.2; //Specular reflection
     float KD = 0.4; //Diffuse reflection
 
     const int numLights = 1;
@@ -307,10 +310,10 @@ void main()
             vec3 RM = reflect(normalize(-LM), normalValue[i]);
 
             //First diffuse...
-            binLightMultiplier[i] += clamp(KD * dot(RM, normalValue[i]) * lightDiffuseIntensities[iCtr], 0, 1);
+            binLightMultiplier[i] += clamp(KD * dot(LM, normalValue[i]) * lightDiffuseIntensities[iCtr], 0, 1);
 
             //Next specular...
-            binLightMultiplier[i] += clamp(KS * vec3(pow(dot(RM, normalize(-pos)), 4)), 0, 1); //The magic number is shininess
+            binLightMultiplier[i] += clamp(vec3(pow(dot(RM, normalize(-pos)), 4)), 0, 1); //The magic number is shininess
         }
 
         //Keep the light multiplier in a reasonable range.
@@ -335,8 +338,8 @@ void main()
         }
         binValue[i] = (newA[i] + 1.0 - pow(1.0 - newA[i], K + 1.0))
                / (oldA[i] + 1.0 - pow(1.0 - oldA[i], K + 1.0)) * binValue[i];
-        for (int j = i + 1; j < nBins; ++j)
-            binValue[j] = clamp(pow(1.0 - newA[i], K) / pow(1.0 - oldA[i], K) * binValue[j], 0, 1);
+//        for (int j = i + 1; j < nBins; ++j)
+//            binValue[j] = clamp(pow(1.0 - newA[i], K) / pow(1.0 - oldA[i], K) * binValue[j], 0, 1);
     }
 
     // sum
@@ -344,18 +347,18 @@ void main()
     //Sort the bins by depth (of first encounter). TODO: This probably shouldn't be insertion sort :/
     for(int iCtr = 0; iCtr < 16; iCtr++)
         depthOrder[iCtr] = iCtr;
-//    for(int iCtr = 0; iCtr < 16; iCtr++)
-//    {
-//        for(int jCtr = iCtr + 1; jCtr < 16; jCtr++)
-//        {
-//            if(depthValue[depthOrder[iCtr]] > depthValue[depthOrder[jCtr]])
-//            {
-//                int Temp = depthOrder[iCtr];
-//                depthOrder[iCtr] = depthOrder[jCtr];
-//                depthOrder[jCtr] = Temp;
-//            }
-//        }
-//    }
+    for(int iCtr = 0; iCtr < 16; iCtr++)
+    {
+        for(int jCtr = iCtr + 1; jCtr < 16; jCtr++)
+        {
+            if(depthValue[depthOrder[iCtr]] > depthValue[depthOrder[jCtr]])
+            {
+                int Temp = depthOrder[iCtr];
+                depthOrder[iCtr] = depthOrder[jCtr];
+                depthOrder[jCtr] = Temp;
+            }
+        }
+    }
 
     vec4 sum = vec4(0.0);
 
