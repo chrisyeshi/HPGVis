@@ -199,7 +199,7 @@ vec3[16] BlurredEstimateNormal(vec2 coord)
 void main()
 {
     vec4 ID = texture(featureID, FragIn.texCoord);
-    if(ID.x != selectedID)
+    if(ID.x != selectedID && featureHighlight != 0)
     {
         //If we're not on the feature of interest, don't draw it...
         fragColor = vec4(0, 0, 0, 1);

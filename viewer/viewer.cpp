@@ -4,6 +4,8 @@
 #include <cassert>
 #include "boost/shared_ptr.hpp"
 
+using namespace std;
+
 Viewer::Viewer(QWidget *parent) :
     QGLWidget(parent),
     vboQuad(QOpenGLBuffer::VertexBuffer),
@@ -194,10 +196,10 @@ void Viewer::paintGL()
     progRaf.setUniformValue("viewport", float(width()), float(height()));
     
     //Select feature of interest here!
-    progRaf.setUniformValue("selectedID", float(1) / 3);
+    progRaf.setUniformValue("selectedID", SelectedFeature);
 
     //Enable/Disable feature highlighting here!
-    progRaf.setUniformValue("featureHighlight", int(1));
+    progRaf.setUniformValue("featureHighlight", int(HighlightFeatures ? 1 : 0));
 
     glDrawArrays(GL_TRIANGLE_FAN, 0, nVertsQuad);
 
@@ -220,6 +222,29 @@ void Viewer::resizeGL(int width, int height)
     glViewport(0, 0, width, height);
 }
 
+void Viewer::EnableHighlighting(float x, float y)
+{
+    cout << "Feature Highlighting Enabled!" << endl;
+    HighlightFeatures = true;
+    SelectedFeature = float(1) / 3; // TODO: Get pixel from Yang's image.
+    update();
+}
+
+void Viewer::DisableHighlighting()
+{
+    cout << "Feature Highlighting Disabled!" << endl;
+    HighlightFeatures = false;
+    update();
+}
+
+void Viewer::mousePressEvent(QMouseEvent *e)
+{
+    if(e->buttons() & Qt::RightButton)
+        DisableHighlighting();
+    if(e->buttons() & Qt::LeftButton)
+        EnableHighlighting(e->x(), e->y());
+}
+
 void Viewer::mouseMoveEvent(QMouseEvent *e)
 {
     int wx = e->x();
@@ -236,6 +261,10 @@ void Viewer::mouseMoveEvent(QMouseEvent *e)
     for (int i = 0; i < imageRaf.getNBins(); ++i)
         std::cout << imageRaf.getDepths()[imageRaf.getWidth() * imageRaf.getHeight() * i + (y * imageRaf.getWidth() + x)] << ", ";
     std::cout << std::endl;
+    if(e->buttons() & Qt::RightButton)
+        DisableHighlighting();
+    if(e->buttons() & Qt::LeftButton)
+        EnableHighlighting(e->x(), e->y());
 }
 
 void Viewer::keyPressEvent(QKeyEvent *e)

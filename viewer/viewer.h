@@ -43,6 +43,7 @@ protected:
     virtual void initializeGL();
     virtual void paintGL();
     virtual void resizeGL(int width, int height);
+    virtual void mousePressEvent(QMouseEvent *e);
     virtual void mouseMoveEvent(QMouseEvent *e);
     virtual void keyPressEvent(QKeyEvent *e);
 
@@ -51,6 +52,8 @@ protected:
     // My functions
     //
     //
+    void EnableHighlighting(float x, float y);
+    void DisableHighlighting();
     void initQuadVbo();
     void updateProgram();
     void updateVAO();
@@ -82,6 +85,8 @@ private:
     QOpenGLVertexArrayObject vao;
 
     hpgv::ImageRAF imageRaf;
+    bool HighlightFeatures;
+    float SelectedFeature;
 
     //
     //
