@@ -19,7 +19,7 @@ typedef struct tf_color_t {
 //
 //
 
-static float stepBase = 10.f;
+// static float stepBase = 10.f;
 
 //
 //
@@ -27,16 +27,16 @@ static float stepBase = 10.f;
 //
 //
 
-tf_color_t tf_raf_bin_integrate(float* tf, int tfsize,
+tf_color_t tf_raf_bin_integrate(const float* tf, int tfsize,
         float valbeg, float valend, float length)
 {
     // error checking
     float small = valbeg < valend ? valbeg : valend;
     float big = valbeg < valend ? valend : valbeg;
     int binId = small * HPGV_RAF_BIN_NUM;
-    float binRange[2] = { (float)binId / HPGV_RAF_BIN_NUM, (float)(binId + 1) / HPGV_RAF_BIN_NUM };
-    assert(valbeg >= binRange[0] && valbeg <= binRange[1]);
-    assert(valend >= binRange[0] && valend <= binRange[1]);
+    // float binRange[2] = { (float)binId / HPGV_RAF_BIN_NUM, (float)(binId + 1) / HPGV_RAF_BIN_NUM };
+    // assert(valbeg >= binRange[0] && valbeg <= binRange[1]);
+    // assert(valend >= binRange[0] && valend <= binRange[1]);
     // here we go
     float binVal = ((float)binId + 0.5f) / (float)HPGV_RAF_BIN_NUM;
     if (small <= binVal && binVal <= big)
@@ -76,7 +76,7 @@ tf_color_t tf_raf_bin_integrate(float* tf, int tfsize,
 //
 //
 
-tf_color_t hpgv_tf_sample(float* tf, int tfsize, float val)
+tf_color_t hpgv_tf_sample(const float* tf, int tfsize, float val)
 {
     assert(val >= 0.f && val <= 1.f);
     // sample position in tf space
@@ -108,18 +108,24 @@ tf_color_t hpgv_tf_sample(float* tf, int tfsize, float val)
     return color;
 }
 
-void hpgv_tf_raf_integrate(float* tf, int tfsize,
+void hpgv_tf_raf_integrate(const float* tf, int tfsize,
 		float left_value, float rite_value, float left_depth, float rite_depth,
 		float sampling_spacing, hpgv_raf_t* histogram)
 {
+    // // Sample at Ray Segment End Points
+    // int binId = CLAMP((int)(rite_value * HPGV_RAF_BIN_NUM), 0, HPGV_RAF_BIN_NUM - 1);
+    // tf_color_t color = hpgv_tf_sample(tf, tfsize, rite_value);
+    // float attenuation = (1.f - histogram->attenuation) * color.a;
+    // histogram->attenuation += attenuation;
+    // histogram->raf[binId] += attenuation;
+    // if (rite_depth < histogram->depths[binId])
+    //     histogram->depths[binId] = rite_depth;
+
+    // Integrate Over Ray Segments
     int binBeg = CLAMP((int)(left_value * HPGV_RAF_BIN_NUM), 0, HPGV_RAF_BIN_NUM - 1);
     int binEnd = CLAMP((int)(rite_value * HPGV_RAF_BIN_NUM), 0, HPGV_RAF_BIN_NUM - 1);
-    int dir = 0;
-    if (binBeg != binEnd)
-        dir = (binEnd - binBeg) / abs(binEnd - binBeg);
     // if binBeg == binEnd
-    if (binBeg == binEnd)
-    {
+    if (binBeg == binEnd) {
         float valBeg = left_value;
         float valEnd = rite_value;
         tf_color_t color = tf_raf_bin_integrate(tf, tfsize, valBeg, valEnd, sampling_spacing);
@@ -129,81 +135,94 @@ void hpgv_tf_raf_integrate(float* tf, int tfsize,
         float binVal = ((float)binBeg + 0.5f) / (float)HPGV_RAF_BIN_NUM;
         if ((valBeg <= binVal && binVal <= valEnd)
          || (valEnd <= binVal && binVal <= valBeg)) {
-            float depth = (binVal - valBeg) / (valEnd - valBeg) * (rite_depth - left_depth) + left_depth;
+            float depth = left_depth;
+            if (fabs(valEnd - valBeg) > 0.0001)
+                depth = (binVal - valBeg) / (valEnd - valBeg) * (rite_depth - left_depth) + left_depth;
             if (depth < histogram->depths[binBeg])
                 histogram->depths[binBeg] = depth;
         }
-    } else
+        return;
+    }
+    int dir = (binEnd - binBeg) / abs(binEnd - binBeg);
+    // the beginning bin, which is partially included
     {
-        assert(dir != 0);
-        // the beginning bin, which is partially included
-        {
-            float valBeg = left_value;
-            float valEnd;
-            if (dir > 0)
-                valEnd = (float)(binBeg + 1) / (float)(HPGV_RAF_BIN_NUM);
-            else
-                valEnd = (float)(binBeg) / (float)(HPGV_RAF_BIN_NUM);
-            float length = (valEnd - valBeg) / (rite_value - left_value) * sampling_spacing;
-            tf_color_t color  = tf_raf_bin_integrate(tf, tfsize, valBeg, valEnd, length);
-            float attenuation = (1.f - histogram->attenuation) * color.a;
-            histogram->attenuation += attenuation;
-            histogram->raf[binBeg] += attenuation;
-            float binVal = ((float)binBeg + 0.5f) / (float)HPGV_RAF_BIN_NUM;
-            if ((valBeg <= binVal && binVal <= valEnd)
-             || (valEnd <= binVal && binVal <= valBeg)) {
-                float depth = (binVal - valBeg) / (rite_value - valBeg) * (rite_depth - left_depth) + left_depth;
-                if (depth < histogram->depths[binBeg])
-                    histogram->depths[binBeg] = depth;
-            }
+        float valBeg = left_value;
+        float valEnd;
+        if (dir > 0)
+            valEnd = (float)(binBeg + 1) / (float)(HPGV_RAF_BIN_NUM);
+        else
+            valEnd = (float)(binBeg) / (float)(HPGV_RAF_BIN_NUM);
+        float length = 0.f;
+        if (fabs(rite_value - left_value) > 0.0001)
+            length = (valEnd - valBeg) / (rite_value - left_value) * sampling_spacing;
+        tf_color_t color  = tf_raf_bin_integrate(tf, tfsize, valBeg, valEnd, length);
+        float attenuation = (1.f - histogram->attenuation) * color.a;
+        histogram->attenuation += attenuation;
+        histogram->raf[binBeg] += attenuation;
+        float binVal = ((float)binBeg + 0.5f) / (float)HPGV_RAF_BIN_NUM;
+        if ((valBeg <= binVal && binVal <= valEnd)
+         || (valEnd <= binVal && binVal <= valBeg)) {
+            float depth = left_depth;
+            if (fabs(rite_value - valBeg) > 0.0001)
+                depth = (binVal - valBeg) / (rite_value - valBeg) * (rite_depth - left_depth) + left_depth;
+            if (depth < histogram->depths[binBeg])
+                histogram->depths[binBeg] = depth;
         }
-        // the bins in between
-        int binId;
-        for (binId = binBeg + dir; binId != binEnd; binId += dir)
-        {
-            float valBeg, valEnd;
-            if (dir > 0) {
-                valBeg = (float)(binId + 0) / (float)(HPGV_RAF_BIN_NUM);
-                valEnd = (float)(binId + 1) / (float)(HPGV_RAF_BIN_NUM);
-            } else {
-                valBeg = (float)(binId + 1) / (float)(HPGV_RAF_BIN_NUM);
-                valEnd = (float)(binId + 0) / (float)(HPGV_RAF_BIN_NUM);
-            }
-            float length = (valEnd - valBeg) / (rite_value - left_value) * sampling_spacing;
-            tf_color_t color = tf_raf_bin_integrate(tf, tfsize, valBeg, valEnd, length);
-            float attenuation = (1.f - histogram->attenuation) * color.a;
-            histogram->attenuation += attenuation;
-            histogram->raf[binId] += attenuation;
-            float valAvg = ((float)binId + 0.5f) / (float)HPGV_RAF_BIN_NUM;
-            float depth = (valAvg - left_value) / (rite_value - left_value) * (rite_depth - left_depth) + left_depth;
-            if (depth < histogram->depths[binId])
-                histogram->depths[binId] = depth;
+    }
+    // the bins in between
+    int binId;
+    for (binId = binBeg + dir; binId != binEnd; binId += dir)
+    {
+        float valBeg, valEnd;
+        if (dir > 0) {
+            valBeg = (float)(binId + 0) / (float)(HPGV_RAF_BIN_NUM);
+            valEnd = (float)(binId + 1) / (float)(HPGV_RAF_BIN_NUM);
+        } else {
+            valBeg = (float)(binId + 1) / (float)(HPGV_RAF_BIN_NUM);
+            valEnd = (float)(binId + 0) / (float)(HPGV_RAF_BIN_NUM);
         }
-        // the end bin, which is also partially included
-        {
-            float valBeg;
-            if (dir > 0)
-                valBeg = (float)(binEnd + 0) / (float)(HPGV_RAF_BIN_NUM);
-            else
-                valBeg = (float)(binEnd + 1) / (float)(HPGV_RAF_BIN_NUM);
-            float valEnd = rite_value;
-            float length = (valEnd - valBeg) / (rite_value - left_value) * sampling_spacing;
-            tf_color_t color  = tf_raf_bin_integrate(tf, tfsize, valBeg, valEnd, length);
-            float attenuation = (1.f - histogram->attenuation) * color.a;
-            histogram->attenuation += attenuation;
-            histogram->raf[binEnd] += attenuation;
-            float binVal = ((float)binEnd + 0.5f) / (float)HPGV_RAF_BIN_NUM;
-            if ((valBeg <= binVal && binVal <= valEnd)
-             || (valEnd <= binVal && binVal <= valBeg)) {
-                float depth = (binVal - valBeg) / (rite_value - valBeg) * (rite_depth - left_depth) + left_depth;
-                if (depth < histogram->depths[binEnd])
-                    histogram->depths[binEnd] = depth;
-            }
+        float length = 0.f;
+        if (fabs(rite_value - left_value) > 0.0001)
+            length = (valEnd - valBeg) / (rite_value - left_value) * sampling_spacing;
+        tf_color_t color = tf_raf_bin_integrate(tf, tfsize, valBeg, valEnd, length);
+        float attenuation = (1.f - histogram->attenuation) * color.a;
+        histogram->attenuation += attenuation;
+        histogram->raf[binId] += attenuation;
+        float valAvg = ((float)binId + 0.5f) / (float)HPGV_RAF_BIN_NUM;
+        float depth = left_depth;
+        if (fabs(rite_value - left_value) > 0.0001)
+            depth = (valAvg - left_value) / (rite_value - left_value) * (rite_depth - left_depth) + left_depth;
+        if (depth < histogram->depths[binId])
+            histogram->depths[binId] = depth;
+    }
+    // the end bin, which is also partially included
+    {
+        float valBeg;
+        if (dir > 0)
+            valBeg = (float)(binEnd + 0) / (float)(HPGV_RAF_BIN_NUM);
+        else
+            valBeg = (float)(binEnd + 1) / (float)(HPGV_RAF_BIN_NUM);
+        float valEnd = rite_value;
+        float length = 0.f;
+        if (fabs(rite_value - left_value) > 0.0001)
+            length = (valEnd - valBeg) / (rite_value - left_value) * sampling_spacing;
+        tf_color_t color  = tf_raf_bin_integrate(tf, tfsize, valBeg, valEnd, length);
+        float attenuation = (1.f - histogram->attenuation) * color.a;
+        histogram->attenuation += attenuation;
+        histogram->raf[binEnd] += attenuation;
+        float binVal = ((float)binEnd + 0.5f) / (float)HPGV_RAF_BIN_NUM;
+        if ((valBeg <= binVal && binVal <= valEnd)
+         || (valEnd <= binVal && binVal <= valBeg)) {
+            float depth = left_depth;
+            if (fabs(rite_value - valBeg) > 0.0001)
+                depth = (binVal - valBeg) / (rite_value - valBeg) * (rite_depth - left_depth) + left_depth;
+            if (depth < histogram->depths[binEnd])
+                histogram->depths[binEnd] = depth;
         }
     }
 }
 
-void hpgv_tf_raf_seg_integrate(float* tf, int tfsize,
+void hpgv_tf_raf_seg_integrate(const float* tf, int tfsize,
         float left_value, float rite_value, float left_depth, float rite_depth,
         float sampling_spacing, hpgv_raf_seg_t* seg, int segid)
 {

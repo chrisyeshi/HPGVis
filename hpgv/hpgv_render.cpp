@@ -15,6 +15,8 @@
 
 #include "hpgv_render.h"
 #include <vector>
+#include <iostream>
+#include <sys/time.h>
 
 #define INBOX(point_3d, ll_tick, ur_tick) \
 (((point_3d).x3d >= (ll_tick)[0]) && ((point_3d).x3d < (ur_tick[0])) && \
@@ -240,8 +242,8 @@ vis_ray_clip_box(int id, ray_t *ray, double sampling_spacing,
                  int32_t *pnfirst, int32_t *pnlast)
 {
     double tnear = 0, tfar = 0;
-    int32_t nstart, nend, sample_pos;
-    point_3d_t real_sample;
+    int32_t nstart, nend/*, sample_pos*/;
+    // point_3d_t real_sample;
     
     HPGV_ASSERT_P(id, pnfirst, "pnfirst is null.", HPGV_ERR_MEM);
     HPGV_ASSERT_P(id, pnlast,  "pnlast is null.",  HPGV_ERR_MEM);
@@ -545,8 +547,8 @@ vis_render_pos(vis_control_t    *visctl,
                void             *pixel_data,
                int              num_vol,
                float            sampling_spacing,
-               double*          prev_value,
-               double*          prev_depth,
+               float*           prev_value,
+               float*           prev_depth,
                const hpgv::Parameter::Image& image)
                // int              *id_vol,
                // para_tf_t        *tf_vol,
@@ -688,12 +690,12 @@ vis_render_pos(vis_control_t    *visctl,
             //=========================================
             point_3d_t screen;
             hpgv_gl_project(pos->x3d, pos->y3d, pos->z3d, &screen.x3d, &screen.y3d, &screen.z3d);
-            double curr_depth = screen.z3d;
+            float curr_depth = screen.z3d;
             if (*prev_value < 0.0) {
                 *prev_value = sample;
                 *prev_depth = curr_depth;
             } else {
-                double left_value, rite_value, left_depth, rite_depth;
+                float left_value, rite_value, left_depth, rite_depth;
                 left_value = *prev_value;
                 rite_value = sample;
                 left_depth = *prev_depth;
@@ -738,8 +740,8 @@ vis_ray_render_positions(vis_control_t  *visctl,
 {
     int32_t pos;
     point_3d_t real_sample;
-    double prev_value = -1.0;
-    double prev_depth = 1.0;
+    float prev_value = -1.0;
+    float prev_depth = 1.0;
     
     int format = visctl->format;
     
@@ -838,6 +840,7 @@ vis_render_volume(vis_control_t *visctl, const hpgv::Parameter::Image& image)
     hpgv_vis_clear_color(visctl);
     hpgv_gl_clear_databuf();
 
+#pragma omp parallel for private(index, ray, firstpos, lastpos, pixel, color, raf) firstprivate(pixel_data)
     for (index = 0; index < visctl->castcount; index++) {
 
         if (visctl->format == HPGV_RAF)
@@ -993,8 +996,9 @@ hpgv_vis_framesize(int width, int height, int type, int format, int framenum)
     updateview = hpgv_gl_framesize(width, height);
     
     int framesize = hpgv_gl_get_framesize();
-    
-    int bytenum = framesize * hpgv_typesize(type) * hpgv_formatsize(format);
+
+    assert(hpgv_typesize(type) * hpgv_formatsize(format) == sizeof(hpgv_raf_t));
+    int bytenum = framesize * sizeof(hpgv_raf_t);
 
     int realnum = 1;
     if (framenum > 1) {
@@ -1288,7 +1292,7 @@ hpgv_vis_render_one_composite(block_t *block, int root, MPI_Comm comm)
     }
 
     /* prepare the buffer which holds all images */
-    int i;
+    // int i;
     int framebuf_size_x = hpgv_gl_get_framewidth();
     int framebuf_size_y = hpgv_gl_get_frameheight();
     int framebuf_size = hpgv_gl_get_framesize();
@@ -1322,7 +1326,7 @@ hpgv_vis_render_one_composite(block_t *block, int root, MPI_Comm comm)
     HPGV_TIMING_COUNT(MY_STEP_MULTI_PARREND_TIME);
     HPGV_TIMING_COUNT(MY_STEP_MULTI_GHOST_TIME);
     
-    for (img = 0; img < theVisControl->para.getImages().size(); img++) {
+    for (img = 0; img < (int)theVisControl->para.getImages().size(); img++) {
         
         /* processing each image */
         const hpgv::Parameter::Image& image = theVisControl->para.getImages()[img];
@@ -1465,12 +1469,11 @@ hpgv_vis_render_multi_composite(block_t *block, int root, MPI_Comm comm)
     HPGV_TIMING_COUNT(MY_STEP_MULTI_PARREND_TIME);
     HPGV_TIMING_COUNT(MY_STEP_MULTI_GHOST_TIME);
     
-    for (img = 0; img < theVisControl->para.getImages().size(); img++) {
+    for (img = 0; img < (int)theVisControl->para.getImages().size(); img++) {
         
         /* processing each image */
         const hpgv::Parameter::Image& image = theVisControl->para.getImages()[img];
-        // para_image_t  *para_image
-        // = &(theVisControl->para_input->para_image[img]);
+        double time_raycast, time_composite;
         
         if (image.volumes.size() > 0) {
             hpgv_vis_set_rendervolume(HPGV_TRUE);
@@ -1480,10 +1483,13 @@ hpgv_vis_render_multi_composite(block_t *block, int root, MPI_Comm comm)
         
         HPGV_TIMING_BARRIER(theVisControl->comm);
         HPGV_TIMING_BEGIN(MY_STEP_MULTI_VOLREND_TIME);
-        
+
         /* volume render */
         if (image.volumes.size() > 0) {
+            timeval start; gettimeofday(&start, NULL);
             vis_render_volume(theVisControl, image);
+            timeval end; gettimeofday(&end, NULL);
+            time_raycast = (end.tv_sec - start.tv_sec) * 1000.0 + (end.tv_usec - start.tv_usec) / 1000.0;
         }
         
         HPGV_TIMING_END(MY_STEP_MULTI_VOLREND_TIME);
@@ -1510,7 +1516,7 @@ hpgv_vis_render_multi_composite(block_t *block, int root, MPI_Comm comm)
         int framebuf_size_x = hpgv_gl_get_framewidth();
         int framebuf_size_y = hpgv_gl_get_frameheight();
 
-
+        timeval start; gettimeofday(&start, NULL);
         if (format == HPGV_RGBA) {
             int framebuf_size = hpgv_gl_get_framesize();
             
@@ -1626,10 +1632,10 @@ hpgv_vis_render_multi_composite(block_t *block, int root, MPI_Comm comm)
             int nSeg = HPGV_RAF_BIN_NUM / HPGV_RAF_SEG_NUM;
             for (int s = 0; s < nSeg; ++s)
             { // for each raf_seg
+#pragma omp parallel for
                 for (int m = 0; m < framebuf_size; ++m)
                 {
                     vis_raf_to_seg(s, &raf_local[m], &raf_seg[m]);
-//                    printf("val: [%lf, %lf]\n", raf_seg[m].val_head, raf_seg[m].val_tail);
                 }
                 // composite with others
                 hpgv_composite(
@@ -1651,6 +1657,7 @@ hpgv_vis_render_multi_composite(block_t *block, int root, MPI_Comm comm)
                 if (theVisControl->id == theVisControl->root)
                 {
                     hpgv_raf_t* raf_global = (hpgv_raf_t*)theVisControl->databuf_collect;
+#pragma omp parallel for
                     for (int m = 0; m < framebuf_size; ++m)
                         vis_seg_to_raf(s, &raf_collect[m], &raf_global[m]);
                 }
@@ -1667,6 +1674,17 @@ hpgv_vis_render_multi_composite(block_t *block, int root, MPI_Comm comm)
             HPGV_TIMING_END(MY_STEP_MULTI_COMPOSE_TIME);
         } else {
             HPGV_ABORT("Unsupported format", HPGV_ERROR);
+        }
+        timeval end; gettimeofday(&end, NULL);
+        time_composite = (end.tv_sec - start.tv_sec) * 1000.0 + (end.tv_usec - start.tv_usec) / 1000.0;
+
+        // output timing
+        double time_raycast_reduce, time_composite_reduce;
+        MPI_Reduce(&time_raycast, &time_raycast_reduce, 1, MPI_DOUBLE, MPI_MAX, theVisControl->root, theVisControl->comm);
+        MPI_Reduce(&time_composite, &time_composite_reduce, 1, MPI_DOUBLE, MPI_MAX, theVisControl->root, theVisControl->comm);
+        if (theVisControl->id == theVisControl->root)
+        {
+            std::cout << "[HPGV Timing] Raycast: " << time_raycast_reduce << " ms :::: Composite: " << time_composite_reduce << " ms" << std::endl;
         }
         
         theVisControl->updateview = HPGV_FALSE;

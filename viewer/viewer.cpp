@@ -251,8 +251,10 @@ void Viewer::initQuadVbo()
 void Viewer::updateProgram()
 {
     progRaf.removeAllShaders();
-    assert(progRaf.addShaderFromSourceFile(QOpenGLShader::Vertex, "../../viewer/shaders/raf.vert"));
-    assert(progRaf.addShaderFromSourceFile(QOpenGLShader::Fragment, "../../viewer/shaders/raf.frag"));
+    bool isVertex = progRaf.addShaderFromSourceFile(QOpenGLShader::Vertex, "../../viewer/shaders/raf.vert");
+    assert(isVertex);
+    bool isFragment = progRaf.addShaderFromSourceFile(QOpenGLShader::Fragment, "../../viewer/shaders/raf.frag");
+    assert(isFragment);
     progRaf.link();
     progRaf.bind();
     progRaf.setUniformValue("nBins", nBins);
