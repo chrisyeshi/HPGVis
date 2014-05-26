@@ -79,7 +79,7 @@ void main()
         lightMult[i] = vec3(1.0) * KA;
         vec3 RM = normalize(reflect(LM, normalValue[i]));
         lightMult[i] += clamp(KD * dot(LM, normalValue[i]), 0, 1);
-        lightMult[i] += clamp(KS * vec3(pow(dot(RM, vec3(0.0,0.0,-1.0)), 4)), 0, 1); //The magic number is shininess
+        lightMult[i] += clamp(KS * vec3(pow(dot(RM, vec3(0.0,0.0,-1.0)), 40)), 0, 1); //The magic number is shininess
         // propagation
         if (abs(oldA[i] - newA[i]) < 0.0001)
             continue;

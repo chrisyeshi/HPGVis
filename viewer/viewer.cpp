@@ -1,6 +1,8 @@
 #include "viewer.h"
 #include <QMouseEvent>
+#include <QShortcut>
 #include <iostream>
+#include <sstream>
 #include <cassert>
 #include <sys/time.h>
 #include "boost/shared_ptr.hpp"
@@ -19,6 +21,8 @@ Viewer::Viewer(QWidget *parent) :
     int maxLayer; glGetIntegerv(GL_MAX_FRAMEBUFFER_LAYERS, &maxLayer);
     std::cout << "GL_MAX_FRAMEBUFFER_LAYERS: " << maxLayer << std::endl;
     setFocusPolicy(Qt::StrongFocus);
+    QShortcut* scSnapshot = new QShortcut(QKeySequence(tr("s")), this);
+    connect(scSnapshot, SIGNAL(activated()), this, SLOT(screenCapture()));
 }
 
 Viewer::~Viewer()
@@ -110,6 +114,14 @@ void Viewer::lightDirChanged(QVector3D lightDir)
     updateGL();
 }
 
+void Viewer::screenCapture()
+{
+    static int i = 1;
+    std::stringstream ss;
+    ss << "snapshot_" << i++;
+    this->snapshot(ss.str());
+}
+
 void Viewer::snapshot(const std::string &filename)
 {
     makeCurrent();
@@ -193,19 +205,18 @@ void Viewer::DisableHighlighting()
 void Viewer::mousePressEvent(QMouseEvent *e)
 {
     cursorPrev = e->localPos();
-    int wx = e->x();
-    int wy = height() - e->y();
-    int x = double(wx) / double(width()) * double(imageRaf.getWidth());
-    int y = double(wy) / double(height()) * double(imageRaf.getHeight());
-
-    if (x < 0 || x >= imageRaf.getWidth() || y < 0 || y >= imageRaf.getHeight())
-        return;
-
-    if(e->buttons() & Qt::RightButton)
-        DisableHighlighting();
-    if(e->buttons() & Qt::LeftButton)
+    if (HighlightFeatures && e->buttons() & Qt::LeftButton)
+    {
+        float wx = float(e->x()) / float(width());
+        float wy = float(height() - e->y()) / float(height());
+        QVector4D screen(2.f * (wx - 0.5f), 2.f * (wy - 0.5f), 0.f, 1.f);
+        QVector4D world = mvp().inverted() * screen;
+        int x = (world.x() + 1.0) / 2.f * imageRaf.getWidth();
+        int y = (world.y() + 1.0) / 2.f * imageRaf.getHeight();
+        if (x < 0 || x >= imageRaf.getWidth() || y < 0 || y >= imageRaf.getHeight())
+            return;
         EnableHighlighting(x, y);
-
+    }
 }
 
 void Viewer::mouseMoveEvent(QMouseEvent *e)
@@ -238,11 +249,11 @@ void Viewer::mouseMoveEvent(QMouseEvent *e)
             std::cout << imageRaf.getDepths()[imageRaf.getWidth() * imageRaf.getHeight() * i + (y * imageRaf.getWidth() + x)] << ", ";
         std::cout << std::endl;
     }
-    // feature extraction/tracking
-    if(e->buttons() & Qt::RightButton)
-        DisableHighlighting();
-    if(e->buttons() & Qt::LeftButton)
-        EnableHighlighting(e->x(), e->y());
+//    // feature extraction/tracking
+//    if(e->buttons() & Qt::RightButton)
+//        DisableHighlighting();
+//    if(e->buttons() & Qt::LeftButton)
+//        EnableHighlighting(e->x(), e->y());
 }
 
 void Viewer::keyPressEvent(QKeyEvent *e)
@@ -273,7 +284,7 @@ void Viewer::keyPressEvent(QKeyEvent *e)
         if (HighlightFeatures)
             DisableHighlighting();
         else
-            EnableHighlighting(0, 0);
+            EnableHighlighting(imageRaf.getWidth() / 2, imageRaf.getHeight() / 2);
         break;
     }
 
@@ -316,6 +327,7 @@ void Viewer::updateProgram()
     progRaf.bind();
     progRaf.setUniformValue("nBins", nBins);
     progRaf.setUniformValue("mvp", mvp());
+    progRaf.setUniformValue("lightDir", QVector3D(0.0, 0.0, -1.0));
     progRaf.setUniformValue("tf", 0);
     progRaf.setUniformValue("rafa", 1);
     progRaf.setUniformValue("rafarr", 2);
