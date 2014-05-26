@@ -5,13 +5,15 @@
 #include <sys/time.h>
 #include "boost/shared_ptr.hpp"
 
+using namespace std;
+
 Viewer::Viewer(QWidget *parent) :
     QGLWidget(parent),
     vboQuad(QOpenGLBuffer::VertexBuffer),
     texTf(QOpenGLTexture::Target1D),
     texAlpha(QOpenGLTexture::Target1D),
     texArrRaf(NULL), texArrDep(NULL),
-    zoomFactor(1.f), texArrNml(NULL)
+    zoomFactor(1.f), texArrNml(NULL), texFeature(NULL)
 {
     std::cout << "OpenGL Version: " << this->context()->format().majorVersion() << "." << this->context()->format().minorVersion() << std::endl;
     int maxLayer; glGetIntegerv(GL_MAX_FRAMEBUFFER_LAYERS, &maxLayer);
@@ -23,6 +25,7 @@ Viewer::~Viewer()
 {
     if (texArrRaf) delete texArrRaf;
     if (texArrDep) delete texArrDep;
+    if (texFeature) delete texFeature;
 }
 
 //
@@ -37,6 +40,49 @@ void Viewer::renderRAF(const hpgv::ImageRAF &image)
     imageRaf = image;
     updateTexRAF();
     updateTexNormal();
+}
+
+void Viewer::getFeatureMap(const hpgv::ImageRAF &image)
+{
+    imageRaf = image;
+    int w = imageRaf.getWidth();
+    int h = imageRaf.getHeight();
+
+    featureTracker.setDim(w, h);
+
+    std::vector<float*> deps;
+    deps.push_back(image.getDepths().get());
+    for (int i = 1; i < nBins; ++i) {
+        deps.push_back(deps.front() + w*h*i);
+    }
+
+    mask = std::vector<float>(w*h, 0.0f);
+    featureTracker.track(deps[8], mask.data());
+    nFeatures = featureTracker.getNumFeatures();
+
+    for (auto& p : mask) {
+        p /= (float)nFeatures;
+    }
+
+    std::cout << "nFeatures: " << nFeatures;
+
+    // clean up
+    if (texFeature) {
+        assert(!texFeature->isBound());
+        delete texFeature; texFeature = NULL;
+    }
+    // new texture
+    texFeature = new QOpenGLTexture(QOpenGLTexture::Target2D);
+    texFeature->setSize(w, h);
+    texFeature->setFormat(QOpenGLTexture::R32F);
+    texFeature->allocateStorage();
+    texFeature->setWrapMode(QOpenGLTexture::ClampToEdge);
+    texFeature->setMinMagFilters(QOpenGLTexture::Nearest, QOpenGLTexture::Nearest);
+    texFeature->setData(QOpenGLTexture::Red, QOpenGLTexture::Float32, mask.data());
+
+//    updateRAF(texFeature, featureMap.get(), w, h);
+//    texFeature->setMinMagFilters(QOpenGLTexture::Nearest, QOpenGLTexture::Nearest);
+
     updateGL();
 }
 
@@ -90,11 +136,15 @@ void Viewer::paintGL()
     texArrRaf->bind(2);
     texArrNml->bind(3);
     texArrDep->bind(4);
+    texFeature->bind(5);
 
     progRaf.setUniformValue("invVP", 1.f / float(imageRaf.getWidth()), 1.f / float(imageRaf.getHeight()));
+    progRaf.setUniformValue("selectedID", float(SelectedFeature)/nFeatures);
+    progRaf.setUniformValue("featureHighlight", int(HighlightFeatures ? 1 : 0));
 
     glDrawArrays(GL_TRIANGLE_FAN, 0, nVertsQuad);
 
+    texFeature->release();
     texArrDep->release();
     texArrNml->release();
     texArrRaf->release();
@@ -110,13 +160,47 @@ void Viewer::resizeGL(int width, int height)
     updateShaderMVP();
 }
 
+void Viewer::EnableHighlighting(float x, float y)
+{
+    cout << "Feature Highlighting Enabled!" << endl;
+    HighlightFeatures = true;
+
+    int idx = int(x) + int(y) * imageRaf.getWidth();
+    SelectedFeature = int(mask[idx] * nFeatures + 0.5);
+
+    std::cout << "SelectedFeature: " << SelectedFeature << std::endl;
+
+    update();
+}
+
+void Viewer::DisableHighlighting()
+{
+    cout << "Feature Highlighting Disabled!" << endl;
+    HighlightFeatures = false;
+    update();
+}
+
 void Viewer::mousePressEvent(QMouseEvent *e)
 {
     cursorPrev = e->localPos();
+    int wx = e->x();
+    int wy = height() - e->y();
+    int x = double(wx) / double(width()) * double(imageRaf.getWidth());
+    int y = double(wy) / double(height()) * double(imageRaf.getHeight());
+
+    if (x < 0 || x >= imageRaf.getWidth() || y < 0 || y >= imageRaf.getHeight())
+        return;
+
+    if(e->buttons() & Qt::RightButton)
+        DisableHighlighting();
+    if(e->buttons() & Qt::LeftButton)
+        EnableHighlighting(x, y);
+
 }
 
 void Viewer::mouseMoveEvent(QMouseEvent *e)
 {
+    // camera movement
     if (e->buttons() & Qt::LeftButton)
     {
         QPointF dir = e->localPos() - cursorPrev;
@@ -144,6 +228,11 @@ void Viewer::mouseMoveEvent(QMouseEvent *e)
             std::cout << imageRaf.getDepths()[imageRaf.getWidth() * imageRaf.getHeight() * i + (y * imageRaf.getWidth() + x)] << ", ";
         std::cout << std::endl;
     }
+    // feature extraction/tracking
+    if(e->buttons() & Qt::RightButton)
+        DisableHighlighting();
+    if(e->buttons() & Qt::LeftButton)
+        EnableHighlighting(e->x(), e->y());
 }
 
 void Viewer::keyPressEvent(QKeyEvent *e)
@@ -152,10 +241,32 @@ void Viewer::keyPressEvent(QKeyEvent *e)
     {
     case Qt::Key_F5:
         std::cout << "F5: update shader program." << std::endl;
-        updateProgram();QPoint
+        updateProgram();
         updateVAO();
         updateGL();
+        break;
+    case Qt::Key_Right:
+        SelectedFeature++;
+        if (SelectedFeature > nFeatures)
+            SelectedFeature = 0;
+        std::cout << "FID: " << SelectedFeature << std::endl;
+        updateGL();
+        break;
+    case Qt::Key_Left:
+        SelectedFeature--;
+        if (SelectedFeature < 0)
+            SelectedFeature = nFeatures;
+        std::cout << "FID: " << SelectedFeature << std::endl;
+        updateGL();
+        break;
+    case Qt::Key_F:
+        if (HighlightFeatures)
+            DisableHighlighting();
+        else
+            EnableHighlighting(0, 0);
+        break;
     }
+
 }
 
 void Viewer::wheelEvent(QWheelEvent *e)
@@ -200,6 +311,7 @@ void Viewer::updateProgram()
     progRaf.setUniformValue("rafarr", 2);
     progRaf.setUniformValue("nmlarr", 3);
     progRaf.setUniformValue("deparr", 4);
+    progRaf.setUniformValue("featureID", 5);
     progRaf.release();
 }
 

@@ -50,7 +50,7 @@ add_subdirectory(test)
 # demo
 #
 #
-add_subdirectory(demo)
+#add_subdirectory(demo)
 
 #
 #

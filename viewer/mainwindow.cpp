@@ -13,7 +13,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     connect(ui->tf, SIGNAL(tfChanged(mslib::TF&)), ui->viewer, SLOT(tfChanged(mslib::TF&)));
     connect(ui->open, SIGNAL(clicked()), this, SLOT(open()));
-    connect(ui->timeSlider, SIGNAL(valueChanged(int)), this, SLOT(timeChanged(int)));
+    connect(ui->timeSlider, SIGNAL(sliderReleased()), this, SLOT(timeChanged()));
 }
 
 MainWindow::~MainWindow()
@@ -48,12 +48,16 @@ void MainWindow::open()
 
     hpgv::ImageRAF image;
     if (image.open(qfilename.toUtf8().constData()))
+    {
         ui->viewer->renderRAF(image);
+        ui->viewer->getFeatureMap(image);
+    }
+
 }
 
-void MainWindow::timeChanged(int val)
+void MainWindow::timeChanged()
 {
-//    int val = ui->timeSlider->value();
+    int val = ui->timeSlider->value();
     if(val < 0 || val >= files.size())
         return;
 
@@ -64,7 +68,10 @@ void MainWindow::timeChanged(int val)
     double time_file = (end.tv_sec - start.tv_sec) * 1000.0 + (end.tv_usec - start.tv_usec) / 1000.0;
     std::cout << "Time: File:    " << time_file << " ms" << std::endl;
     if (isOpen)
+    {
         ui->viewer->renderRAF(image);
+        ui->viewer->getFeatureMap(image);
+    }
 }
 
 //

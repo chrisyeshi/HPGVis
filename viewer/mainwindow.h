@@ -21,7 +21,7 @@ public:
 
 public slots:
     void open();
-    void timeChanged(int val);
+    void timeChanged();
 
 protected:
 

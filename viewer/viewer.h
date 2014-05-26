@@ -9,6 +9,7 @@
 #include <QOpenGLFunctions>
 #include "TF.h"
 #include "imageraf.h"
+#include "featuretracker.h"
 
 class Viewer : public QGLWidget
 {
@@ -24,6 +25,7 @@ public:
     //
     void renderRAF(const hpgv::ImageRAF& image);
     void snapshot(const std::string& filename);
+    void getFeatureMap(const hpgv::ImageRAF& image);  // fet
 
 signals:
 
@@ -54,6 +56,8 @@ protected:
     // My functions
     //
     //
+    void EnableHighlighting(float x, float y);
+    void DisableHighlighting();
     void initQuadVbo();
     void updateProgram();
     void updateShaderMVP();
@@ -81,7 +85,7 @@ private:
     QMatrix4x4 matModel, matView, matProj;
     QOpenGLBuffer vboQuad;
     QOpenGLTexture texTf, texAlpha;
-    QOpenGLTexture *texArrRaf, *texArrDep;
+    QOpenGLTexture *texArrRaf, *texArrDep, *texFeature;
     QOpenGLShaderProgram progRaf;
     QOpenGLVertexArrayObject vao;
     float zoomFactor;
@@ -90,7 +94,13 @@ private:
     QOpenGLTexture* texArrNml;
 
     hpgv::ImageRAF imageRaf;
+    bool HighlightFeatures;
+    int SelectedFeature;
 
+    std::vector<float> mask;
+
+    FeatureTracker featureTracker;
+    int nFeatures;
     //
     //
     // Helper functions
