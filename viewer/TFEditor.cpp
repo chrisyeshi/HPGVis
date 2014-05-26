@@ -694,7 +694,7 @@ void TFDrawArea::paintEvent(QPaintEvent *e)
     painter.setBrush(QBrush(QColor(255, 255, 255), Qt::SolidPattern));
     for (int i = 0; i < tf().gaussianObjectCount(); i++)
     {
-        TFGaussianObject &gaus = tf().gaussianObject(i);
+        // TFGaussianObject &gaus = tf().gaussianObject(i);
 
         TFControlPoint posCtrl = getGaussianPositionControl(i);
 

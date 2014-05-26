@@ -1086,6 +1086,7 @@ void * hpgv_vis_loadraw(int *width, int *height, int *format, int *type,
                         int *imgnum, const char *filename)
 {
     FILE *fp;
+    size_t freadr;
     
     fp = fopen(filename, "rb");
     if (!fp) {
@@ -1093,11 +1094,16 @@ void * hpgv_vis_loadraw(int *width, int *height, int *format, int *type,
         return NULL;
     }
     
-    fread(width,  sizeof(int), 1, fp);
-    fread(height, sizeof(int), 1, fp);
-    fread(format, sizeof(int), 1, fp);
-    fread(type,   sizeof(int), 1, fp);
-    fread(imgnum, sizeof(int), 1, fp);
+    freadr = fread(width,  sizeof(int), 1, fp);
+    if (freadr != 1) return NULL;
+    freadr = fread(height, sizeof(int), 1, fp);
+    if (freadr != 1) return NULL;
+    freadr = fread(format, sizeof(int), 1, fp);
+    if (freadr != 1) return NULL;
+    freadr = fread(type,   sizeof(int), 1, fp);
+    if (freadr != 1) return NULL;
+    freadr = fread(imgnum, sizeof(int), 1, fp);
+    if (freadr != 1) return NULL;
 
     long size = (*width) * (*height) *
                 hpgv_formatsize(*format) *
@@ -1113,7 +1119,8 @@ void * hpgv_vis_loadraw(int *width, int *height, int *format, int *type,
     }
     
     
-    fread(pixels, size, 1, fp);
+    freadr = fread(pixels, size, 1, fp);
+    if (freadr != 1) return NULL;
     
     fclose(fp);
     
@@ -1173,6 +1180,7 @@ void * hpgv_vis_loadraf(int *width, int *height, int *format, int *type,
                         int *imgnum, const char *filename)
 {
     FILE *fp = NULL;
+    size_t freadr;
     
     fp = fopen(filename, "rb");
     if (!fp) {
@@ -1180,11 +1188,16 @@ void * hpgv_vis_loadraf(int *width, int *height, int *format, int *type,
         return NULL;
     }
     
-    fread(width,  sizeof(int), 1, fp);
-    fread(height, sizeof(int), 1, fp);
-    fread(format, sizeof(int), 1, fp);
-    fread(type,   sizeof(int), 1, fp);
-    fread(imgnum, sizeof(int), 1, fp);
+    freadr = fread(width,  sizeof(int), 1, fp);
+    if (freadr != 1) return NULL;
+    freadr = fread(height, sizeof(int), 1, fp);
+    if (freadr != 1) return NULL;
+    freadr = fread(format, sizeof(int), 1, fp);
+    if (freadr != 1) return NULL;
+    freadr = fread(type,   sizeof(int), 1, fp);
+    if (freadr != 1) return NULL;
+    freadr = fread(imgnum, sizeof(int), 1, fp);
+    if (freadr != 1) return NULL;
     
     long size = (*width) * (*height) *
                 hpgv_formatsize(*format) *
@@ -1199,7 +1212,8 @@ void * hpgv_vis_loadraf(int *width, int *height, int *format, int *type,
         return NULL;
     }
     
-    fread(pixels, size, 1, fp);
+    freadr = fread(pixels, size, 1, fp);
+    if (freadr != 1) return NULL;
     
     fclose(fp);
     

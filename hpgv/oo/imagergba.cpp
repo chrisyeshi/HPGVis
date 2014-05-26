@@ -79,7 +79,7 @@ void ImageRGBA::write(std::ostream& out) const
     for (int y = height - 1; y >= 0; --y)
     for (int x = 0; x < width; ++x)
     {
-        uint8_t r, g, b;
+        uint8_t r=0, g=0, b=0;
         int i = width * y + x;
         if (type == HPGV_FLOAT)
         {

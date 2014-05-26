@@ -67,12 +67,12 @@ int main(int argc, char* argv[])
     // volume
     hpgv::H5Reader reader("/home/chrisyeshi/Dropbox/supernova_600_1580.h5", "/entropy");
 	reader.configure(MPI_COMM_WORLD, mypx, mypy, mypz, npx, npy, npz);
-    bool isRead = reader.read();
-	assert(isRead);
+    if (!reader.read())
+        exit(1);
 	// parameter
 	hpgv::Parameter para;
-    bool isPara = para.open("../../supernova_nocut.hp");
-    assert(isPara);
+    if (!para.open("../../supernova_nocut.hp"))
+        exit(1);
 	para.setFormat(formats[argv[4]]);
     para.rView().width = 1024;
     para.rView().height = 1024;

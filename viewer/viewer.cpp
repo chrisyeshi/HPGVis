@@ -2,6 +2,7 @@
 #include <QMouseEvent>
 #include <iostream>
 #include <cassert>
+#include <sys/time.h>
 #include "boost/shared_ptr.hpp"
 
 Viewer::Viewer(QWidget *parent) :
@@ -9,23 +10,19 @@ Viewer::Viewer(QWidget *parent) :
     vboQuad(QOpenGLBuffer::VertexBuffer),
     texTf(QOpenGLTexture::Target1D),
     texAlpha(QOpenGLTexture::Target1D),
-    texRaf0(NULL), texRaf1(NULL), texRaf2(NULL), texRaf3(NULL),
-    texDep0(NULL), texDep1(NULL), texDep2(NULL), texDep3(NULL)
+    texArrRaf(NULL), texArrDep(NULL),
+    zoomFactor(1.f), texArrNml(NULL)
 {
     std::cout << "OpenGL Version: " << this->context()->format().majorVersion() << "." << this->context()->format().minorVersion() << std::endl;
+    int maxLayer; glGetIntegerv(GL_MAX_FRAMEBUFFER_LAYERS, &maxLayer);
+    std::cout << "GL_MAX_FRAMEBUFFER_LAYERS: " << maxLayer << std::endl;
     setFocusPolicy(Qt::StrongFocus);
 }
 
 Viewer::~Viewer()
 {
-    if (texRaf0) delete texRaf0;
-    if (texRaf1) delete texRaf1;
-    if (texRaf2) delete texRaf2;
-    if (texRaf3) delete texRaf3;
-    if (texDep0) delete texDep0;
-    if (texDep1) delete texDep1;
-    if (texDep2) delete texDep2;
-    if (texDep3) delete texDep3;
+    if (texArrRaf) delete texArrRaf;
+    if (texArrDep) delete texArrDep;
 }
 
 //
@@ -37,88 +34,9 @@ Viewer::~Viewer()
 void Viewer::renderRAF(const hpgv::ImageRAF &image)
 {
     makeCurrent();
-
     imageRaf = image;
-    int w = imageRaf.getWidth();
-    int h = imageRaf.getHeight();
-    boost::shared_ptr<float[]> temp(new float [w * h * 4]);
-    // texRaf0
-    for (int i = 0; i < w * h; ++i)
-    {
-        temp[4 * i + 0] = imageRaf.getRafs()[i + w * h * 0];
-        temp[4 * i + 1] = imageRaf.getRafs()[i + w * h * 1];
-        temp[4 * i + 2] = imageRaf.getRafs()[i + w * h * 2];
-        temp[4 * i + 3] = imageRaf.getRafs()[i + w * h * 3];
-    }
-    updateRAF(texRaf0, temp.get(), w, h);
-    // texRaf1
-    for (int i = 0; i < w * h; ++i)
-    {
-        temp[4 * i + 0] = imageRaf.getRafs()[i + w * h * 4];
-        temp[4 * i + 1] = imageRaf.getRafs()[i + w * h * 5];
-        temp[4 * i + 2] = imageRaf.getRafs()[i + w * h * 6];
-        temp[4 * i + 3] = imageRaf.getRafs()[i + w * h * 7];
-    }
-    updateRAF(texRaf1, temp.get(), w, h);
-    // texRaf2
-    for (int i = 0; i < w * h; ++i)
-    {
-        temp[4 * i + 0] = imageRaf.getRafs()[i + w * h * 8];
-        temp[4 * i + 1] = imageRaf.getRafs()[i + w * h * 9];
-        temp[4 * i + 2] = imageRaf.getRafs()[i + w * h * 10];
-        temp[4 * i + 3] = imageRaf.getRafs()[i + w * h * 11];
-    }
-    updateRAF(texRaf2, temp.get(), w, h);
-    // texRaf3
-    for (int i = 0; i < w * h; ++i)
-    {
-        temp[4 * i + 0] = imageRaf.getRafs()[i + w * h * 12];
-        temp[4 * i + 1] = imageRaf.getRafs()[i + w * h * 13];
-        temp[4 * i + 2] = imageRaf.getRafs()[i + w * h * 14];
-        temp[4 * i + 3] = imageRaf.getRafs()[i + w * h * 15];
-    }
-    updateRAF(texRaf3, temp.get(), w, h);
-    // texAlpha
-    assert(nBins == imageRaf.getNBins());
-    std::vector<float> alphas = imageRaf.getAlphas();
-    texAlpha.setData(QOpenGLTexture::Red, QOpenGLTexture::Float32, alphas.data());
-    // texDep0
-    for (int i = 0; i < w * h; ++i)
-    {
-        temp[4 * i + 0] = imageRaf.getDepths()[i + w* h * 0];
-        temp[4 * i + 1] = imageRaf.getDepths()[i + w* h * 1];
-        temp[4 * i + 2] = imageRaf.getDepths()[i + w* h * 2];
-        temp[4 * i + 3] = imageRaf.getDepths()[i + w* h * 3];
-    }
-    updateRAF(texDep0, temp.get(), w, h);
-    // texDep1
-    for (int i = 0; i < w * h; ++i)
-    {
-        temp[4 * i + 0] = imageRaf.getDepths()[i + w* h * 4];
-        temp[4 * i + 1] = imageRaf.getDepths()[i + w* h * 5];
-        temp[4 * i + 2] = imageRaf.getDepths()[i + w* h * 6];
-        temp[4 * i + 3] = imageRaf.getDepths()[i + w* h * 7];
-    }
-    updateRAF(texDep1, temp.get(), w, h);
-    // texDep2
-    for (int i = 0; i < w * h; ++i)
-    {
-        temp[4 * i + 0] = imageRaf.getDepths()[i + w* h * 8];
-        temp[4 * i + 1] = imageRaf.getDepths()[i + w* h * 9];
-        temp[4 * i + 2] = imageRaf.getDepths()[i + w* h * 10];
-        temp[4 * i + 3] = imageRaf.getDepths()[i + w* h * 11];
-    }
-    updateRAF(texDep2, temp.get(), w, h);
-    // texDep3
-    for (int i = 0; i < w * h; ++i)
-    {
-        temp[4 * i + 0] = imageRaf.getDepths()[i + w* h * 12];
-        temp[4 * i + 1] = imageRaf.getDepths()[i + w* h * 13];
-        temp[4 * i + 2] = imageRaf.getDepths()[i + w* h * 14];
-        temp[4 * i + 3] = imageRaf.getDepths()[i + w* h * 15];
-    }
-    updateRAF(texDep3, temp.get(), w, h);
-
+    updateTexRAF();
+    updateTexNormal();
     updateGL();
 }
 
@@ -163,58 +81,69 @@ void Viewer::initializeGL()
 void Viewer::paintGL()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    if (!texRaf0) return;
+    if (!texArrRaf) return;
 
+    progRaf.bind();
     vao.bind();
     texTf.bind(0);
-    texRaf0->bind(1);
-    texRaf1->bind(2);
-    texRaf2->bind(3);
-    texRaf3->bind(4);
-    texAlpha.bind(5);
-    texDep0->bind(6);
-    texDep1->bind(7);
-    texDep2->bind(8);
-    texDep3->bind(9);
+    texAlpha.bind(1);
+    texArrRaf->bind(2);
+    texArrNml->bind(3);
+    texArrDep->bind(4);
 
-    progRaf.setUniformValue("viewport", float(width()), float(height()));
+    progRaf.setUniformValue("invVP", 1.f / float(imageRaf.getWidth()), 1.f / float(imageRaf.getHeight()));
 
     glDrawArrays(GL_TRIANGLE_FAN, 0, nVertsQuad);
 
-    texDep3->release();
-    texDep2->release();
-    texDep1->release();
-    texDep0->release();
+    texArrDep->release();
+    texArrNml->release();
+    texArrRaf->release();
     texAlpha.release();
-    texRaf3->release();
-    texRaf2->release();
-    texRaf1->release();
-    texRaf0->release();
     texTf.release();
     vao.release();
+    progRaf.release();
 }
 
 void Viewer::resizeGL(int width, int height)
 {
     glViewport(0, 0, width, height);
+    updateShaderMVP();
+}
+
+void Viewer::mousePressEvent(QMouseEvent *e)
+{
+    cursorPrev = e->localPos();
 }
 
 void Viewer::mouseMoveEvent(QMouseEvent *e)
 {
-    int wx = e->x();
-    int wy = height() - e->y();
-    int x = double(wx) / double(width()) * double(imageRaf.getWidth());
-    int y = double(wy) / double(height()) * double(imageRaf.getHeight());
-    if (x < 0 || x >= imageRaf.getWidth() || y < 0 || y >= imageRaf.getHeight())
-        return;
-    std::cout << "[" << x << "," << y << "]: value: ";
-    for (int i = 0; i < imageRaf.getNBins(); ++i)
-        std::cout << imageRaf.getRafs()[imageRaf.getWidth() * imageRaf.getHeight() * i + (y * imageRaf.getWidth() + x)] << ", ";
-    std::cout << std::endl;
-    std::cout << "[" << x << "," << y << "]: depth: ";
-    for (int i = 0; i < imageRaf.getNBins(); ++i)
-        std::cout << imageRaf.getDepths()[imageRaf.getWidth() * imageRaf.getHeight() * i + (y * imageRaf.getWidth() + x)] << ", ";
-    std::cout << std::endl;
+    if (e->buttons() & Qt::LeftButton)
+    {
+        QPointF dir = e->localPos() - cursorPrev;
+        dir.rx() = dir.x() / float(width()) * zoomFactor * 2.f;
+        dir.ry() = -dir.y() / float(height()) * zoomFactor * 2.f;
+        focal.rx() -= dir.x();
+        focal.ry() -= dir.y();
+        cursorPrev = e->localPos();
+        updateShaderMVP();
+        updateGL();
+    } else
+    {
+        int wx = e->x();
+        int wy = height() - e->y();
+        int x = double(wx) / double(width()) * double(imageRaf.getWidth());
+        int y = double(wy) / double(height()) * double(imageRaf.getHeight());
+        if (x < 0 || x >= imageRaf.getWidth() || y < 0 || y >= imageRaf.getHeight())
+            return;
+        std::cout << "[" << x << "," << y << "]: value: ";
+        for (unsigned int i = 0; i < imageRaf.getNBins(); ++i)
+            std::cout << imageRaf.getRafs()[imageRaf.getWidth() * imageRaf.getHeight() * i + (y * imageRaf.getWidth() + x)] << ", ";
+        std::cout << std::endl;
+        std::cout << "[" << x << "," << y << "]: depth: ";
+        for (unsigned int i = 0; i < imageRaf.getNBins(); ++i)
+            std::cout << imageRaf.getDepths()[imageRaf.getWidth() * imageRaf.getHeight() * i + (y * imageRaf.getWidth() + x)] << ", ";
+        std::cout << std::endl;
+    }
 }
 
 void Viewer::keyPressEvent(QKeyEvent *e)
@@ -223,10 +152,19 @@ void Viewer::keyPressEvent(QKeyEvent *e)
     {
     case Qt::Key_F5:
         std::cout << "F5: update shader program." << std::endl;
-        updateProgram();
+        updateProgram();QPoint
         updateVAO();
         updateGL();
     }
+}
+
+void Viewer::wheelEvent(QWheelEvent *e)
+{
+    int numSteps = e->angleDelta().y() / 8 / 15;
+    zoomFactor *= 1.f - float(numSteps) / 15.f;
+    zoomFactor = std::min(1.f, zoomFactor);
+    updateShaderMVP();
+    updateGL();
 }
 
 //
@@ -251,24 +189,30 @@ void Viewer::initQuadVbo()
 void Viewer::updateProgram()
 {
     progRaf.removeAllShaders();
-    bool isVertex = progRaf.addShaderFromSourceFile(QOpenGLShader::Vertex, "../../viewer/shaders/raf.vert");
-    assert(isVertex);
-    bool isFragment = progRaf.addShaderFromSourceFile(QOpenGLShader::Fragment, "../../viewer/shaders/raf.frag");
-    assert(isFragment);
+    progRaf.addShaderFromSourceFile(QOpenGLShader::Vertex,   "../../viewer/shaders/raf.vert");
+    progRaf.addShaderFromSourceFile(QOpenGLShader::Fragment, "../../viewer/shaders/new.frag");
     progRaf.link();
     progRaf.bind();
     progRaf.setUniformValue("nBins", nBins);
     progRaf.setUniformValue("mvp", mvp());
     progRaf.setUniformValue("tf", 0);
-    progRaf.setUniformValue("raf0", 1);
-    progRaf.setUniformValue("raf1", 2);
-    progRaf.setUniformValue("raf2", 3);
-    progRaf.setUniformValue("raf3", 4);
-    progRaf.setUniformValue("rafa", 5);
-    progRaf.setUniformValue("dep0", 6);
-    progRaf.setUniformValue("dep1", 7);
-    progRaf.setUniformValue("dep2", 8);
-    progRaf.setUniformValue("dep3", 9);
+    progRaf.setUniformValue("rafa", 1);
+    progRaf.setUniformValue("rafarr", 2);
+    progRaf.setUniformValue("nmlarr", 3);
+    progRaf.setUniformValue("deparr", 4);
+    progRaf.release();
+}
+
+void Viewer::updateShaderMVP()
+{
+    matView.setToIdentity();
+    float w = float(width()) / float(height()) * zoomFactor;
+    float h = 1.f * zoomFactor;
+    matView.ortho(focal.x() - w, focal.x() + w, focal.y() - h, focal.y() + h, -1.f, 1.f);
+    if (!progRaf.isLinked())
+        return;
+    progRaf.bind();
+    progRaf.setUniformValue("mvp", mvp());
     progRaf.release();
 }
 
@@ -277,7 +221,6 @@ void Viewer::updateVAO()
     vao.create();
     vao.bind();
     vboQuad.bind();
-    progRaf.bind();
     progRaf.enableAttributeArray("vertex");
     progRaf.setAttributeBuffer("vertex", GL_FLOAT, 0, nFloatsPerVertQuad);
     progRaf.enableAttributeArray("texCoord");
@@ -304,20 +247,137 @@ void Viewer::initTF()
     texAlpha.setMinMagFilters(QOpenGLTexture::Nearest, QOpenGLTexture::Nearest);
 }
 
-void Viewer::updateRAF(QOpenGLTexture*& tex, float* data, int width, int height)
+void Viewer::updateTexRAF()
+{
+    // RAF
+    // clean up
+    if (texArrRaf)
+    {
+        assert(!texArrRaf->isBound());
+        delete texArrRaf; texArrRaf = NULL;
+    }
+    // new texture array
+    texArrRaf = new QOpenGLTexture(QOpenGLTexture::Target2DArray);
+    texArrRaf->setSize(imageRaf.getWidth(), imageRaf.getHeight());
+    texArrRaf->setLayers(imageRaf.getNBins());
+    texArrRaf->setFormat(QOpenGLTexture::R32F);
+    texArrRaf->allocateStorage();
+    texArrRaf->setWrapMode(QOpenGLTexture::ClampToEdge);
+    texArrRaf->setMinMagFilters(QOpenGLTexture::Linear, QOpenGLTexture::Linear);
+    for (unsigned int layer = 0; layer < imageRaf.getNBins(); ++layer)
+    {
+        texArrRaf->setData(0, layer, QOpenGLTexture::Red, QOpenGLTexture::Float32,
+                &(imageRaf.getRafs().get()[layer * imageRaf.getWidth() * imageRaf.getHeight()]));
+    }
+
+    // Depth
+    if (texArrDep)
+    {
+        assert(!texArrDep->isBound());
+        delete texArrDep; texArrDep = NULL;
+    }
+    // new texture array
+    texArrDep = new QOpenGLTexture(QOpenGLTexture::Target2DArray);
+    texArrDep->setSize(imageRaf.getWidth(), imageRaf.getHeight());
+    texArrDep->setLayers(imageRaf.getNBins());
+    texArrDep->setFormat(QOpenGLTexture::R32F);
+    texArrDep->allocateStorage();
+    texArrDep->setWrapMode(QOpenGLTexture::ClampToEdge);
+    texArrDep->setMinMagFilters(QOpenGLTexture::Nearest, QOpenGLTexture::Nearest);
+    for (unsigned int layer = 0; layer < imageRaf.getNBins(); ++layer)
+    {
+        texArrDep->setData(0, layer, QOpenGLTexture::Red, QOpenGLTexture::Float32,
+                &(imageRaf.getDepths().get()[layer * imageRaf.getWidth() * imageRaf.getHeight()]));
+    }
+}
+
+void Viewer::updateTexNormal()
 {
     // clean up
-    if (tex)
+    if (texArrNml)
     {
-        assert(!tex->isBound());
-        delete tex; tex = NULL;
+        delete texArrNml;
+        texArrNml = NULL;
     }
-    // new texture
-    tex = new QOpenGLTexture(QOpenGLTexture::Target2D);
-    tex->setSize(width, height);
-    tex->setFormat(QOpenGLTexture::RGBA32F);
-    tex->allocateStorage();
-    tex->setWrapMode(QOpenGLTexture::ClampToEdge);
-    tex->setMinMagFilters(QOpenGLTexture::Linear, QOpenGLTexture::Linear);
-    tex->setData(QOpenGLTexture::RGBA, QOpenGLTexture::Float32, data);
+    // texture
+    texArrNml = new QOpenGLTexture(QOpenGLTexture::Target2DArray);
+    texArrNml->setSize(imageRaf.getWidth(), imageRaf.getHeight());
+    texArrNml->setLayers(imageRaf.getNBins());
+    texArrNml->setFormat(QOpenGLTexture::RGB32F);
+    texArrNml->allocateStorage();
+    texArrNml->setWrapMode(QOpenGLTexture::ClampToEdge);
+    texArrNml->setMinMagFilters(QOpenGLTexture::Linear, QOpenGLTexture::Linear);
+    // calculate normal in CPU -- this is going to be painful
+    timeval start; gettimeofday(&start, NULL);
+    for (int layer = 0; layer < imageRaf.getNBins(); ++layer)
+    {
+        int w = imageRaf.getWidth();
+        int h = imageRaf.getHeight();
+        float* normals = new float [3 * w * h];
+        float* depths = &(imageRaf.getDepths().get()[layer * w * h]);
+#pragma omp parallel for
+        for (int y = 0; y < w; ++y)
+#pragma omp parallel for
+        for (int x = 0; x < h; ++x)
+        {
+            // 3 2 1
+            // 4 C 0
+            // 5 6 7
+            float tx = (float(x) + 0.5f) / float(w);
+            float ty = (float(y) + 0.5f) / float(h);
+            float dx = 1.f / float(w);
+            float dy = 1.f / float(h);
+            QPoint pos[8];
+            pos[0] = QPoint(x+1,y+0);
+            pos[1] = QPoint(x+1,y+1);
+            pos[2] = QPoint(x+0,y+1);
+            pos[3] = QPoint(x-1,y+1);
+            pos[4] = QPoint(x-1,y+0);
+            pos[5] = QPoint(x-1,y-1);
+            pos[6] = QPoint(x+0,y-1);
+            pos[7] = QPoint(x+1,y-1);
+            for (int i = 0; i < 8; ++i)
+            {
+                pos[i].rx() = std::min(pos[i].x(), w-1);
+                pos[i].rx() = std::max(pos[i].x(), 0);
+                pos[i].ry() = std::min(pos[i].y(), h-1);
+                pos[i].ry() = std::max(pos[i].y(), 0);
+            }
+            QVector3D coordsCtr(tx, ty, depths[w*y+x]);
+            QVector3D coords[8];
+            coords[0] = QVector3D(tx+dx, ty   , depths[w*pos[0].y()+pos[0].x()]);
+            coords[1] = QVector3D(tx+dx, ty+dy, depths[w*pos[1].y()+pos[1].x()]);
+            coords[2] = QVector3D(tx   , ty+dy, depths[w*pos[2].y()+pos[2].x()]);
+            coords[3] = QVector3D(tx-dx, ty+dy, depths[w*pos[3].y()+pos[3].x()]);
+            coords[4] = QVector3D(tx-dx, ty   , depths[w*pos[4].y()+pos[4].x()]);
+            coords[5] = QVector3D(tx-dx, ty-dy, depths[w*pos[5].y()+pos[5].x()]);
+            coords[6] = QVector3D(tx   , ty-dy, depths[w*pos[6].y()+pos[6].x()]);
+            coords[7] = QVector3D(tx+dx, ty-dy, depths[w*pos[7].y()+pos[7].x()]);
+            QVector3D dirs[8];
+            for (int i = 0; i < 8; ++i)
+                dirs[i] = coords[i] - coordsCtr;
+            QVector3D sum;
+            for (int i = 0; i < 7; ++i)
+            {
+                float delta = 0.001f;
+                QVector3D normal;
+                if (dirs[i].z() > delta || dirs[i+1].z() > delta)
+                    normal = QVector3D(0.f,0.f,0.f);
+                else
+                    normal = QVector3D::crossProduct(dirs[i],dirs[i+1]);
+                sum += normal;
+            }
+            QVector3D theNormal = sum.normalized();
+            normals[3 * (w * y + x) + 0] = (theNormal.x() + 1.f) * 0.5f;
+            normals[3 * (w * y + x) + 1] = (theNormal.y() + 1.f) * 0.5f;
+            normals[3 * (w * y + x) + 2] = (theNormal.z() + 1.f) * 0.5f;
+        }
+        texArrNml->setData(0, layer,
+                QOpenGLTexture::RGB, QOpenGLTexture::Float32,
+                normals);
+        delete [] normals;
+    }
+    timeval end; gettimeofday(&end, NULL);
+    double time_normal = (end.tv_sec - start.tv_sec) * 1000.0 + (end.tv_usec - start.tv_usec) / 1000.0;
+    std::cout << "Time: Normal:  " << time_normal << " ms" << std::endl;
 }

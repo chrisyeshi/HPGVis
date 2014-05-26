@@ -6,6 +6,7 @@
 #include <QOpenGLBuffer>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLVertexArrayObject>
+#include <QOpenGLFunctions>
 #include "TF.h"
 #include "imageraf.h"
 
@@ -43,8 +44,10 @@ protected:
     virtual void initializeGL();
     virtual void paintGL();
     virtual void resizeGL(int width, int height);
+    virtual void mousePressEvent(QMouseEvent *e);
     virtual void mouseMoveEvent(QMouseEvent *e);
     virtual void keyPressEvent(QKeyEvent *e);
+    virtual void wheelEvent(QWheelEvent* e);
 
     //
     //
@@ -53,9 +56,11 @@ protected:
     //
     void initQuadVbo();
     void updateProgram();
+    void updateShaderMVP();
     void updateVAO();
     void initTF();
-    void updateRAF(QOpenGLTexture*& tex, float* data, int width, int height);
+    void updateTexRAF();
+    void updateTexNormal();
 
 private:
     //
@@ -76,10 +81,13 @@ private:
     QMatrix4x4 matModel, matView, matProj;
     QOpenGLBuffer vboQuad;
     QOpenGLTexture texTf, texAlpha;
-    QOpenGLTexture *texRaf0, *texRaf1, *texRaf2, *texRaf3;
-    QOpenGLTexture *texDep0, *texDep1, *texDep2, *texDep3;
+    QOpenGLTexture *texArrRaf, *texArrDep;
     QOpenGLShaderProgram progRaf;
     QOpenGLVertexArrayObject vao;
+    float zoomFactor;
+    QPointF focal;
+    QPointF cursorPrev;
+    QOpenGLTexture* texArrNml;
 
     hpgv::ImageRAF imageRaf;
 

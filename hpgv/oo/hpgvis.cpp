@@ -29,10 +29,11 @@ float data_quantize(float value, int varname)
 
 HPGVis::HPGVis()
   : isInit(false),
-  	rank(0), root(DEFAULT_ROOT), comm(MPI_COMM_WORLD),
+  	root(DEFAULT_ROOT), comm(MPI_COMM_WORLD),
     npx(1), npy(1), npz(1),
-    ipx(0), ipy(0), ipz(0),
-    block(new block_t), image(NULL)
+    block(new block_t), image(NULL),
+    rank(0),
+    ipx(0), ipy(0), ipz(0)
 {
 	block->volume_num = 0;
 	updateMPI();

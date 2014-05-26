@@ -1,9 +1,9 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QFileDialog>
-#include "imageraf.h"
-
 #include <iostream>
+#include <sys/time.h>
+#include "imageraf.h"
 using namespace std;
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -13,7 +13,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     connect(ui->tf, SIGNAL(tfChanged(mslib::TF&)), ui->viewer, SLOT(tfChanged(mslib::TF&)));
     connect(ui->open, SIGNAL(clicked()), this, SLOT(open()));
-    connect(ui->timeSlider, SIGNAL(sliderReleased()), this, SLOT(timeChanged()));
+    connect(ui->timeSlider, SIGNAL(valueChanged(int)), this, SLOT(timeChanged(int)));
 }
 
 MainWindow::~MainWindow()
@@ -47,18 +47,23 @@ void MainWindow::open()
     ui->timeSlider->setRange(0, files.size() - 1);
 
     hpgv::ImageRAF image;
-    if (image.open(parentDir.absoluteFilePath(files.front()).toUtf8().constData()))
+    if (image.open(qfilename.toUtf8().constData()))
         ui->viewer->renderRAF(image);
 }
 
-void MainWindow::timeChanged()
+void MainWindow::timeChanged(int val)
 {
-    int val = ui->timeSlider->value();
+//    int val = ui->timeSlider->value();
     if(val < 0 || val >= files.size())
         return;
 
     hpgv::ImageRAF image;
-    if (image.open(parentDir.absoluteFilePath(files[val]).toUtf8().constData()))
+    timeval start; gettimeofday(&start, NULL);
+    bool isOpen = image.open(parentDir.absoluteFilePath(files[val]).toUtf8().constData());
+    timeval end; gettimeofday(&end, NULL);
+    double time_file = (end.tv_sec - start.tv_sec) * 1000.0 + (end.tv_usec - start.tv_usec) / 1000.0;
+    std::cout << "Time: File:    " << time_file << " ms" << std::endl;
+    if (isOpen)
         ui->viewer->renderRAF(image);
 }
 

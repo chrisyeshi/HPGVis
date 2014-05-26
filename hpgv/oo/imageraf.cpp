@@ -1,6 +1,7 @@
 #include "imageraf.h"
 #include <cstring>
 #include <iostream>
+#include <sys/time.h>
 
 namespace hpgv
 {
@@ -19,7 +20,7 @@ void ImageRAF::setRafs(const void *buffer, int nBytes)
     const float* inBuf = reinterpret_cast<const float*>(buffer);
     rafs = boost::shared_ptr<float[]>(new float [nFloatsRafs()]);
     depths = boost::shared_ptr<float[]>(new float [nFloatsDepths()]);
-    for (int sliceId = 0; sliceId < nBins(); ++sliceId)
+    for (unsigned int sliceId = 0; sliceId < nBins(); ++sliceId)
     {
         for (int i = 0; i < width * height; ++i)
         {
@@ -56,6 +57,7 @@ bool ImageRAF::read(std::istream& in)
     in.read(reinterpret_cast<char*>(rafs.get()), nBytesRafs());
     depths = boost::shared_ptr<float[]>(new float [nFloatsDepths()]);
     in.read(reinterpret_cast<char*>(depths.get()), nBytesDepths());
+
     return true;
 }
 

@@ -42,6 +42,7 @@ bool Parameter::open(const std::string& filename)
     fin.read(buffer, filesize);
     this->deserialize(buffer);
     delete [] buffer;
+    return true;
 }
 
 void Parameter::save(const std::string& filename) const
@@ -143,8 +144,7 @@ std::vector<char> Parameter::serialize() const
     // total byte
     uint64_t totalbyte = bufferSize;
     memcpy(ptr, &totalbyte, uint64Size); ptr += uint64Size;
-    uint64_t ptrbyte = ptr - &(buffer[0]);
-    assert(totalbyte == ptrbyte);
+    assert(totalbyte == ptr - &(buffer[0]));
     return buffer;
 }
 

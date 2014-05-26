@@ -62,6 +62,9 @@ bool H5Reader::read()
     H5Dclose(h5DsetId);
     H5Fclose(h5FileId);
 
+    if (h5Status < 0)
+        return false;
+
     x = boost::shared_ptr<double[]>(new double [nx]);
     y = boost::shared_ptr<double[]>(new double [ny]);
     z = boost::shared_ptr<double[]>(new double [nz]);
