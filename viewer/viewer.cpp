@@ -100,6 +100,16 @@ void Viewer::tfChanged(mslib::TF& tf)
     updateGL();
 }
 
+void Viewer::lightDirChanged(QVector3D lightDir)
+{
+    makeCurrent();
+    progRaf.bind();
+    progRaf.setUniformValue("lightDir", lightDir);
+    progRaf.release();
+
+    updateGL();
+}
+
 void Viewer::snapshot(const std::string &filename)
 {
     makeCurrent();

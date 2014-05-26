@@ -45,9 +45,19 @@
      </layout>
     </item>
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout_3">
+     <layout class="QVBoxLayout" name="verticalLayout_3" stretch="1,0,0">
       <item>
        <widget class="TFEditor" name="tf" native="true">
+        <property name="minimumSize">
+         <size>
+          <width>400</width>
+          <height>400</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="LightCtrl" name="light" native="true">
         <property name="minimumSize">
          <size>
           <width>400</width>
@@ -83,6 +93,12 @@
    <class>Viewer</class>
    <extends>QWidget</extends>
    <header>viewer.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>LightCtrl</class>
+   <extends>QWidget</extends>
+   <header>lightctrl.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

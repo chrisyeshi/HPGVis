@@ -14,6 +14,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->tf, SIGNAL(tfChanged(mslib::TF&)), ui->viewer, SLOT(tfChanged(mslib::TF&)));
     connect(ui->open, SIGNAL(clicked()), this, SLOT(open()));
     connect(ui->timeSlider, SIGNAL(sliderReleased()), this, SLOT(timeChanged()));
+    connect(ui->light, SIGNAL(lightDirChanged(QVector3D)), ui->viewer, SLOT(lightDirChanged(QVector3D)));
 }
 
 MainWindow::~MainWindow()

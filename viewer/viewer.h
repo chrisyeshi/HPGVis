@@ -36,6 +36,7 @@ public slots:
     //
     //
     void tfChanged(mslib::TF& tf);
+    void lightDirChanged(QVector3D lightDir);
 
 protected:
     //

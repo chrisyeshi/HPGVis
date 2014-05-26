@@ -36,7 +36,7 @@ set(SOURCES
         mainwindow.ui
         viewer.cpp
         featuretracker.cpp
-        )
+        lightctrl.cpp)
 
 #
 #

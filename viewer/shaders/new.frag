@@ -9,6 +9,7 @@ uniform sampler2DArray nmlarr;
 uniform sampler2D featureID;
 uniform float selectedID;
 uniform int featureHighlight;
+uniform vec3 lightDir;
 
 in VertexData {
     vec2 texCoord;
@@ -70,7 +71,7 @@ void main()
     KA = 0.1; //Ambient reflection
     KS = 0.2; //Specular reflection
     KD = 0.4; //Diffuse reflection
-    LM = normalize(vec3(1, 1, 1));
+    LM = normalize(-lightDir);
     // propagate alphas
     for (int i = 0; i < nBins; ++i)
     {
