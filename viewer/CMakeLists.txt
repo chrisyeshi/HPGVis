@@ -27,7 +27,12 @@ link_directories(${CMAKE_BINARY_DIR}/hpgv)
 # SOURCES
 #
 #
-set(SHADERS shaders/raf.vert shaders/raf.frag shaders/new.frag)
+set(SHADERS
+        shaders/raf.vert
+        shaders/raf.frag
+        shaders/new.frag
+        shaders/normal.vert
+        shaders/normal.frag)
 set(SOURCES
         TF.cpp
         TFEditor.cpp

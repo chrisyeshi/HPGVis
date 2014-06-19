@@ -10,7 +10,7 @@ void FeatureTracker::setDim(const int &w, const int &h) {
 }
 
 void FeatureTracker::extract() {
-    clock_t start = std::clock();
+//    clock_t start = std::clock();
 
 #pragma omp parallel for
     for (int y = 0; y < dim.y; ++y) {
@@ -25,8 +25,8 @@ void FeatureTracker::extract() {
         }
     }
 
-    double diff = (std::clock() - start) / static_cast<double>(CLOCKS_PER_SEC);
-    std::cout << "diff: " << diff << std::endl;
+//    double diff = (std::clock() - start) / static_cast<double>(CLOCKS_PER_SEC);
+//    std::cout << "diff: " << diff << std::endl;
 }
 
 void FeatureTracker::findNewFeature(const vec2i& seed) {

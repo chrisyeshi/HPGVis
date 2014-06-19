@@ -13,7 +13,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     connect(ui->tf, SIGNAL(tfChanged(mslib::TF&)), ui->viewer, SLOT(tfChanged(mslib::TF&)));
     connect(ui->open, SIGNAL(clicked()), this, SLOT(open()));
-    connect(ui->timeSlider, SIGNAL(sliderReleased()), this, SLOT(timeChanged()));
+    connect(ui->movie, SIGNAL(clicked()), this, SLOT(movie()));
+    connect(ui->timeSlider, SIGNAL(valueChanged(int)), this, SLOT(timeChanged(int)));
     connect(ui->light, SIGNAL(lightDirChanged(QVector3D)), ui->viewer, SLOT(lightDirChanged(QVector3D)));
 }
 
@@ -32,7 +33,6 @@ void MainWindow::open()
 {
     QString qfilename = QFileDialog::getOpenFileName(this,
             tr("Open RAF file"), QString(), tr("Explorable Images (*.raf)"));
-//    std::string filename = qfilename.toUtf8().constData();
 
     QFileInfo qfi(qfilename);
 
@@ -51,14 +51,28 @@ void MainWindow::open()
     if (image.open(qfilename.toUtf8().constData()))
     {
         ui->viewer->renderRAF(image);
-        ui->viewer->getFeatureMap(image);
     }
 
 }
 
-void MainWindow::timeChanged()
+void MainWindow::movie()
 {
-    int val = ui->timeSlider->value();
+    for (int iFile = 0; iFile < files.size(); ++iFile)
+    {
+        hpgv::ImageRAF image;
+        bool isOpen = image.open(parentDir.absoluteFilePath(files[iFile]).toUtf8().constData());
+        if (isOpen)
+        {
+            ui->viewer->renderRAF(image);
+            ui->viewer->updateGL();
+            ui->viewer->screenCapture();
+        }
+    }
+}
+
+void MainWindow::timeChanged(int val)
+{
+//    int val = ui->timeSlider->value();
     if(val < 0 || val >= files.size())
         return;
 
@@ -71,7 +85,6 @@ void MainWindow::timeChanged()
     if (isOpen)
     {
         ui->viewer->renderRAF(image);
-        ui->viewer->getFeatureMap(image);
     }
 }
 

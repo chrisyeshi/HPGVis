@@ -21,7 +21,8 @@ public:
 
 public slots:
     void open();
-    void timeChanged();
+    void movie();
+    void timeChanged(int);
 
 protected:
 

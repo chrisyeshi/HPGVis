@@ -6,12 +6,13 @@
 #include <QOpenGLBuffer>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLVertexArrayObject>
-#include <QOpenGLFunctions>
+#include <QOpenGLFramebufferObject>
+#include <QOpenGLFunctions_3_3_Core>
 #include "TF.h"
 #include "imageraf.h"
 #include "featuretracker.h"
 
-class Viewer : public QGLWidget
+class Viewer : public QGLWidget, protected QOpenGLFunctions_3_3_Core
 {
     Q_OBJECT
 public:
@@ -25,7 +26,6 @@ public:
     //
     void renderRAF(const hpgv::ImageRAF& image);
     void snapshot(const std::string& filename);
-    void getFeatureMap(const hpgv::ImageRAF& image);  // fet
 
 signals:
 
@@ -66,7 +66,10 @@ protected:
     void updateVAO();
     void initTF();
     void updateTexRAF();
+    void initTexNormalTools();
     void updateTexNormal();
+    void initTexNormal();
+    void updateFeatureMap();
 
 private:
     //
@@ -94,6 +97,9 @@ private:
     QPointF focal;
     QPointF cursorPrev;
     QOpenGLTexture* texArrNml;
+    std::vector<GLuint> fboArrNml;
+    QOpenGLVertexArrayObject vaoArrNml;
+    QOpenGLShaderProgram progArrNml;
 
     hpgv::ImageRAF imageRaf;
     bool HighlightFeatures;
@@ -103,6 +109,7 @@ private:
 
     FeatureTracker featureTracker;
     int nFeatures;
+
     //
     //
     // Helper functions

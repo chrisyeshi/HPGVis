@@ -15,7 +15,7 @@ static double theValueMin = 0;
 static double theValueMax = 0;
 float data_quantize(float value, int varname)
 {
-    float v = (value - 0.0) / (0.125 - 0.0);
+    float v = (value - theValueMin) / (theValueMax - theValueMin);
     if (v < 0.0) v = 0.0;
     if (v >= 1.0) v = 1.0 - FLT_EPSILON;
     return v;

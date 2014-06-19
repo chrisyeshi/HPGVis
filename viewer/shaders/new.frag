@@ -32,9 +32,9 @@ vec3 LM;
 vec3 getNormal(int layer)
 {
     return texture(nmlarr, vec3(FragIn.texCoord + vec2(     0.0,     0.0), float(layer))).xyz * 2.f - 1.f;
-//    // 6 7 8
-//    // 3 4 5
-//    // 0 1 2
+    // 6 7 8
+    // 3 4 5
+    // 0 1 2
 //    vec3 sum = vec3(0.0);
 //    sum += texture(nmlarr, vec3(FragIn.texCoord + vec2(-invVP.x,-invVP.y), float(layer))).xyz * 2.f - 1.f;
 //    sum += texture(nmlarr, vec3(FragIn.texCoord + vec2(     0.0,-invVP.y), float(layer))).xyz * 2.f - 1.f;
@@ -67,10 +67,14 @@ void main()
     // normal values
     for (int i = 0; i < nBins; ++i)
         normalValue[i] = getNormal(i);
+//    fragColor = vec4(normalValue[8], 1.0);
+    int l = 4;
+    fragColor = vec4(texture(nmlarr, vec3(FragIn.texCoord + vec2(     0.0,     0.0), float(l))).xyz, 1.0);
+    return;
     // lighting parameters
-    KA = 0.1; //Ambient reflection
+    KA = 0.01; //Ambient reflection
     KS = 0.2; //Specular reflection
-    KD = 0.4; //Diffuse reflection
+    KD = 0.5; //Diffuse reflection
     LM = normalize(-lightDir);
     // propagate alphas
     for (int i = 0; i < nBins; ++i)
@@ -79,7 +83,7 @@ void main()
         lightMult[i] = vec3(1.0) * KA;
         vec3 RM = normalize(reflect(LM, normalValue[i]));
         lightMult[i] += clamp(KD * dot(LM, normalValue[i]), 0, 1);
-        lightMult[i] += clamp(KS * vec3(pow(dot(RM, vec3(0.0,0.0,-1.0)), 40)), 0, 1); //The magic number is shininess
+        lightMult[i] += clamp(KS * vec3(pow(dot(RM, vec3(0.0,0.0,-1.0)), 50)), 0, 1); //The magic number is shininess
         // propagation
         if (abs(oldA[i] - newA[i]) < 0.0001)
             continue;
@@ -93,12 +97,16 @@ void main()
         for (int j = i + 1; j < nBins; ++j)
             binValue[j] = clamp(pow(1.0 - newA[i], K) / pow(1.0 - oldA[i], K) * binValue[j], 0, 1);
     }
+
     // final coloring
     vec4 sum = vec4(0.0);
     float AccumulatedOpacity = 0;
     for (int i = 0; i < nBins; ++i)
     {
-        sum += vec4(vec3(colors[i].rgb * lightMult[i]) * binValue[i] * 2, binValue[i]);
+//        vec4 c = vec4(vec3(colors[i].rgb * lightMult[i]) * binValue[i], binValue[i]);
+//        float attenuation = (1.0 - sum.a) * c.a;
+//        sum += c * attenuation;
+        sum += vec4(vec3(colors[i].rgb * lightMult[i]) * binValue[i], binValue[i]);
     }
     // feature extraction/tracking
     vec4 ID = texture(featureID, FragIn.texCoord);

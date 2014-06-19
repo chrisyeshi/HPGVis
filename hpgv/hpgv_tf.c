@@ -13,13 +13,19 @@ typedef struct tf_color_t {
     float r, g, b, a;
 } tf_color_t;
 
+float binVals[17] = { 0.f,
+     4.00f/16.f,  6.00f/16.f,  8.00f/16.f,  9.50f/16.f,
+    11.50f/16.f, 11.75f/16.f, 12.00f/16.f, 12.25f/16.f,
+    12.50f/16.f, 12.75f/16.f, 13.00f/16.f, 13.25f/16.f,
+    13.50f/16.f, 13.75f/16.f, 14.00f/16.f,         1.f };
+
 //
 //
 // Local Variables
 //
 //
 
-// static float stepBase = 10.f;
+static float stepBase = 10.f;
 
 //
 //
@@ -30,44 +36,56 @@ typedef struct tf_color_t {
 tf_color_t tf_raf_bin_integrate(const float* tf, int tfsize,
         float valbeg, float valend, float length)
 {
-    // error checking
-    float small = valbeg < valend ? valbeg : valend;
-    float big = valbeg < valend ? valend : valbeg;
-    int binId = small * HPGV_RAF_BIN_NUM;
-    // float binRange[2] = { (float)binId / HPGV_RAF_BIN_NUM, (float)(binId + 1) / HPGV_RAF_BIN_NUM };
-    // assert(valbeg >= binRange[0] && valbeg <= binRange[1]);
-    // assert(valend >= binRange[0] && valend <= binRange[1]);
-    // here we go
-    float binVal = ((float)binId + 0.5f) / (float)HPGV_RAF_BIN_NUM;
-    if (small <= binVal && binVal <= big)
-    { // across the avg value
-        tf_color_t color = hpgv_tf_sample(tf, tfsize, binVal);
-        color.a = 1.f / 16.f;
-        return color;
-    }
-    // not crossing the avg value
-    tf_color_t color;
-    color.r = 0.f;
-    color.g = 0.f;
-    color.b = 0.f;
-    color.a = 0.f;
-    return color;
+//    // Default Simplified Transfer Function
+//    //========================================================
+//    // error checking
+//    float small = valbeg < valend ? valbeg : valend;
+//    float big = valbeg < valend ? valend : valbeg;
+//    int binId = small * HPGV_RAF_BIN_NUM;
+//    // float binRange[2] = { (float)binId / HPGV_RAF_BIN_NUM, (float)(binId + 1) / HPGV_RAF_BIN_NUM };
+//    // assert(valbeg >= binRange[0] && valbeg <= binRange[1]);
+//    // assert(valend >= binRange[0] && valend <= binRange[1]);
+//    // here we go
+//    float binVal = ((float)binId + 0.5f) / (float)HPGV_RAF_BIN_NUM;
+//    if (small <= binVal && binVal <= big)
+//    { // across the avg value
+//        tf_color_t color = hpgv_tf_sample(tf, tfsize, binVal);
+//        color.a = 1.f / 16.f;
+//        return color;
+//    }
+//    // not crossing the avg value
+//    tf_color_t color;
+//    color.r = 0.f;
+//    color.g = 0.f;
+//    color.b = 0.f;
+//    color.a = 0.f;
+//    return color;
 
-//    // Integrate over transfer function
-//    //=========================================================
+    // Integrate over transfer function
+    //=========================================================
 //    tf_color_t colorbeg = hpgv_tf_sample(tf, tfsize, valbeg);
 //    tf_color_t colorend = hpgv_tf_sample(tf, tfsize, valend);
-//    tf_color_t color;
-//    color.r = (colorbeg.r + colorend.r) * 0.5f;
-//    color.g = (colorbeg.g + colorend.g) * 0.5f;
-//    color.b = (colorbeg.b + colorend.b) * 0.5f;
-//    color.a = (colorbeg.a + colorend.a) * 0.5f;
-//    // adjust to step size
-//    color.a = 1.0 - pow(1.0 - color.a, length / stepBase);
-//    color.r *= color.a;
-//    color.g *= color.a;
-//    color.b *= color.a;
-//    return color;
+    tf_color_t colorbeg;
+    colorbeg.r = 1.f;
+    colorbeg.g = 1.f;
+    colorbeg.b = 1.f;
+    colorbeg.a = 1.f/16.f;
+    tf_color_t colorend;
+    colorend.r = 1.f;
+    colorend.g = 1.f;
+    colorend.b = 1.f;
+    colorend.a = 1.f/16.f;
+    tf_color_t color;
+    color.r = (colorbeg.r + colorend.r) * 0.5f;
+    color.g = (colorbeg.g + colorend.g) * 0.5f;
+    color.b = (colorbeg.b + colorend.b) * 0.5f;
+    color.a = (colorbeg.a + colorend.a) * 0.5f;
+    // adjust to step size
+    color.a = 1.0 - pow(1.0 - color.a, length / stepBase);
+    color.r *= color.a;
+    color.g *= color.a;
+    color.b *= color.a;
+    return color;
 }
 
 //
@@ -108,22 +126,57 @@ tf_color_t hpgv_tf_sample(const float* tf, int tfsize, float val)
     return color;
 }
 
+int getBinId(float value)
+{
+    int binId = -1;
+    for (binId = 0; binId < 16; ++binId)
+    {
+        float lower = binVals[binId];
+        float upper = binVals[binId+1];
+        if (lower <= value && value < upper)
+        {
+            return binId;
+        }
+    }
+    return -1;
+}
+
 void hpgv_tf_raf_integrate(const float* tf, int tfsize,
 		float left_value, float rite_value, float left_depth, float rite_depth,
 		float sampling_spacing, hpgv_raf_t* histogram)
 {
-    // // Sample at Ray Segment End Points
-    // int binId = CLAMP((int)(rite_value * HPGV_RAF_BIN_NUM), 0, HPGV_RAF_BIN_NUM - 1);
-    // tf_color_t color = hpgv_tf_sample(tf, tfsize, rite_value);
-    // float attenuation = (1.f - histogram->attenuation) * color.a;
-    // histogram->attenuation += attenuation;
-    // histogram->raf[binId] += attenuation;
-    // if (rite_depth < histogram->depths[binId])
-    //     histogram->depths[binId] = rite_depth;
+//    // Sample with Manual Bin Values
+//    int i;
+//#pragma omp parallel for private(i)
+//    for (i = 0; i < 16; ++i) {
+//        if (left_value <= binVals[i] && binVals[i] <= rite_value)
+//        {
+//            float alpha = 1.f / 16.f;
+//            float attenuation = (1.f - histogram->attenuation) * alpha;
+//            histogram->attenuation += attenuation;
+//            histogram->raf[i] += attenuation;
+//            float depth = left_depth;
+//            if (fabs(rite_value - left_value) > 0.0001)
+//                depth = (binVals[i] - left_value) / (rite_value - left_value) * (rite_depth - left_depth) + left_depth;
+//            if (depth < histogram->depths[i])
+//                histogram->depths[i] = depth;
+//        }
+//    }
+
+//     // Sample at Ray Segment End Points
+//     int binId = CLAMP((int)(rite_value * HPGV_RAF_BIN_NUM), 0, HPGV_RAF_BIN_NUM - 1);
+//     tf_color_t color = hpgv_tf_sample(tf, tfsize, rite_value);
+//     float attenuation = (1.f - histogram->attenuation) * color.a;
+//     histogram->attenuation += attenuation;
+//     histogram->raf[binId] += attenuation;
+//     if (rite_depth < histogram->depths[binId])
+//         histogram->depths[binId] = rite_depth;
 
     // Integrate Over Ray Segments
-    int binBeg = CLAMP((int)(left_value * HPGV_RAF_BIN_NUM), 0, HPGV_RAF_BIN_NUM - 1);
-    int binEnd = CLAMP((int)(rite_value * HPGV_RAF_BIN_NUM), 0, HPGV_RAF_BIN_NUM - 1);
+//    int binBeg = CLAMP((int)(left_value * HPGV_RAF_BIN_NUM), 0, HPGV_RAF_BIN_NUM - 1);
+//    int binEnd = CLAMP((int)(rite_value * HPGV_RAF_BIN_NUM), 0, HPGV_RAF_BIN_NUM - 1);
+    int binBeg = getBinId(left_value);
+    int binEnd = getBinId(rite_value);
     // if binBeg == binEnd
     if (binBeg == binEnd) {
         float valBeg = left_value;
@@ -149,9 +202,9 @@ void hpgv_tf_raf_integrate(const float* tf, int tfsize,
         float valBeg = left_value;
         float valEnd;
         if (dir > 0)
-            valEnd = (float)(binBeg + 1) / (float)(HPGV_RAF_BIN_NUM);
+            valEnd = binVals[binBeg+1]; //(float)(binBeg + 1) / (float)(HPGV_RAF_BIN_NUM);
         else
-            valEnd = (float)(binBeg) / (float)(HPGV_RAF_BIN_NUM);
+            valEnd = binVals[binBeg]; //(float)(binBeg) / (float)(HPGV_RAF_BIN_NUM);
         float length = 0.f;
         if (fabs(rite_value - left_value) > 0.0001)
             length = (valEnd - valBeg) / (rite_value - left_value) * sampling_spacing;
@@ -175,11 +228,11 @@ void hpgv_tf_raf_integrate(const float* tf, int tfsize,
     {
         float valBeg, valEnd;
         if (dir > 0) {
-            valBeg = (float)(binId + 0) / (float)(HPGV_RAF_BIN_NUM);
-            valEnd = (float)(binId + 1) / (float)(HPGV_RAF_BIN_NUM);
+            valBeg = binVals[binId]; //(float)(binId + 0) / (float)(HPGV_RAF_BIN_NUM);
+            valEnd = binVals[binId+1]; //(float)(binId + 1) / (float)(HPGV_RAF_BIN_NUM);
         } else {
-            valBeg = (float)(binId + 1) / (float)(HPGV_RAF_BIN_NUM);
-            valEnd = (float)(binId + 0) / (float)(HPGV_RAF_BIN_NUM);
+            valBeg = binVals[binId+1]; //(float)(binId + 1) / (float)(HPGV_RAF_BIN_NUM);
+            valEnd = binVals[binId]; //(float)(binId + 0) / (float)(HPGV_RAF_BIN_NUM);
         }
         float length = 0.f;
         if (fabs(rite_value - left_value) > 0.0001)
@@ -199,9 +252,9 @@ void hpgv_tf_raf_integrate(const float* tf, int tfsize,
     {
         float valBeg;
         if (dir > 0)
-            valBeg = (float)(binEnd + 0) / (float)(HPGV_RAF_BIN_NUM);
+            valBeg = binVals[binEnd]; //(float)(binEnd + 0) / (float)(HPGV_RAF_BIN_NUM);
         else
-            valBeg = (float)(binEnd + 1) / (float)(HPGV_RAF_BIN_NUM);
+            valBeg = binVals[binEnd+1]; //(float)(binEnd + 1) / (float)(HPGV_RAF_BIN_NUM);
         float valEnd = rite_value;
         float length = 0.f;
         if (fabs(rite_value - left_value) > 0.0001)

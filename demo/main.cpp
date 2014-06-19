@@ -65,7 +65,7 @@ int main(int argc, char* argv[])
  //    }
 
     // volume
-    hpgv::H5Reader reader("/home/chrisyeshi/Dropbox/supernova300.h5", "/entropy");
+    hpgv::H5Reader reader("/home/chrisyeshi/Dropbox/supernova_600_1580.h5", "/entropy");
 	reader.configure(MPI_COMM_WORLD, mypx, mypy, mypz, npx, npy, npz);
     if (!reader.read())
         exit(1);

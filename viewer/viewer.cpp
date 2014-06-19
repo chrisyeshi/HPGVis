@@ -18,8 +18,6 @@ Viewer::Viewer(QWidget *parent) :
     zoomFactor(1.f), texArrNml(NULL), texFeature(NULL)
 {
     std::cout << "OpenGL Version: " << this->context()->format().majorVersion() << "." << this->context()->format().minorVersion() << std::endl;
-    int maxLayer; glGetIntegerv(GL_MAX_FRAMEBUFFER_LAYERS, &maxLayer);
-    std::cout << "GL_MAX_FRAMEBUFFER_LAYERS: " << maxLayer << std::endl;
     setFocusPolicy(Qt::StrongFocus);
     QShortcut* scSnapshot = new QShortcut(QKeySequence(tr("s")), this);
     connect(scSnapshot, SIGNAL(activated()), this, SLOT(screenCapture()));
@@ -42,51 +40,10 @@ void Viewer::renderRAF(const hpgv::ImageRAF &image)
 {
     makeCurrent();
     imageRaf = image;
+    std::cout << "Image: Width: " << imageRaf.getWidth() << " Height: " << imageRaf.getHeight() << std::endl;
     updateTexRAF();
     updateTexNormal();
-}
-
-void Viewer::getFeatureMap(const hpgv::ImageRAF &image)
-{
-    imageRaf = image;
-    int w = imageRaf.getWidth();
-    int h = imageRaf.getHeight();
-
-    featureTracker.setDim(w, h);
-
-    std::vector<float*> deps;
-    deps.push_back(image.getDepths().get());
-    for (int i = 1; i < nBins; ++i) {
-        deps.push_back(deps.front() + w*h*i);
-    }
-
-    mask = std::vector<float>(w*h, 0.0f);
-    featureTracker.track(deps[8], mask.data());
-    nFeatures = featureTracker.getNumFeatures();
-
-    for (auto& p : mask) {
-        p /= (float)nFeatures;
-    }
-
-    std::cout << "nFeatures: " << nFeatures;
-
-    // clean up
-    if (texFeature) {
-        assert(!texFeature->isBound());
-        delete texFeature; texFeature = NULL;
-    }
-    // new texture
-    texFeature = new QOpenGLTexture(QOpenGLTexture::Target2D);
-    texFeature->setSize(w, h);
-    texFeature->setFormat(QOpenGLTexture::R32F);
-    texFeature->allocateStorage();
-    texFeature->setWrapMode(QOpenGLTexture::ClampToEdge);
-    texFeature->setMinMagFilters(QOpenGLTexture::Nearest, QOpenGLTexture::Nearest);
-    texFeature->setData(QOpenGLTexture::Red, QOpenGLTexture::Float32, mask.data());
-
-//    updateRAF(texFeature, featureMap.get(), w, h);
-//    texFeature->setMinMagFilters(QOpenGLTexture::Nearest, QOpenGLTexture::Nearest);
-
+    updateFeatureMap();
     updateGL();
 }
 
@@ -137,10 +94,16 @@ void Viewer::snapshot(const std::string &filename)
 
 void Viewer::initializeGL()
 {
+    initializeOpenGLFunctions();
+    int maxLayer; glGetIntegerv(GL_MAX_FRAMEBUFFER_LAYERS, &maxLayer);
+    std::cout << "GL_MAX_FRAMEBUFFER_LAYERS: " << maxLayer << std::endl;
+    int maxColorAttach; glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &maxColorAttach);
+    std::cout << "GL_MAX_COLOR_ATTACHMENTS: " << maxColorAttach << std::endl;
     initQuadVbo();
     updateProgram();
     updateVAO();
     initTF();
+    initTexNormalTools();
     qglClearColor(QColor(0, 0, 0, 0));
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
@@ -148,6 +111,8 @@ void Viewer::initializeGL()
 
 void Viewer::paintGL()
 {
+    timeval start; gettimeofday(&start, NULL);
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     if (!texArrRaf) return;
 
@@ -174,6 +139,10 @@ void Viewer::paintGL()
     texTf.release();
     vao.release();
     progRaf.release();
+
+    timeval end; gettimeofday(&end, NULL);
+    double time_normal = (end.tv_sec - start.tv_sec) * 1000.0 + (end.tv_usec - start.tv_usec) / 1000.0;
+    std::cout << "Time: Paint:  " << time_normal << " ms" << std::endl;
 }
 
 void Viewer::resizeGL(int width, int height)
@@ -425,14 +394,162 @@ void Viewer::updateTexRAF()
     }
 }
 
+void Viewer::initTexNormalTools()
+{
+    // program
+    progArrNml.removeAllShaders();
+    progArrNml.addShaderFromSourceFile(QOpenGLShader::Vertex,   "../../viewer/shaders/normal.vert");
+    progArrNml.addShaderFromSourceFile(QOpenGLShader::Fragment, "../../viewer/shaders/normal.frag");
+    progArrNml.link();
+    progArrNml.bind();
+    progArrNml.setUniformValue("deparr", 0);
+    progArrNml.release();
+    // vao
+    vaoArrNml.create();
+    vaoArrNml.bind();
+    vboQuad.bind();
+    progArrNml.enableAttributeArray("vertex");
+    progArrNml.setAttributeBuffer("vertex", GL_FLOAT, 0, nFloatsPerVertQuad);
+    progArrNml.enableAttributeArray("texCoord");
+    progArrNml.setAttributeBuffer("texCoord", GL_FLOAT, nBytesQuad(), nFloatsPerVertQuad);
+    vaoArrNml.release();
+}
+
 void Viewer::updateTexNormal()
 {
-    // clean up
-    if (texArrNml)
+    // if the dimension is changed, delete the texture
+    if (texArrNml && (texArrNml->width() != imageRaf.getWidth() || texArrNml->height() != imageRaf.getHeight() || texArrNml->layers() != imageRaf.getNBins()))
     {
         delete texArrNml;
         texArrNml = NULL;
+        glDeleteFramebuffers(fboArrNml.size(), fboArrNml.data());
+        fboArrNml.clear();
     }
+    // initialize the texture
+    if (!texArrNml)
+        initTexNormal();
+
+    timeval start; gettimeofday(&start, NULL);
+
+    // calculate normal in GPU -- Yeah!~ I will keep the equivalent CPU code in comment below. We shall compare the performance difference.
+    progArrNml.bind();
+    progArrNml.setUniformValue("nBins", nBins);
+    progArrNml.setUniformValue("vp", imageRaf.getWidth(), imageRaf.getHeight());
+    progArrNml.setUniformValue("invVP", 1.f / float(imageRaf.getWidth()), 1.f / float(imageRaf.getHeight()));
+    vaoArrNml.bind();
+    texArrDep->bind(0);
+
+    glFinish();
+    timeval init; gettimeofday(&init, NULL);
+    double time_init = (init.tv_sec - start.tv_sec) * 1000.0 + (init.tv_usec - start.tv_usec) / 1000.0;
+    std::cout << "Time: Normal: Init: " << time_init << " ms" << std::endl;
+    // viewport
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    glViewport(0, 0, imageRaf.getWidth(), imageRaf.getHeight());
+    // draw
+    for (int layer = 0; layer < texArrNml->layers(); ++layer)
+    {
+        progArrNml.setUniformValue("layer", layer);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboArrNml[layer]);
+
+        glDrawArrays(GL_TRIANGLE_FAN, 0, nVertsQuad);
+
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    }
+    glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+
+    timeval draw; gettimeofday(&draw, NULL);
+    double time_draw = (draw.tv_sec - init.tv_sec) * 1000.0 + (draw.tv_usec - init.tv_usec) / 1000.0;
+    std::cout << "Time: Normal: Draw " << time_draw << " ms" << std::endl;
+
+    texArrDep->release();
+    vaoArrNml.release();
+    progArrNml.release();
+
+    timeval end; gettimeofday(&end, NULL);
+    double time_normal = (end.tv_sec - draw.tv_sec) * 1000.0 + (end.tv_usec - draw.tv_usec) / 1000.0;
+    std::cout << "Time: Normal: Clean: " << time_normal << " ms" << std::endl;
+
+/*
+//    // calculate normal in CPU -- this is going to be painful
+//    timeval start; gettimeofday(&start, NULL);
+//    for (int layer = 0; layer < imageRaf.getNBins(); ++layer)
+//    {
+//        int w = imageRaf.getWidth();
+//        int h = imageRaf.getHeight();
+//        float* normals = new float [3 * w * h];
+//        float* depths = &(imageRaf.getDepths().get()[layer * w * h]);
+//#pragma omp parallel for
+//        for (int y = 0; y < w; ++y)
+//#pragma omp parallel for
+//        for (int x = 0; x < h; ++x)
+//        {
+//            // 3 2 1
+//            // 4 C 0
+//            // 5 6 7
+//            float tx = (float(x) + 0.5f) / float(w);
+//            float ty = (float(y) + 0.5f) / float(h);
+//            float dx = 1.f / float(w);
+//            float dy = 1.f / float(h);
+//            QPoint pos[8];
+//            pos[0] = QPoint(x+1,y+0);
+//            pos[1] = QPoint(x+1,y+1);
+//            pos[2] = QPoint(x+0,y+1);
+//            pos[3] = QPoint(x-1,y+1);
+//            pos[4] = QPoint(x-1,y+0);
+//            pos[5] = QPoint(x-1,y-1);
+//            pos[6] = QPoint(x+0,y-1);
+//            pos[7] = QPoint(x+1,y-1);
+//            for (int i = 0; i < 8; ++i)
+//            {
+//                pos[i].rx() = std::min(pos[i].x(), w-1);
+//                pos[i].rx() = std::max(pos[i].x(), 0);
+//                pos[i].ry() = std::min(pos[i].y(), h-1);
+//                pos[i].ry() = std::max(pos[i].y(), 0);
+//            }
+//            QVector3D coordsCtr(tx, ty, depths[w*y+x]);
+//            QVector3D coords[8];
+//            coords[0] = QVector3D(tx+dx, ty   , depths[w*pos[0].y()+pos[0].x()]);
+//            coords[1] = QVector3D(tx+dx, ty+dy, depths[w*pos[1].y()+pos[1].x()]);
+//            coords[2] = QVector3D(tx   , ty+dy, depths[w*pos[2].y()+pos[2].x()]);
+//            coords[3] = QVector3D(tx-dx, ty+dy, depths[w*pos[3].y()+pos[3].x()]);
+//            coords[4] = QVector3D(tx-dx, ty   , depths[w*pos[4].y()+pos[4].x()]);
+//            coords[5] = QVector3D(tx-dx, ty-dy, depths[w*pos[5].y()+pos[5].x()]);
+//            coords[6] = QVector3D(tx   , ty-dy, depths[w*pos[6].y()+pos[6].x()]);
+//            coords[7] = QVector3D(tx+dx, ty-dy, depths[w*pos[7].y()+pos[7].x()]);
+//            QVector3D dirs[8];
+//            for (int i = 0; i < 8; ++i)
+//                dirs[i] = coords[i] - coordsCtr;
+//            QVector3D sum;
+//            for (int i = 0; i < 7; ++i)
+//            {
+//                float delta = 0.001f;
+//                QVector3D normal;
+//                if (dirs[i].z() > delta || dirs[i+1].z() > delta)
+//                    normal = QVector3D(0.f,0.f,0.f);
+//                else
+//                    normal = QVector3D::crossProduct(dirs[i],dirs[i+1]);
+//                sum += normal;
+//            }
+//            QVector3D theNormal = sum.normalized();
+//            normals[3 * (w * y + x) + 0] = (theNormal.x() + 1.f) * 0.5f;
+//            normals[3 * (w * y + x) + 1] = (theNormal.y() + 1.f) * 0.5f;
+//            normals[3 * (w * y + x) + 2] = (theNormal.z() + 1.f) * 0.5f;
+//        }
+//        texArrNml->setData(0, layer,
+//                QOpenGLTexture::RGB, QOpenGLTexture::Float32,
+//                normals);
+//        delete [] normals;
+//    }
+//    timeval end; gettimeofday(&end, NULL);
+//    double time_normal = (end.tv_sec - start.tv_sec) * 1000.0 + (end.tv_usec - start.tv_usec) / 1000.0;
+//    std::cout << "Time: Normal:  " << time_normal << " ms" << std::endl;
+*/
+}
+
+void Viewer::initTexNormal()
+{
     // texture
     texArrNml = new QOpenGLTexture(QOpenGLTexture::Target2DArray);
     texArrNml->setSize(imageRaf.getWidth(), imageRaf.getHeight());
@@ -441,77 +558,46 @@ void Viewer::updateTexNormal()
     texArrNml->allocateStorage();
     texArrNml->setWrapMode(QOpenGLTexture::ClampToEdge);
     texArrNml->setMinMagFilters(QOpenGLTexture::Linear, QOpenGLTexture::Linear);
-    // calculate normal in CPU -- this is going to be painful
-    timeval start; gettimeofday(&start, NULL);
-    for (int layer = 0; layer < imageRaf.getNBins(); ++layer)
+    // fbo
+    fboArrNml.resize(imageRaf.getNBins());
+    glGenFramebuffers(imageRaf.getNBins(), fboArrNml.data());
+    for (int iFbo = 0; iFbo < fboArrNml.size(); ++iFbo)
     {
-        int w = imageRaf.getWidth();
-        int h = imageRaf.getHeight();
-        float* normals = new float [3 * w * h];
-        float* depths = &(imageRaf.getDepths().get()[layer * w * h]);
-#pragma omp parallel for
-        for (int y = 0; y < w; ++y)
-#pragma omp parallel for
-        for (int x = 0; x < h; ++x)
-        {
-            // 3 2 1
-            // 4 C 0
-            // 5 6 7
-            float tx = (float(x) + 0.5f) / float(w);
-            float ty = (float(y) + 0.5f) / float(h);
-            float dx = 1.f / float(w);
-            float dy = 1.f / float(h);
-            QPoint pos[8];
-            pos[0] = QPoint(x+1,y+0);
-            pos[1] = QPoint(x+1,y+1);
-            pos[2] = QPoint(x+0,y+1);
-            pos[3] = QPoint(x-1,y+1);
-            pos[4] = QPoint(x-1,y+0);
-            pos[5] = QPoint(x-1,y-1);
-            pos[6] = QPoint(x+0,y-1);
-            pos[7] = QPoint(x+1,y-1);
-            for (int i = 0; i < 8; ++i)
-            {
-                pos[i].rx() = std::min(pos[i].x(), w-1);
-                pos[i].rx() = std::max(pos[i].x(), 0);
-                pos[i].ry() = std::min(pos[i].y(), h-1);
-                pos[i].ry() = std::max(pos[i].y(), 0);
-            }
-            QVector3D coordsCtr(tx, ty, depths[w*y+x]);
-            QVector3D coords[8];
-            coords[0] = QVector3D(tx+dx, ty   , depths[w*pos[0].y()+pos[0].x()]);
-            coords[1] = QVector3D(tx+dx, ty+dy, depths[w*pos[1].y()+pos[1].x()]);
-            coords[2] = QVector3D(tx   , ty+dy, depths[w*pos[2].y()+pos[2].x()]);
-            coords[3] = QVector3D(tx-dx, ty+dy, depths[w*pos[3].y()+pos[3].x()]);
-            coords[4] = QVector3D(tx-dx, ty   , depths[w*pos[4].y()+pos[4].x()]);
-            coords[5] = QVector3D(tx-dx, ty-dy, depths[w*pos[5].y()+pos[5].x()]);
-            coords[6] = QVector3D(tx   , ty-dy, depths[w*pos[6].y()+pos[6].x()]);
-            coords[7] = QVector3D(tx+dx, ty-dy, depths[w*pos[7].y()+pos[7].x()]);
-            QVector3D dirs[8];
-            for (int i = 0; i < 8; ++i)
-                dirs[i] = coords[i] - coordsCtr;
-            QVector3D sum;
-            for (int i = 0; i < 7; ++i)
-            {
-                float delta = 0.001f;
-                QVector3D normal;
-                if (dirs[i].z() > delta || dirs[i+1].z() > delta)
-                    normal = QVector3D(0.f,0.f,0.f);
-                else
-                    normal = QVector3D::crossProduct(dirs[i],dirs[i+1]);
-                sum += normal;
-            }
-            QVector3D theNormal = sum.normalized();
-            normals[3 * (w * y + x) + 0] = (theNormal.x() + 1.f) * 0.5f;
-            normals[3 * (w * y + x) + 1] = (theNormal.y() + 1.f) * 0.5f;
-            normals[3 * (w * y + x) + 2] = (theNormal.z() + 1.f) * 0.5f;
-        }
-        texArrNml->setData(0, layer,
-                QOpenGLTexture::RGB, QOpenGLTexture::Float32,
-                normals);
-        delete [] normals;
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboArrNml[iFbo]);
+        glFramebufferTextureLayer(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texArrNml->textureId(), 0, iFbo);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     }
-    timeval end; gettimeofday(&end, NULL);
-    double time_normal = (end.tv_sec - start.tv_sec) * 1000.0 + (end.tv_usec - start.tv_usec) / 1000.0;
-    std::cout << "Time: Normal:  " << time_normal << " ms" << std::endl;
+}
+
+void Viewer::updateFeatureMap()
+{
+    int w = imageRaf.getWidth();
+    int h = imageRaf.getHeight();
+    featureTracker.setDim(w, h);
+    // depths
+    std::vector<float*> deps;
+    deps.push_back(imageRaf.getDepths().get());
+    for (int i = 1; i < nBins; ++i)
+        deps.push_back(deps.front() + w*h*i);
+    // mask
+    mask = std::vector<float>(w*h, 0.f);
+    featureTracker.track(deps[8], mask.data());
+    nFeatures = featureTracker.getNumFeatures();
+    for (auto& p : mask)
+        p /= float(nFeatures);
+    std::cout << "nFeatures: " << nFeatures << std::endl;
+    // clean up
+    if (texFeature)
+    {
+        assert(!texFeature->isBound());
+        delete texFeature; texFeature = NULL;
+    }
+    // new texture
+    texFeature = new QOpenGLTexture(QOpenGLTexture::Target2D);
+    texFeature->setSize(w, h);
+    texFeature->setFormat(QOpenGLTexture::R32F);
+    texFeature->allocateStorage();
+    texFeature->setWrapMode(QOpenGLTexture::ClampToEdge);
+    texFeature->setMinMagFilters(QOpenGLTexture::Nearest, QOpenGLTexture::Nearest);
+    texFeature->setData(QOpenGLTexture::Red, QOpenGLTexture::Float32, mask.data());
 }
