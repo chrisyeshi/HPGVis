@@ -15,7 +15,8 @@ Viewer::Viewer(QWidget *parent) :
     texTf(QOpenGLTexture::Target1D),
     texAlpha(QOpenGLTexture::Target1D),
     texArrRaf(NULL), texArrDep(NULL),
-    zoomFactor(1.f), texArrNml(NULL), texFeature(NULL)
+    zoomFactor(1.f), texArrNml(NULL),
+    texFeature(NULL), HighlightFeatures(false), SelectedFeature(0)
 {
     std::cout << "OpenGL Version: " << this->context()->format().majorVersion() << "." << this->context()->format().minorVersion() << std::endl;
     setFocusPolicy(Qt::StrongFocus);
@@ -36,11 +37,11 @@ Viewer::~Viewer()
 //
 //
 
-void Viewer::renderRAF(const hpgv::ImageRAF &image)
+void Viewer::renderRAF(const hpgv::ImageRAF *image)
 {
     makeCurrent();
     imageRaf = image;
-    std::cout << "Image: Width: " << imageRaf.getWidth() << " Height: " << imageRaf.getHeight() << std::endl;
+    std::cout << "Image: Width: " << imageRaf->getWidth() << " Height: " << imageRaf->getHeight() << std::endl;
     updateTexRAF();
     updateTexNormal();
     updateFeatureMap();
@@ -123,15 +124,15 @@ void Viewer::paintGL()
     texArrRaf->bind(2);
     texArrNml->bind(3);
     texArrDep->bind(4);
-    texFeature->bind(5);
+    if (texFeature) texFeature->bind(5);
 
-    progRaf.setUniformValue("invVP", 1.f / float(imageRaf.getWidth()), 1.f / float(imageRaf.getHeight()));
+    progRaf.setUniformValue("invVP", 1.f / float(imageRaf->getWidth()), 1.f / float(imageRaf->getHeight()));
     progRaf.setUniformValue("selectedID", float(SelectedFeature)/nFeatures);
     progRaf.setUniformValue("featureHighlight", int(HighlightFeatures ? 1 : 0));
 
     glDrawArrays(GL_TRIANGLE_FAN, 0, nVertsQuad);
 
-    texFeature->release();
+    if (texFeature) texFeature->release();
     texArrDep->release();
     texArrNml->release();
     texArrRaf->release();
@@ -156,7 +157,7 @@ void Viewer::EnableHighlighting(float x, float y)
     cout << "Feature Highlighting Enabled!" << endl;
     HighlightFeatures = true;
 
-    int idx = int(x) + int(y) * imageRaf.getWidth();
+    int idx = int(x) + int(y) * imageRaf->getWidth();
     SelectedFeature = int(mask[idx] * nFeatures + 0.5);
 
     std::cout << "SelectedFeature: " << SelectedFeature << std::endl;
@@ -174,17 +175,25 @@ void Viewer::DisableHighlighting()
 void Viewer::mousePressEvent(QMouseEvent *e)
 {
     cursorPrev = e->localPos();
-    if (HighlightFeatures && e->buttons() & Qt::LeftButton)
-    {
-        float wx = float(e->x()) / float(width());
-        float wy = float(height() - e->y()) / float(height());
-        QVector4D screen(2.f * (wx - 0.5f), 2.f * (wy - 0.5f), 0.f, 1.f);
-        QVector4D world = mvp().inverted() * screen;
-        int x = (world.x() + 1.0) / 2.f * imageRaf.getWidth();
-        int y = (world.y() + 1.0) / 2.f * imageRaf.getHeight();
-        if (x < 0 || x >= imageRaf.getWidth() || y < 0 || y >= imageRaf.getHeight())
-            return;
-        EnableHighlighting(x, y);
+}
+
+void Viewer::mouseReleaseEvent(QMouseEvent *e)
+{
+    QPointF moved = e->localPos() - cursorPrev;
+    if (moved.manhattanLength() < 1)
+    { // It's a click
+        if (HighlightFeatures && e->button() == Qt::LeftButton)
+        {
+            float wx = float(e->x()) / float(width());
+            float wy = float(height() - e->y()) / float(height());
+            QVector4D screen(2.f * (wx - 0.5f), 2.f * (wy - 0.5f), 0.f, 1.f);
+            QVector4D world = mvp().inverted() * screen;
+            int x = (world.x() + 1.0) / 2.f * imageRaf->getWidth();
+            int y = (world.y() + 1.0) / 2.f * imageRaf->getHeight();
+            if (x < 0 || x >= imageRaf->getWidth() || y < 0 || y >= imageRaf->getHeight())
+                return;
+            EnableHighlighting(x, y);
+        }
     }
 }
 
@@ -205,24 +214,19 @@ void Viewer::mouseMoveEvent(QMouseEvent *e)
     {
         int wx = e->x();
         int wy = height() - e->y();
-        int x = double(wx) / double(width()) * double(imageRaf.getWidth());
-        int y = double(wy) / double(height()) * double(imageRaf.getHeight());
-        if (x < 0 || x >= imageRaf.getWidth() || y < 0 || y >= imageRaf.getHeight())
+        int x = double(wx) / double(width()) * double(imageRaf->getWidth());
+        int y = double(wy) / double(height()) * double(imageRaf->getHeight());
+        if (x < 0 || x >= imageRaf->getWidth() || y < 0 || y >= imageRaf->getHeight())
             return;
         std::cout << "[" << x << "," << y << "]: value: ";
-        for (unsigned int i = 0; i < imageRaf.getNBins(); ++i)
-            std::cout << imageRaf.getRafs()[imageRaf.getWidth() * imageRaf.getHeight() * i + (y * imageRaf.getWidth() + x)] << ", ";
+        for (unsigned int i = 0; i < imageRaf->getNBins(); ++i)
+            std::cout << imageRaf->getRafs()[imageRaf->getWidth() * imageRaf->getHeight() * i + (y * imageRaf->getWidth() + x)] << ", ";
         std::cout << std::endl;
         std::cout << "[" << x << "," << y << "]: depth: ";
-        for (unsigned int i = 0; i < imageRaf.getNBins(); ++i)
-            std::cout << imageRaf.getDepths()[imageRaf.getWidth() * imageRaf.getHeight() * i + (y * imageRaf.getWidth() + x)] << ", ";
+        for (unsigned int i = 0; i < imageRaf->getNBins(); ++i)
+            std::cout << imageRaf->getDepths()[imageRaf->getWidth() * imageRaf->getHeight() * i + (y * imageRaf->getWidth() + x)] << ", ";
         std::cout << std::endl;
     }
-//    // feature extraction/tracking
-//    if(e->buttons() & Qt::RightButton)
-//        DisableHighlighting();
-//    if(e->buttons() & Qt::LeftButton)
-//        EnableHighlighting(e->x(), e->y());
 }
 
 void Viewer::keyPressEvent(QKeyEvent *e)
@@ -253,7 +257,7 @@ void Viewer::keyPressEvent(QKeyEvent *e)
         if (HighlightFeatures)
             DisableHighlighting();
         else
-            EnableHighlighting(imageRaf.getWidth() / 2, imageRaf.getHeight() / 2);
+            EnableHighlighting(imageRaf->getWidth() / 2, imageRaf->getHeight() / 2);
         break;
     }
 
@@ -291,7 +295,7 @@ void Viewer::updateProgram()
 {
     progRaf.removeAllShaders();
     progRaf.addShaderFromSourceFile(QOpenGLShader::Vertex,   "../../viewer/shaders/raf.vert");
-    progRaf.addShaderFromSourceFile(QOpenGLShader::Fragment, "../../viewer/shaders/new.frag");
+    progRaf.addShaderFromSourceFile(QOpenGLShader::Fragment, "../../viewer/shaders/raf.frag");
     progRaf.link();
     progRaf.bind();
     progRaf.setUniformValue("nBins", nBins);
@@ -361,16 +365,16 @@ void Viewer::updateTexRAF()
     }
     // new texture array
     texArrRaf = new QOpenGLTexture(QOpenGLTexture::Target2DArray);
-    texArrRaf->setSize(imageRaf.getWidth(), imageRaf.getHeight());
-    texArrRaf->setLayers(imageRaf.getNBins());
+    texArrRaf->setSize(imageRaf->getWidth(), imageRaf->getHeight());
+    texArrRaf->setLayers(imageRaf->getNBins());
     texArrRaf->setFormat(QOpenGLTexture::R32F);
     texArrRaf->allocateStorage();
     texArrRaf->setWrapMode(QOpenGLTexture::ClampToEdge);
     texArrRaf->setMinMagFilters(QOpenGLTexture::Linear, QOpenGLTexture::Linear);
-    for (unsigned int layer = 0; layer < imageRaf.getNBins(); ++layer)
+    for (unsigned int layer = 0; layer < imageRaf->getNBins(); ++layer)
     {
         texArrRaf->setData(0, layer, QOpenGLTexture::Red, QOpenGLTexture::Float32,
-                &(imageRaf.getRafs().get()[layer * imageRaf.getWidth() * imageRaf.getHeight()]));
+                &(imageRaf->getRafs().get()[layer * imageRaf->getWidth() * imageRaf->getHeight()]));
     }
 
     // Depth
@@ -381,16 +385,16 @@ void Viewer::updateTexRAF()
     }
     // new texture array
     texArrDep = new QOpenGLTexture(QOpenGLTexture::Target2DArray);
-    texArrDep->setSize(imageRaf.getWidth(), imageRaf.getHeight());
-    texArrDep->setLayers(imageRaf.getNBins());
+    texArrDep->setSize(imageRaf->getWidth(), imageRaf->getHeight());
+    texArrDep->setLayers(imageRaf->getNBins());
     texArrDep->setFormat(QOpenGLTexture::R32F);
     texArrDep->allocateStorage();
     texArrDep->setWrapMode(QOpenGLTexture::ClampToEdge);
     texArrDep->setMinMagFilters(QOpenGLTexture::Nearest, QOpenGLTexture::Nearest);
-    for (unsigned int layer = 0; layer < imageRaf.getNBins(); ++layer)
+    for (unsigned int layer = 0; layer < imageRaf->getNBins(); ++layer)
     {
         texArrDep->setData(0, layer, QOpenGLTexture::Red, QOpenGLTexture::Float32,
-                &(imageRaf.getDepths().get()[layer * imageRaf.getWidth() * imageRaf.getHeight()]));
+                &(imageRaf->getDepths().get()[layer * imageRaf->getWidth() * imageRaf->getHeight()]));
     }
 }
 
@@ -418,7 +422,7 @@ void Viewer::initTexNormalTools()
 void Viewer::updateTexNormal()
 {
     // if the dimension is changed, delete the texture
-    if (texArrNml && (texArrNml->width() != imageRaf.getWidth() || texArrNml->height() != imageRaf.getHeight() || texArrNml->layers() != imageRaf.getNBins()))
+    if (texArrNml && (texArrNml->width() != imageRaf->getWidth() || texArrNml->height() != imageRaf->getHeight() || texArrNml->layers() != imageRaf->getNBins()))
     {
         delete texArrNml;
         texArrNml = NULL;
@@ -434,8 +438,8 @@ void Viewer::updateTexNormal()
     // calculate normal in GPU -- Yeah!~ I will keep the equivalent CPU code in comment below. We shall compare the performance difference.
     progArrNml.bind();
     progArrNml.setUniformValue("nBins", nBins);
-    progArrNml.setUniformValue("vp", imageRaf.getWidth(), imageRaf.getHeight());
-    progArrNml.setUniformValue("invVP", 1.f / float(imageRaf.getWidth()), 1.f / float(imageRaf.getHeight()));
+    progArrNml.setUniformValue("vp", imageRaf->getWidth(), imageRaf->getHeight());
+    progArrNml.setUniformValue("invVP", 1.f / float(imageRaf->getWidth()), 1.f / float(imageRaf->getHeight()));
     vaoArrNml.bind();
     texArrDep->bind(0);
 
@@ -446,7 +450,7 @@ void Viewer::updateTexNormal()
     // viewport
     GLint viewport[4];
     glGetIntegerv(GL_VIEWPORT, viewport);
-    glViewport(0, 0, imageRaf.getWidth(), imageRaf.getHeight());
+    glViewport(0, 0, imageRaf->getWidth(), imageRaf->getHeight());
     // draw
     for (int layer = 0; layer < texArrNml->layers(); ++layer)
     {
@@ -474,12 +478,12 @@ void Viewer::updateTexNormal()
 /*
 //    // calculate normal in CPU -- this is going to be painful
 //    timeval start; gettimeofday(&start, NULL);
-//    for (int layer = 0; layer < imageRaf.getNBins(); ++layer)
+//    for (int layer = 0; layer < imageRaf->getNBins(); ++layer)
 //    {
-//        int w = imageRaf.getWidth();
-//        int h = imageRaf.getHeight();
+//        int w = imageRaf->getWidth();
+//        int h = imageRaf->getHeight();
 //        float* normals = new float [3 * w * h];
-//        float* depths = &(imageRaf.getDepths().get()[layer * w * h]);
+//        float* depths = &(imageRaf->getDepths().get()[layer * w * h]);
 //#pragma omp parallel for
 //        for (int y = 0; y < w; ++y)
 //#pragma omp parallel for
@@ -552,15 +556,15 @@ void Viewer::initTexNormal()
 {
     // texture
     texArrNml = new QOpenGLTexture(QOpenGLTexture::Target2DArray);
-    texArrNml->setSize(imageRaf.getWidth(), imageRaf.getHeight());
-    texArrNml->setLayers(imageRaf.getNBins());
+    texArrNml->setSize(imageRaf->getWidth(), imageRaf->getHeight());
+    texArrNml->setLayers(imageRaf->getNBins());
     texArrNml->setFormat(QOpenGLTexture::RGB32F);
     texArrNml->allocateStorage();
     texArrNml->setWrapMode(QOpenGLTexture::ClampToEdge);
     texArrNml->setMinMagFilters(QOpenGLTexture::Linear, QOpenGLTexture::Linear);
     // fbo
-    fboArrNml.resize(imageRaf.getNBins());
-    glGenFramebuffers(imageRaf.getNBins(), fboArrNml.data());
+    fboArrNml.resize(imageRaf->getNBins());
+    glGenFramebuffers(imageRaf->getNBins(), fboArrNml.data());
     for (int iFbo = 0; iFbo < fboArrNml.size(); ++iFbo)
     {
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboArrNml[iFbo]);
@@ -571,12 +575,14 @@ void Viewer::initTexNormal()
 
 void Viewer::updateFeatureMap()
 {
-    int w = imageRaf.getWidth();
-    int h = imageRaf.getHeight();
+    timeval start; gettimeofday(&start, NULL);
+
+    int w = imageRaf->getWidth();
+    int h = imageRaf->getHeight();
     featureTracker.setDim(w, h);
     // depths
     std::vector<float*> deps;
-    deps.push_back(imageRaf.getDepths().get());
+    deps.push_back(imageRaf->getDepths().get());
     for (int i = 1; i < nBins; ++i)
         deps.push_back(deps.front() + w*h*i);
     // mask
@@ -600,4 +606,8 @@ void Viewer::updateFeatureMap()
     texFeature->setWrapMode(QOpenGLTexture::ClampToEdge);
     texFeature->setMinMagFilters(QOpenGLTexture::Nearest, QOpenGLTexture::Nearest);
     texFeature->setData(QOpenGLTexture::Red, QOpenGLTexture::Float32, mask.data());
+
+    timeval end; gettimeofday(&end, NULL);
+    double time_normal = (end.tv_sec - start.tv_sec) * 1000.0 + (end.tv_usec - start.tv_usec) / 1000.0;
+    std::cout << "Time: Feature: " << time_normal << " ms" << std::endl;
 }

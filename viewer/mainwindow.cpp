@@ -33,59 +33,63 @@ void MainWindow::open()
 {
     QString qfilename = QFileDialog::getOpenFileName(this,
             tr("Open RAF file"), QString(), tr("Explorable Images (*.raf)"));
+    int iImage = imageCache.open(qfilename);
+    ui->timeSlider->setRange(0, imageCache.getImageCount() - 1);
+    ui->timeSlider->setValue(iImage);
+//    ui->viewer->renderRAF(imageCache.getImage(iImage));
 
-    QFileInfo qfi(qfilename);
+//    QFileInfo qfi(qfilename);
 
-    parentDir = qfi.absoluteDir();
-    files = parentDir.entryList(QStringList(tr("*.raf")));
+//    parentDir = qfi.absoluteDir();
+//    files = parentDir.entryList(QStringList(tr("*.raf")));
 
-    if(files.empty())
-    {
-        cout << "No files Available :(" << endl;
-        return;
-    }
+//    if(files.empty())
+//    {
+//        cout << "No files Available :(" << endl;
+//        return;
+//    }
 
-    ui->timeSlider->setRange(0, files.size() - 1);
+//    ui->timeSlider->setRange(0, files.size() - 1);
 
-    hpgv::ImageRAF image;
-    if (image.open(qfilename.toUtf8().constData()))
-    {
-        ui->viewer->renderRAF(image);
-    }
+//    hpgv::ImageRAF image;
+//    if (image.open(qfilename.toUtf8().constData()))
+//    {
+//        ui->viewer->renderRAF(image);
+//    }
 
 }
 
 void MainWindow::movie()
 {
-    for (int iFile = 0; iFile < files.size(); ++iFile)
+    for (int iFile = 0; iFile < imageCache.getImageCount(); ++iFile)
     {
-        hpgv::ImageRAF image;
-        bool isOpen = image.open(parentDir.absoluteFilePath(files[iFile]).toUtf8().constData());
-        if (isOpen)
-        {
-            ui->viewer->renderRAF(image);
+//        hpgv::ImageRAF image;
+//        bool isOpen = image.open(parentDir.absoluteFilePath(files[iFile]).toUtf8().constData());
+//        if (isOpen)
+//        {
+            ui->viewer->renderRAF(imageCache.getImage(iFile));
             ui->viewer->updateGL();
             ui->viewer->screenCapture();
-        }
+//        }
     }
 }
 
 void MainWindow::timeChanged(int val)
 {
 //    int val = ui->timeSlider->value();
-    if(val < 0 || val >= files.size())
+    if(val < 0 || val >= imageCache.getImageCount())
         return;
 
-    hpgv::ImageRAF image;
-    timeval start; gettimeofday(&start, NULL);
-    bool isOpen = image.open(parentDir.absoluteFilePath(files[val]).toUtf8().constData());
-    timeval end; gettimeofday(&end, NULL);
-    double time_file = (end.tv_sec - start.tv_sec) * 1000.0 + (end.tv_usec - start.tv_usec) / 1000.0;
-    std::cout << "Time: File:    " << time_file << " ms" << std::endl;
-    if (isOpen)
-    {
-        ui->viewer->renderRAF(image);
-    }
+//    hpgv::ImageRAF image;
+//    timeval start; gettimeofday(&start, NULL);
+//    bool isOpen = image.open(parentDir.absoluteFilePath(files[val]).toUtf8().constData());
+//    timeval end; gettimeofday(&end, NULL);
+//    double time_file = (end.tv_sec - start.tv_sec) * 1000.0 + (end.tv_usec - start.tv_usec) / 1000.0;
+//    std::cout << "Time: File:    " << time_file << " ms" << std::endl;
+//    if (isOpen)
+//    {
+        ui->viewer->renderRAF(imageCache.getImage(val));
+//    }
 }
 
 //

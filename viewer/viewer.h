@@ -24,7 +24,7 @@ public:
     // The interface
     //
     //
-    void renderRAF(const hpgv::ImageRAF& image);
+    void renderRAF(const hpgv::ImageRAF* image);
     void snapshot(const std::string& filename);
 
 signals:
@@ -49,6 +49,7 @@ protected:
     virtual void paintGL();
     virtual void resizeGL(int width, int height);
     virtual void mousePressEvent(QMouseEvent *e);
+    virtual void mouseReleaseEvent(QMouseEvent *e);
     virtual void mouseMoveEvent(QMouseEvent *e);
     virtual void keyPressEvent(QKeyEvent *e);
     virtual void wheelEvent(QWheelEvent* e);
@@ -80,7 +81,6 @@ private:
     static const int nVertsQuad = 4;
     static const int nFloatsPerVertQuad = 2;
     static const int nBins = 16;
-    static const int nAlphaBins = 17;
 
     //
     //
@@ -101,7 +101,7 @@ private:
     QOpenGLVertexArrayObject vaoArrNml;
     QOpenGLShaderProgram progArrNml;
 
-    hpgv::ImageRAF imageRaf;
+    const hpgv::ImageRAF* imageRaf;
     bool HighlightFeatures;
     int SelectedFeature;
 
