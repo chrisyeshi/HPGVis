@@ -30,7 +30,6 @@ link_directories(${CMAKE_BINARY_DIR}/hpgv)
 set(SHADERS
         shaders/raf.vert
         shaders/raf.frag
-        shaders/new.frag
         shaders/normal.vert
         shaders/normal.frag)
 set(SOURCES
@@ -41,7 +40,8 @@ set(SOURCES
         mainwindow.ui
         viewer.cpp
         featuretracker.cpp
-        lightctrl.cpp)
+        lightctrl.cpp
+        imagecache.cpp)
 
 #
 #

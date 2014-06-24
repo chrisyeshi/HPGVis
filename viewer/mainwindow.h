@@ -4,6 +4,8 @@
 #include <QMainWindow>
 #include <QDir>
 #include <QStringList>
+#include <QTimer>
+#include "imagecache.h"
 
 class HPGVRender;
 
@@ -30,7 +32,7 @@ private:
     Ui::MainWindow *ui;
     QDir parentDir;
     QStringList files;
-
+    ImageCache imageCache;
 };
 
 #endif // MAINWINDOW_H
