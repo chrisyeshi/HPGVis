@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QDir>
 #include <QStringList>
+#include <QTimer>
 #include "imagecache.h"
 
 class HPGVRender;

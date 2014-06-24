@@ -112,7 +112,7 @@ void Viewer::initializeGL()
 
 void Viewer::paintGL()
 {
-    timeval start; gettimeofday(&start, NULL);
+//    timeval start; gettimeofday(&start, NULL);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     if (!texArrRaf) return;
@@ -141,9 +141,9 @@ void Viewer::paintGL()
     vao.release();
     progRaf.release();
 
-    timeval end; gettimeofday(&end, NULL);
-    double time_normal = (end.tv_sec - start.tv_sec) * 1000.0 + (end.tv_usec - start.tv_usec) / 1000.0;
-    std::cout << "Time: Paint:  " << time_normal << " ms" << std::endl;
+//    timeval end; gettimeofday(&end, NULL);
+//    double time_normal = (end.tv_sec - start.tv_sec) * 1000.0 + (end.tv_usec - start.tv_usec) / 1000.0;
+//    std::cout << "Time: Paint:  " << time_normal << " ms" << std::endl;
 }
 
 void Viewer::resizeGL(int width, int height)
@@ -433,7 +433,7 @@ void Viewer::updateTexNormal()
     if (!texArrNml)
         initTexNormal();
 
-    timeval start; gettimeofday(&start, NULL);
+//    timeval start; gettimeofday(&start, NULL);
 
     // calculate normal in GPU -- Yeah!~ I will keep the equivalent CPU code in comment below. We shall compare the performance difference.
     progArrNml.bind();
@@ -444,9 +444,9 @@ void Viewer::updateTexNormal()
     texArrDep->bind(0);
 
     glFinish();
-    timeval init; gettimeofday(&init, NULL);
-    double time_init = (init.tv_sec - start.tv_sec) * 1000.0 + (init.tv_usec - start.tv_usec) / 1000.0;
-    std::cout << "Time: Normal: Init: " << time_init << " ms" << std::endl;
+//    timeval init; gettimeofday(&init, NULL);
+//    double time_init = (init.tv_sec - start.tv_sec) * 1000.0 + (init.tv_usec - start.tv_usec) / 1000.0;
+//    std::cout << "Time: Normal: Init: " << time_init << " ms" << std::endl;
     // viewport
     GLint viewport[4];
     glGetIntegerv(GL_VIEWPORT, viewport);
@@ -463,17 +463,17 @@ void Viewer::updateTexNormal()
     }
     glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 
-    timeval draw; gettimeofday(&draw, NULL);
-    double time_draw = (draw.tv_sec - init.tv_sec) * 1000.0 + (draw.tv_usec - init.tv_usec) / 1000.0;
-    std::cout << "Time: Normal: Draw " << time_draw << " ms" << std::endl;
+//    timeval draw; gettimeofday(&draw, NULL);
+//    double time_draw = (draw.tv_sec - init.tv_sec) * 1000.0 + (draw.tv_usec - init.tv_usec) / 1000.0;
+//    std::cout << "Time: Normal: Draw " << time_draw << " ms" << std::endl;
 
     texArrDep->release();
     vaoArrNml.release();
     progArrNml.release();
 
-    timeval end; gettimeofday(&end, NULL);
-    double time_normal = (end.tv_sec - draw.tv_sec) * 1000.0 + (end.tv_usec - draw.tv_usec) / 1000.0;
-    std::cout << "Time: Normal: Clean: " << time_normal << " ms" << std::endl;
+//    timeval end; gettimeofday(&end, NULL);
+//    double time_normal = (end.tv_sec - draw.tv_sec) * 1000.0 + (end.tv_usec - draw.tv_usec) / 1000.0;
+//    std::cout << "Time: Normal: Clean: " << time_normal << " ms" << std::endl;
 
 /*
 //    // calculate normal in CPU -- this is going to be painful
@@ -575,7 +575,7 @@ void Viewer::initTexNormal()
 
 void Viewer::updateFeatureMap()
 {
-    timeval start; gettimeofday(&start, NULL);
+//    timeval start; gettimeofday(&start, NULL);
 
     int w = imageRaf->getWidth();
     int h = imageRaf->getHeight();
@@ -591,7 +591,7 @@ void Viewer::updateFeatureMap()
     nFeatures = featureTracker.getNumFeatures();
     for (auto& p : mask)
         p /= float(nFeatures);
-    std::cout << "nFeatures: " << nFeatures << std::endl;
+//    std::cout << "nFeatures: " << nFeatures << std::endl;
     // clean up
     if (texFeature)
     {
@@ -607,7 +607,7 @@ void Viewer::updateFeatureMap()
     texFeature->setMinMagFilters(QOpenGLTexture::Nearest, QOpenGLTexture::Nearest);
     texFeature->setData(QOpenGLTexture::Red, QOpenGLTexture::Float32, mask.data());
 
-    timeval end; gettimeofday(&end, NULL);
-    double time_normal = (end.tv_sec - start.tv_sec) * 1000.0 + (end.tv_usec - start.tv_usec) / 1000.0;
-    std::cout << "Time: Feature: " << time_normal << " ms" << std::endl;
+//    timeval end; gettimeofday(&end, NULL);
+//    double time_normal = (end.tv_sec - start.tv_sec) * 1000.0 + (end.tv_usec - start.tv_usec) / 1000.0;
+//    std::cout << "Time: Feature: " << time_normal << " ms" << std::endl;
 }
