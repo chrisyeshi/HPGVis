@@ -76,7 +76,7 @@ void Viewer::screenCapture()
 {
     static int i = 1;
     std::stringstream ss;
-    ss << "snapshot_" << i++;
+    ss << "snapshot_" << i++ << ".png";
     this->snapshot(ss.str());
 }
 
@@ -294,8 +294,8 @@ void Viewer::initQuadVbo()
 void Viewer::updateProgram()
 {
     progRaf.removeAllShaders();
-    progRaf.addShaderFromSourceFile(QOpenGLShader::Vertex,   "../../viewer/shaders/raf.vert");
-    progRaf.addShaderFromSourceFile(QOpenGLShader::Fragment, "../../viewer/shaders/raf.frag");
+    progRaf.addShaderFromSourceFile(QOpenGLShader::Vertex,   "../../viewer/shaders/aware.vert");
+    progRaf.addShaderFromSourceFile(QOpenGLShader::Fragment, "../../viewer/shaders/aware.frag");
     progRaf.link();
     progRaf.bind();
     progRaf.setUniformValue("nBins", nBins);
@@ -325,7 +325,8 @@ void Viewer::updateShaderMVP()
 
 void Viewer::updateVAO()
 {
-    vao.create();
+    if (!vao.isCreated())
+        vao.create();
     vao.bind();
     vboQuad.bind();
     progRaf.enableAttributeArray("vertex");

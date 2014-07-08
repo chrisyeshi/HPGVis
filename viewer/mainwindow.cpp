@@ -34,6 +34,8 @@ void MainWindow::open()
 {
     QString qfilename = QFileDialog::getOpenFileName(this,
             tr("Open RAF file"), QString(), tr("Explorable Images (*.raf)"));
+    if (qfilename.isNull())
+        return;
     int iImage = imageCache.open(qfilename);
     ui->timeSlider->setRange(0, imageCache.getImageCount() - 1);
     ui->timeSlider->setValue(iImage);

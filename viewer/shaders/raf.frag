@@ -48,6 +48,15 @@ vec3 getNormal(int layer)
 //    return normalize(sum);
 }
 
+vec2 getGradient(int layer)
+{
+    float xp = texture(rafarr, vec3(FragIn.texCoord + vec2( invVP.x,     0.0), float(layer))).r;
+    float xm = texture(rafarr, vec3(FragIn.texCoord + vec2(-invVP.x,     0.0), float(layer))).r;
+    float yp = texture(rafarr, vec3(FragIn.texCoord + vec2(     0.0, invVP.y), float(layer))).r;
+    float ym = texture(rafarr, vec3(FragIn.texCoord + vec2(     0.0,-invVP.y), float(layer))).r;
+    return vec2((xp-xm)/2.0, (yp-ym)/2.0);
+}
+
 void main()
 {
     nBins = 16;
@@ -102,8 +111,24 @@ void main()
 //        vec4 c = vec4(vec3(colors[i].rgb * lightMult[i]) * binValue[i], binValue[i]);
 //        float attenuation = (1.0 - sum.a) * c.a;
 //        sum += c * attenuation;
-        sum += vec4(vec3(colors[i].rgb * lightMult[i]) * binValue[i], binValue[i]);
+        vec4 layerColor = vec4(vec3(colors[i].rgb * lightMult[i]) * binValue[i], binValue[i]);
+        vec2 grad = getGradient(i);
+        float ro = 9.0 * pow(length(grad), 0.5);
+        sum += /*(1.0 - ro) * */layerColor;
     }
+
+    // depth-aware enhancement
+//    float ro = 0.0;
+//    for (int i = 0; i < nBins; ++i)
+//    {
+//        vec2 grad = getGradient(i);
+//        float eucli = length(grad);
+//        eucli = eucli * eucli;
+//        ro += eucli;
+//    }
+//    ro = 50.0 * pow(ro, 0.5);
+////    sum = vec4(vec3(ro), 1.0);
+//    sum = (1.0 - ro) * sum;
     // feature extraction/tracking
     vec4 ID = texture(featureID, FragIn.texCoord);
     if (featureHighlight == 0)

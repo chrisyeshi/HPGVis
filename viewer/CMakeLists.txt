@@ -31,7 +31,9 @@ set(SHADERS
         shaders/raf.vert
         shaders/raf.frag
         shaders/normal.vert
-        shaders/normal.frag)
+        shaders/normal.frag
+        shaders/aware.vert
+        shaders/aware.frag)
 set(SOURCES
         TF.cpp
         TFEditor.cpp

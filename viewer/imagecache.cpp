@@ -27,6 +27,9 @@ int ImageCache::open(const QString &qfilename)
     if (temp.empty())
         return -1;
     // clean up
+    mutexTasks.lock();
+    tasks.clear();
+    mutexTasks.unlock();
     mutexCache.lock();
     files.clear();
     cache.clear();
@@ -46,6 +49,9 @@ const hpgv::ImageRAF* ImageCache::getImage(int idx)
     if (0 == cache.count(idx))
     {
         std::string filename = dir.absoluteFilePath(files[idx]).toUtf8().constData();
+        mutexCurrTask.lock();
+        assert(currTask.code == Task::Empty);
+        mutexCurrTask.unlock();
         mutexCache.lock();
         cache[idx].open(filename);
         mutexCache.unlock();
@@ -73,17 +79,22 @@ void ImageCache::handleTask(ImageCache *self)
             std::this_thread::sleep_for(std::chrono::milliseconds(200));
             continue;
         }
-        self->mutexTasks.lock();
+        self->mutexCurrTask.lock();
         self->currTask = self->tasks.front();
+        self->mutexTasks.lock();
         self->tasks.pop_front();
         self->mutexTasks.unlock();
         // exit condition
         if (self->currTask.code == Task::Exit)
         {
+            self->currTask = Task(Task::Empty);
+            self->mutexCurrTask.unlock();
             break;
         }
         // handle tasks
         self->handleCurrTask();
+        self->currTask = Task(Task::Empty);
+        self->mutexCurrTask.unlock();
     }
 }
 
@@ -125,6 +136,7 @@ void ImageCache::performCache()
     tasks.push_back(Task(Task::Sleep));
     mutexTasks.unlock();
     // delete tasks
+    mutexCache.lock();
     for (auto& itr : cache)
     {
         if (itr.first < currIdx - nEntries / 2 || itr.first > currIdx + nEntries / 2)
@@ -134,6 +146,7 @@ void ImageCache::performCache()
             mutexTasks.unlock();
         }
     }
+    mutexCache.unlock();
     // forward
     for (int i = currIdx + 1; i <= std::min(currIdx + nEntries / 2, files.size() - 1); ++i)
     {

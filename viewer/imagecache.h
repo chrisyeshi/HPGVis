@@ -45,6 +45,7 @@ private:
     std::thread taskThread;
     std::mutex mutexTasks;
     std::mutex mutexCache;
+    std::mutex mutexCurrTask;
     Task currTask;
     int currIdx;
     QTimer timerCache;
