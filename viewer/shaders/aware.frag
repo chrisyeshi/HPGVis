@@ -57,11 +57,11 @@ void main()
         binValue[i] = texture(rafarr, vec3(FragIn.texCoord, float(i))).r;
     }
     // scale bin values according to the difference between new and old alphas
-//    for (int i = 0; i < nBins; ++i)
-//    {
-//        binValue[i] = (newA[i] + 1.0 - pow(1.0 - newA[i], K + 1.0))
-//                    / (oldA[i] + 1.0 - pow(1.0 - oldA[i], K + 1.0)) * binValue[i];
-//    }
+    for (int i = 0; i < nBins; ++i)
+    {
+        binValue[i] = (newA[i] + 1.0 - pow(1.0 - newA[i], K + 1.0))
+                    / (oldA[i] + 1.0 - pow(1.0 - oldA[i], K + 1.0)) * binValue[i];
+    }
     // gradients
     for (int i = 0; i < nBins; ++i)
     {
@@ -73,7 +73,7 @@ void main()
     {
         vec4 layerColor = vec4(vec3(colors[i].rgb) * binValue[i], binValue[i]);
         float ro = 9.0 * pow(length(gradients[i]), 0.5);
-        sum += /*(1.0 - ro) * */layerColor;
+        sum += (1.0 - ro) * layerColor;
     }
 //    fragColor = vec4(0.5 * (1.0 + (100.0 * vec2(gradients[8]))), 0.0, 1.0);
 //    fragColor = vec4(vec3(binValue[8]), 1.0);

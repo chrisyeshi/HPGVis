@@ -185,15 +185,6 @@ void hpgv_tf_raf_integrate(const float* tf, int tfsize,
         float attenuation = (1.f - histogram->attenuation) * color.a;
         histogram->attenuation += attenuation;
         histogram->raf[binBeg] += attenuation;
-        float binVal = ((float)binBeg + 0.5f) / (float)HPGV_RAF_BIN_NUM;
-        if ((valBeg <= binVal && binVal <= valEnd)
-         || (valEnd <= binVal && binVal <= valBeg)) {
-            float depth = left_depth;
-            if (fabs(valEnd - valBeg) > 0.0001)
-                depth = (binVal - valBeg) / (valEnd - valBeg) * (rite_depth - left_depth) + left_depth;
-            if (depth < histogram->depths[binBeg])
-                histogram->depths[binBeg] = depth;
-        }
         return;
     }
     int dir = (binEnd - binBeg) / abs(binEnd - binBeg);
@@ -212,12 +203,10 @@ void hpgv_tf_raf_integrate(const float* tf, int tfsize,
         float attenuation = (1.f - histogram->attenuation) * color.a;
         histogram->attenuation += attenuation;
         histogram->raf[binBeg] += attenuation;
-        float binVal = ((float)binBeg + 0.5f) / (float)HPGV_RAF_BIN_NUM;
-        if ((valBeg <= binVal && binVal <= valEnd)
-         || (valEnd <= binVal && binVal <= valBeg)) {
-            float depth = left_depth;
-            if (fabs(rite_value - valBeg) > 0.0001)
-                depth = (binVal - valBeg) / (rite_value - valBeg) * (rite_depth - left_depth) + left_depth;
+        if (dir < 0)
+        {
+            float binVal = binVals[binBeg];
+            float depth = (binVal - valBeg) / (rite_value - valBeg) * (rite_depth - left_depth) + left_depth;
             if (depth < histogram->depths[binBeg])
                 histogram->depths[binBeg] = depth;
         }
@@ -241,10 +230,8 @@ void hpgv_tf_raf_integrate(const float* tf, int tfsize,
         float attenuation = (1.f - histogram->attenuation) * color.a;
         histogram->attenuation += attenuation;
         histogram->raf[binId] += attenuation;
-        float valAvg = ((float)binId + 0.5f) / (float)HPGV_RAF_BIN_NUM;
-        float depth = left_depth;
-        if (fabs(rite_value - left_value) > 0.0001)
-            depth = (valAvg - left_value) / (rite_value - left_value) * (rite_depth - left_depth) + left_depth;
+        float binVal = binVals[binId];
+        float depth = (binVal - left_value) / (rite_value - left_value) * (rite_depth - left_depth) + left_depth;
         if (depth < histogram->depths[binId])
             histogram->depths[binId] = depth;
     }
@@ -263,12 +250,10 @@ void hpgv_tf_raf_integrate(const float* tf, int tfsize,
         float attenuation = (1.f - histogram->attenuation) * color.a;
         histogram->attenuation += attenuation;
         histogram->raf[binEnd] += attenuation;
-        float binVal = ((float)binEnd + 0.5f) / (float)HPGV_RAF_BIN_NUM;
-        if ((valBeg <= binVal && binVal <= valEnd)
-         || (valEnd <= binVal && binVal <= valBeg)) {
-            float depth = left_depth;
-            if (fabs(rite_value - valBeg) > 0.0001)
-                depth = (binVal - valBeg) / (rite_value - valBeg) * (rite_depth - left_depth) + left_depth;
+        if (dir > 0)
+        {
+            float binVal = binVals[binEnd];
+            float depth = (binVal - valBeg) / (rite_value - valBeg) * (rite_depth - left_depth) + left_depth;
             if (depth < histogram->depths[binEnd])
                 histogram->depths[binEnd] = depth;
         }
