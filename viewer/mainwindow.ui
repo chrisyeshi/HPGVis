@@ -31,16 +31,12 @@
      <number>0</number>
     </property>
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout">
+     <layout class="QVBoxLayout" name="verticalLayout" stretch="1,0">
       <item>
        <widget class="Viewer" name="viewer" native="true"/>
       </item>
       <item>
-       <widget class="QSlider" name="timeSlider">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-       </widget>
+       <widget class="MarkSlider" name="timeSlider" native="true"/>
       </item>
      </layout>
     </item>
@@ -106,6 +102,12 @@
    <class>LightCtrl</class>
    <extends>QWidget</extends>
    <header>lightctrl.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>MarkSlider</class>
+   <extends>QWidget</extends>
+   <header>markslider.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

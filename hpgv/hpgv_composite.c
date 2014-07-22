@@ -1154,7 +1154,7 @@ swap_control_raf_float(swap_control_t *swapctrl, swap_schedule_t *schedule)
  */
 static void
 swap_control_rafseg_float(swap_control_t *swapctrl, swap_schedule_t *schedule,
-                          float* tf, int tfsize, float sampling_spacing, int segid)
+                          float* tf, int tfsize, const float binTicks[HPGV_RAF_BIN_NUM+1], float sampling_spacing, int segid)
 {
     swap_message_t *inmessage;
     uint64_t offset, recordcount, i, k;
@@ -1210,7 +1210,7 @@ swap_control_rafseg_float(swap_control_t *swapctrl, swap_schedule_t *schedule,
             float rite_value = partialcolor[i].val_head;
             float left_depth = compositecolor[i].dep_tail;
             float rite_depth = partialcolor[i].dep_head;
-            hpgv_tf_raf_seg_integrate(tf, tfsize,
+            hpgv_tf_raf_seg_integrate(tf, tfsize, binTicks,
                     left_value, rite_value, left_depth, rite_depth,
                     sampling_spacing, &compositecolor[i], segid);
             compositecolor[i].val_tail = partialcolor[i].val_tail;
@@ -1550,7 +1550,7 @@ swap_control_gather(swap_control_t *swapctrl)
  *
  */
 static void
-swap_control_composite(swap_control_t *swapctrl, float* tf, int tfsize, float sampling_spacing, int segid)
+swap_control_composite(swap_control_t *swapctrl, float* tf, int tfsize, const float binTicks[HPGV_RAF_BIN_NUM+1], float sampling_spacing, int segid)
 {
     
     uint32_t stage;
@@ -1642,7 +1642,7 @@ swap_control_composite(swap_control_t *swapctrl, float* tf, int tfsize, float sa
                 case HPGV_FLOAT:
                     swap_control_rafseg_float(swapctrl,
                                               swapctrl->schedule[stage],
-                                              tf, tfsize, sampling_spacing, segid);
+                                              tf, tfsize, binTicks, sampling_spacing, segid);
                     break;
                 default:                
                     HPGV_ABORT_P(swapctrl->mpiid, "Unsupported pixel type.", 
@@ -2018,6 +2018,7 @@ int
 hpgv_composite(int width, int height, int format, int type, 
                void *partialpixels, void *finalpixels, float depth,
                int root, MPI_Comm mpicomm, float* tf, int tfsize,
+               const float binTicks[HPGV_RAF_BIN_NUM+1],
                float sampling_spacing, int segid,
                composite_t composite_type)
 {
@@ -2097,7 +2098,7 @@ hpgv_composite(int width, int height, int format, int type,
     HPGV_TIMING_CONTEXTGLOBAL(context);         
 
     /* compositing */
-    swap_control_composite(theSwapControl, tf, tfsize, sampling_spacing, segid);
+    swap_control_composite(theSwapControl, tf, tfsize, binTicks, sampling_spacing, segid);
     
     return HPGV_SUCCESS;
 }

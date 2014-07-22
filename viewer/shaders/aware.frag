@@ -1,7 +1,7 @@
 #version 330
 
 //uniform int nBins;
-//uniform vec2 invVP;
+uniform vec2 invVP;
 uniform sampler1D tf;
 uniform sampler1D rafa;
 uniform sampler2DArray rafarr;
@@ -18,7 +18,7 @@ in VertexData {
 
 layout(location = 0, index = 0) out vec4 fragColor;
 
-vec2 invVP;
+//vec2 invVP;
 int nBins;
 float stepp;
 float K;
@@ -39,7 +39,7 @@ vec2 getGradient(int layer)
 
 void main()
 {
-    invVP = 1.0 * vec2(1.0 / 1024.0);
+//    invVP = 1.0 * vec2(1.0 / 1024.0);
     nBins = 16;
     stepp = 1.0 / nBins;
     K = 1.0;

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <sys/time.h>
 #include "imageraf.h"
+#include "markslider.h"
 using namespace std;
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -14,8 +15,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->tf, SIGNAL(tfChanged(mslib::TF&)), ui->viewer, SLOT(tfChanged(mslib::TF&)));
     connect(ui->open, SIGNAL(clicked()), this, SLOT(open()));
     connect(ui->movie, SIGNAL(clicked()), this, SLOT(movie()));
-    ui->timeSlider->setTracking(false);
-    connect(ui->timeSlider, SIGNAL(valueChanged(int)), this, SLOT(timeChanged(int)));
+    connect(ui->timeSlider->getSlider(), SIGNAL(valueChanged(int)), this, SLOT(timeChanged(int)));
     connect(ui->light, SIGNAL(lightDirChanged(QVector3D)), ui->viewer, SLOT(lightDirChanged(QVector3D)));
 }
 
@@ -39,7 +39,7 @@ void MainWindow::open()
     int iImage = imageCache.open(qfilename);
     ui->timeSlider->setRange(0, imageCache.getImageCount() - 1);
     ui->timeSlider->setValue(iImage);
-    if (!ui->timeSlider->hasTracking())
+    if (!ui->timeSlider->getSlider()->hasTracking())
         ui->viewer->renderRAF(imageCache.getImage(iImage));
 }
 

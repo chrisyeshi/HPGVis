@@ -702,6 +702,7 @@ vis_render_pos(vis_control_t    *visctl,
                 rite_depth = curr_depth;
 
                 hpgv_tf_raf_integrate(image.tf.get(), visctl->colormapsize,
+                        image.binTicks,
                         left_value, rite_value, left_depth, rite_depth,
                         sampling_spacing, histogram);
 
@@ -1083,7 +1084,7 @@ hpgv_vis_tf_para(int colormapsize, int format, int type)
         fprintf(stderr, "HPGV has not been initialized.\n");
         return;
     }
-    
+
     if (format != HPGV_RGBA || type != HPGV_FLOAT) {
         fprintf(stderr,
                 "HPGV currently only supports the colormap with RGBA and float format.");
@@ -1105,9 +1106,12 @@ hpgv_vis_para(const hpgv::Parameter& para)
 {
     theVisControl->format = para.getFormat();
     int framenum = para.getImages().size();
-    hpgv_vis_tf_para(para.getColormap().size,
-            para.getColormap().format,
-            para.getColormap().type);
+    if (para.getFormat() != HPGV_RAF)
+    { // HPGV_RAF doesn't need colormap.
+        hpgv_vis_tf_para(para.getColormap().size,
+                para.getColormap().format,
+                para.getColormap().type);
+    }
     hpgv_vis_framesize(para.getView().width,
             para.getView().height,
             para.getType(),
@@ -1399,6 +1403,7 @@ hpgv_vis_render_one_composite(block_t *block, int root, MPI_Comm comm)
             theVisControl->comm,
             NULL,
             theVisControl->colormapsize,
+            theVisControl->para.getImages()[0].binTicks,
             theVisControl->sampling_spacing,
             0,
             HPGV_TTSWAP);
@@ -1595,6 +1600,7 @@ hpgv_vis_render_multi_composite(block_t *block, int root, MPI_Comm comm)
                            theVisControl->comm,
                            image.tf.get(),
                            theVisControl->colormapsize,
+                           image.binTicks,
                            theVisControl->sampling_spacing,
                            0,
                            HPGV_TTSWAP);
@@ -1650,6 +1656,7 @@ hpgv_vis_render_multi_composite(block_t *block, int root, MPI_Comm comm)
                         theVisControl->comm,
                         image.tf.get(),
                         theVisControl->colormapsize,
+                        image.binTicks,
                         theVisControl->sampling_spacing,
                         s,
                         HPGV_TTSWAP);

@@ -15,11 +15,11 @@ typedef struct tf_color_t tf_color_t;
 
 tf_color_t hpgv_tf_sample(const float* tf, int tfsize, float val);
 
-void hpgv_tf_raf_integrate(const float* tf, int tfsize,
-		float left_value, float rite_value, float left_depth, float rite_depth,
-		float sampling_spacing, hpgv_raf_t* histogram);
+void hpgv_tf_raf_integrate(const float* tf, int tfsize, const float binTicks[],
+        float left_value, float rite_value, float left_depth, float rite_depth,
+        float sampling_spacing, hpgv_raf_t* histogram);
 
-void hpgv_tf_raf_seg_integrate(const float* tf, int tfsize,
+void hpgv_tf_raf_seg_integrate(const float* tf, int tfsize, const float binTicks[],
         float left_value, float rite_value, float left_depth, float rite_depth,
         float sampling_spacing, hpgv_raf_seg_t* seg, int segid);
 

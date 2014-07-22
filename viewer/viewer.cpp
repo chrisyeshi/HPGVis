@@ -294,8 +294,8 @@ void Viewer::initQuadVbo()
 void Viewer::updateProgram()
 {
     progRaf.removeAllShaders();
-    progRaf.addShaderFromSourceFile(QOpenGLShader::Vertex,   "../../viewer/shaders/aware.vert");
-    progRaf.addShaderFromSourceFile(QOpenGLShader::Fragment, "../../viewer/shaders/aware.frag");
+    progRaf.addShaderFromSourceFile(QOpenGLShader::Vertex,   "../../viewer/shaders/isoraf.vert");
+    progRaf.addShaderFromSourceFile(QOpenGLShader::Fragment, "../../viewer/shaders/isoraf.frag");
     progRaf.link();
     progRaf.bind();
     progRaf.setUniformValue("nBins", nBins);
@@ -308,6 +308,8 @@ void Viewer::updateProgram()
     progRaf.setUniformValue("deparr", 4);
     progRaf.setUniformValue("featureID", 5);
     progRaf.release();
+
+    initTexNormalTools();
 }
 
 void Viewer::updateShaderMVP()
@@ -391,7 +393,7 @@ void Viewer::updateTexRAF()
     texArrDep->setFormat(QOpenGLTexture::R32F);
     texArrDep->allocateStorage();
     texArrDep->setWrapMode(QOpenGLTexture::ClampToEdge);
-    texArrDep->setMinMagFilters(QOpenGLTexture::Nearest, QOpenGLTexture::Nearest);
+    texArrDep->setMinMagFilters(QOpenGLTexture::Linear, QOpenGLTexture::Linear);
     for (unsigned int layer = 0; layer < imageRaf->getNBins(); ++layer)
     {
         texArrDep->setData(0, layer, QOpenGLTexture::Red, QOpenGLTexture::Float32,
@@ -410,7 +412,8 @@ void Viewer::initTexNormalTools()
     progArrNml.setUniformValue("deparr", 0);
     progArrNml.release();
     // vao
-    vaoArrNml.create();
+    if (!vaoArrNml.isCreated())
+        vaoArrNml.create();
     vaoArrNml.bind();
     vboQuad.bind();
     progArrNml.enableAttributeArray("vertex");
