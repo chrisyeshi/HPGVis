@@ -110,6 +110,9 @@ public:
     void                        setFormat(const int& format) { this->format = format; }
     void                        setType(const int& type) { this->type = type; }
     void                        setImages(const std::vector<Image>& images) { this->images = images; }
+    bool                        isMinMaxAuto() const { return autoMinmax; }
+    double                      getMin() const { return minmax[0]; }
+    double                      getMax() const { return minmax[1]; }
     //
     //
     // Reference Accessors
@@ -130,6 +133,8 @@ private:
     int format;
     int type;
     std::vector<Image> images;
+    bool autoMinmax;
+    double minmax[2];
 };
 
 } // namespace hpgv

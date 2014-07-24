@@ -85,6 +85,11 @@ void HPGVis::setParameter(const hpgv::Parameter& para)
 {
 	this->para = para;
 	hpgv_vis_para(para);
+    if (!this->para.isMinMaxAuto())
+    {
+        theValueMin = this->para.getMin();
+        theValueMax = this->para.getMax();
+    }
 }
 
 void HPGVis::setVolume(const hpgv::Volume& volume)
@@ -102,8 +107,8 @@ void HPGVis::setVolume(const hpgv::Volume& volume)
 void HPGVis::render()
 {
     block_exchange_boundary(block, para.getImages()[0].volumes[0].id);
-//    computeMinMax();
-//    std::cout << theValueMin << " :::: " << theValueMax << std::endl;
+    if (this->para.isMinMaxAuto())
+        computeMinMax();
     hpgv_vis_render(block, rank, comm, 0);
     updateImage();
 }

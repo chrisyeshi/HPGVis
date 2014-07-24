@@ -1,5 +1,7 @@
 {
    "format" : "RAF",
+   "type" : "float",
+   "minmax" : [0.0, 0.1],
    "images" : [
       {
          "binTicks" : [
@@ -21,10 +23,9 @@
             0.875,
             1.0
          ],
-         "sampleSpacing" : 0.5
+         "sampleSpacing" : 20
       }
    ],
-   "type" : "float",
    "view" : {
       "viewport" : [ 0, 0, 1024, 1024 ],
       "width" : 1024,

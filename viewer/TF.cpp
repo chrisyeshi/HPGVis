@@ -60,7 +60,7 @@ TF::TF(int resolution, int arraySize)
 
         // initial draw array
         for (int i = 0; i < arraySize; i++)
-            _alphaArray[i] = 1.0f;
+            _alphaArray[i] = 0.5f;
 
         updateColorMap();
     }

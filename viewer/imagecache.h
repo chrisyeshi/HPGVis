@@ -20,6 +20,9 @@ public:
     int open(const QString& qfilename);
     int getImageCount() const { return files.size(); }
     const hpgv::ImageRAF* getImage(int idx);
+    QString getCurrFilename() const;
+    int getCurrFilesize() const;
+    const hpgv::ImageRAF& getCurrImage();
 
 protected:
     static void handleTask(ImageCache* self);

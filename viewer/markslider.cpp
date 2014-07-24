@@ -1,6 +1,7 @@
 #include "markslider.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QStyleOptionSlider>
 #include <iostream>
 
 MarkSlider::MarkSlider(QWidget* parent)
@@ -9,7 +10,7 @@ MarkSlider::MarkSlider(QWidget* parent)
     slider = new QSlider(Qt::Horizontal, this);
     slider->setTracking(false);
     slider->setTickInterval(5);
-    slider->setTickPosition(QSlider::TicksBelow);
+    slider->setTickPosition(QSlider::TicksAbove);
     connect(slider, SIGNAL(sliderMoved(int)), this, SLOT(putLabels(int)));
     connect(slider, SIGNAL(valueChanged(int)), this, SLOT(putLabels(int)));
 
@@ -24,8 +25,8 @@ MarkSlider::MarkSlider(QWidget* parent)
 
     QVBoxLayout* layout = new QVBoxLayout;
     layout->setContentsMargins(5, 0, 5, 0);
+    layout->addSpacing(15);
     layout->addLayout(topLayout);
-    layout->addSpacing(30);
 
     this->setLayout(layout);
 }
@@ -69,10 +70,9 @@ void MarkSlider::putLabels(int curr)
     labelCur->setText(QString::number(curr));
 
     int begOffset = labelBeg->width() + 14;
-    int currPos = float(slider->width()) / (slider->maximum() - slider->minimum()) * curr;
     int labelHalf = labelCur->width() * 0.5;
-    int x = begOffset + currPos - labelHalf;
-    int y = slider->height();
+    int x = QStyle::sliderPositionFromValue(slider->minimum(), slider->maximum(), curr, slider->width()) + begOffset - labelHalf;
+    int y = 0;
     labelCur->move(x, y);
 }
 

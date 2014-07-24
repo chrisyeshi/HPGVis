@@ -70,6 +70,32 @@ const hpgv::ImageRAF* ImageCache::getImage(int idx)
     return &cache[currIdx];
 }
 
+QString ImageCache::getCurrFilename() const
+{
+    if (currIdx >= files.size() || currIdx < 0)
+        return QString();
+    return files[currIdx];
+}
+
+int ImageCache::getCurrFilesize() const
+{
+    if (currIdx >= files.size() || currIdx < 0)
+        return 0;
+    return QFileInfo(dir.absoluteFilePath(files[currIdx])).size();
+}
+
+const hpgv::ImageRAF& ImageCache::getCurrImage()
+{
+    if (currIdx >= files.size() || currIdx < 0)
+    {
+        static hpgv::ImageRAF empty;
+        empty.setSize(0, 0);
+        empty.setNBins(0);
+        return empty;
+    }
+    return cache[currIdx];
+}
+
 void ImageCache::handleTask(ImageCache *self)
 {
     while (true)
@@ -100,7 +126,6 @@ void ImageCache::handleTask(ImageCache *self)
 
 void ImageCache::handleCurrTask()
 {
-//    assert(currTask.idx >= 0 && currTask < files.size());
     if (Task::Sleep == currTask.code)
     {
         std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -113,7 +138,6 @@ void ImageCache::handleCurrTask()
         if (itr != cache.end())
             cache.erase(itr);
         mutexCache.unlock();
-//        std::cout << "Thread Deleted " << currTask.idx << std::endl;
         return;
     }
     if (Task::Load == currTask.code)
@@ -124,7 +148,6 @@ void ImageCache::handleCurrTask()
         mutexCache.lock();
         cache[currTask.idx].open(filename);
         mutexCache.unlock();
-//        std::cout << "Thread loaded " << currTask.idx << std::endl;
         return;
     }
 }

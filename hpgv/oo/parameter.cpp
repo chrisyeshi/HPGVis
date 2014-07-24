@@ -16,7 +16,7 @@ namespace hpgv
 //
 
 Parameter::Parameter()
-  : format(HPGV_RGBA)
+  : format(HPGV_RGBA), autoMinmax(true)
 {
 
 }
@@ -293,6 +293,12 @@ Json::Value Parameter::toJSON() const
         for (int j = 0; j < HPGV_RAF_BIN_NUM + 1; ++j)
             root["images"][i]["binTicks"][j] = images[i].binTicks[j];
     }
+    // minmax
+    if (!autoMinmax)
+    {
+        root["minmax"][0] = minmax[0];
+        root["minmax"][1] = minmax[1];
+    }
 
     return root;
 }
@@ -339,6 +345,16 @@ bool Parameter::fromJSON(const Json::Value& root)
             for (int j = 0; j < HPGV_RAF_BIN_NUM + 1; ++j)
                 images[i].binTicks[j] = root["images"][i]["binTicks"][j].asFloat();
         }
+    }
+    // minmax
+    if (root["minmax"].isNull())
+    {
+        autoMinmax = true;
+    } else
+    {
+        autoMinmax = false;
+        minmax[0] = root["minmax"][0].asDouble();
+        minmax[1] = root["minmax"][1].asDouble();
     }
 
     return true;

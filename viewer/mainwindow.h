@@ -5,6 +5,8 @@
 #include <QDir>
 #include <QStringList>
 #include <QTimer>
+#include <map>
+#include <string>
 #include "imagecache.h"
 
 class HPGVRender;
@@ -25,6 +27,7 @@ public slots:
     void open();
     void movie();
     void timeChanged(int);
+    void updateInfo();
 
 protected:
 
