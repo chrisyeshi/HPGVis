@@ -48,7 +48,8 @@ set(SOURCES
         featuretracker.cpp
         lightctrl.cpp
         imagecache.cpp
-        markslider.cpp)
+        markslider.cpp
+        keyframe.cpp)
 
 #
 #

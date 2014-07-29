@@ -25,9 +25,14 @@ public:
     //
     //
     void renderRAF(const hpgv::ImageRAF* image);
+    void setView(float zoom, QPointF foc);
+    float getZoom() const { return zoomFactor; }
+    QPointF getFocal() const { return focal; }
     void snapshot(const std::string& filename);
+    void screenCapture(int frame);
 
 signals:
+    void viewChanged();
 
 public slots:
     //
@@ -35,7 +40,7 @@ public slots:
     // Public slots
     //
     //
-    void tfChanged(mslib::TF& tf);
+    void tfChanged(const mslib::TF& tf);
     void lightDirChanged(QVector3D lightDir);
     void screenCapture();
 

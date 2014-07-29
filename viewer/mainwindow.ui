@@ -148,18 +148,40 @@
        </spacer>
       </item>
       <item>
-       <layout class="QGridLayout" name="gridLayout" columnstretch="0,0">
-        <item row="1" column="0">
+       <layout class="QGridLayout" name="gridLayout" columnstretch="0,1,1">
+        <item row="1" column="1">
          <widget class="QPushButton" name="open">
           <property name="text">
            <string>Open</string>
           </property>
+          <property name="default">
+           <bool>true</bool>
+          </property>
          </widget>
         </item>
-        <item row="1" column="1">
+        <item row="1" column="2">
          <widget class="QPushButton" name="exit">
           <property name="text">
            <string>Exit</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QToolButton" name="more">
+          <property name="text">
+           <string>...</string>
+          </property>
+          <property name="popupMode">
+           <enum>QToolButton::InstantPopup</enum>
+          </property>
+          <property name="toolButtonStyle">
+           <enum>Qt::ToolButtonIconOnly</enum>
+          </property>
+          <property name="autoRaise">
+           <bool>false</bool>
+          </property>
+          <property name="arrowType">
+           <enum>Qt::NoArrow</enum>
           </property>
          </widget>
         </item>
@@ -169,14 +191,14 @@
     </item>
    </layout>
   </widget>
-  <action name="actionOpen">
+  <action name="actionMovie">
    <property name="text">
-    <string>Open</string>
+    <string>Generate Animation</string>
    </property>
   </action>
-  <action name="actionExit">
+  <action name="actionKeyFrame">
    <property name="text">
-    <string>Exit</string>
+    <string>Print Key Frame</string>
    </property>
   </action>
  </widget>

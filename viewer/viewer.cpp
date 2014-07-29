@@ -48,13 +48,28 @@ void Viewer::renderRAF(const hpgv::ImageRAF *image)
     updateGL();
 }
 
+void Viewer::setView(float zoom, QPointF foc)
+{
+    this->zoomFactor = zoom;
+    this->focal = foc;
+    updateShaderMVP();
+    updateGL();
+}
+
+void Viewer::screenCapture(int frame)
+{
+    std::stringstream ss;
+    ss << "frame_" << frame << ".png";
+    this->snapshot(ss.str());
+}
+
 //
 //
 // Public slots
 //
 //
 
-void Viewer::tfChanged(mslib::TF& tf)
+void Viewer::tfChanged(const mslib::TF& tf)
 {
     assert(tf.resolution() == nBins);
     texTf.setData(QOpenGLTexture::RGBA, QOpenGLTexture::Float32, tf.colorMap());
@@ -323,6 +338,7 @@ void Viewer::updateShaderMVP()
     progRaf.bind();
     progRaf.setUniformValue("mvp", mvp());
     progRaf.release();
+    emit viewChanged();
 }
 
 void Viewer::updateVAO()

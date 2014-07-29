@@ -128,7 +128,8 @@ public slots:
 
 signals:
     void tfChanged();
-    void tfChanged(mslib::TF &tf);
+//    void tfChanged(mslib::TF &tf);
+    void tfChanged(const mslib::TF &tf);
     void bgColorChanged(const QColor &color);
 };
 

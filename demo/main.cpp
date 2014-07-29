@@ -41,8 +41,8 @@ int main(int argc, char* argv[])
     int mypx = (rank - mypz * npx * npy) % npx;
     int mypy = (rank - mypz * npx * npy) / npx;
     // volume
-    hpgv::H5Reader reader(argv[5], "/entropy");
-	reader.configure(MPI_COMM_WORLD, mypx, mypy, mypz, npx, npy, npz);
+    hpgv::H5Reader reader(argv[5], "/qcr");
+    reader.configure(MPI_COMM_WORLD, mypx, mypy, mypz, npx, npy, npz);
     if (!reader.read())
         exit(1);
 	// parameter
@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
 	vis.initialize();
 	vis.setProcDims(npx, npy, npz);
 	vis.setParameter(para);
-	vis.setVolume(reader.volume());
+    vis.setVolume(reader.volume());
 	vis.render();
 	if (rank == vis.getRoot())
         vis.getImage()->save(std::string(argv[6]) + ".raf");

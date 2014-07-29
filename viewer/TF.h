@@ -93,6 +93,7 @@ public:
 
     int resolution() const               { return _resolution; }
     float *colorMap()                    { return _colorMap; }
+    const float *colorMap() const        { return _colorMap; }
     int arraySize() const                { return _arraySize; }
     float *alphaArray()                  { return _alphaArray; }
     const float *backgroundColor() const { return _backgroundColor; }
