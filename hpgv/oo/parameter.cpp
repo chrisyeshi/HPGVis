@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include "hpgv_gl.h"
+#include "json.h"
 
 namespace hpgv
 {
@@ -15,7 +16,7 @@ namespace hpgv
 //
 
 Parameter::Parameter()
-  : format(HPGV_RGBA)
+  : format(HPGV_RGBA), autoMinmax(true)
 {
 
 }
@@ -33,6 +34,17 @@ Parameter::~Parameter()
 
 bool Parameter::open(const std::string& filename)
 {
+    std::string ext = filename.substr(filename.find_last_of(".") + 1);
+    if ("json" == ext || "JSON" == ext)
+    { // Json config file
+        std::ifstream fin(filename.c_str());
+        Json::Value root;
+        Json::Reader reader;
+        bool parsed = reader.parse(fin, root);
+        if (!parsed) return parsed;
+        return this->fromJSON(root);
+    }
+    // Binary config file
     std::ifstream fin(filename.c_str(), std::ios::binary);
     if (!fin) return false;
     fin.seekg(0, fin.end);
@@ -63,6 +75,7 @@ std::vector<char> Parameter::serialize() const
     int lightSize = sizeof(float) * 4;
     int charSize = sizeof(char);
     int uint64Size = sizeof(uint64_t);
+    int binTicksSize = floatSize * (HPGV_RAF_BIN_NUM + 1);
     // buffer size
     int bufferSize = 0;
     bufferSize += intSize * 3;  // colormap
@@ -84,6 +97,7 @@ std::vector<char> Parameter::serialize() const
             for (unsigned int j = 0; j < images[i].volumes.size(); ++j)
                 bufferSize += charSize + lightSize; // light
         }
+        bufferSize += intSize + binTicksSize; // adaptive binning
     }
     // totalbyte also takes a uint64Size
     bufferSize += uint64Size;
@@ -140,6 +154,9 @@ std::vector<char> Parameter::serialize() const
                 memcpy(ptr, &(image.volumes[i].light.parameter[0]), lightSize); ptr += lightSize;
             }
         }
+        // adaptive binning
+//        memcpy(ptr, &image.enableAdaptive, intSize); ptr += intSize;
+//        memcpy(ptr, image.binTicks, binTicksSize); ptr += binTicksSize;
     }
     // total byte
     uint64_t totalbyte = bufferSize;
@@ -159,6 +176,7 @@ bool Parameter::deserialize(const char * head)
     int lightSize = sizeof(float) * 4;
     int charSize = sizeof(char);
     int uint64Size = sizeof(uint64_t);
+    int binTicksSize = floatSize * (HPGV_RAF_BIN_NUM + 1);
 
     // colormap
     memcpy(&colormap.size, ptr, intSize); ptr += intSize;
@@ -222,6 +240,9 @@ bool Parameter::deserialize(const char * head)
                 memcpy(&(vol.light.parameter[0]), ptr, lightSize); ptr += lightSize;
             }
         }
+        // binticks
+//        memcpy(&image.enableAdaptive, ptr, intSize); ptr += intSize;
+//        memcpy(image.binTicks, ptr, binTicksSize); ptr += binTicksSize;
     }
     // total byte
     uint64_t totalbyte = 0;
@@ -238,6 +259,105 @@ bool Parameter::deserialize(const std::vector<char>& buffer)
     if (buffer.empty())
         return false;
     return this->deserialize(&buffer[0]);
+}
+
+Json::Value Parameter::toJSON() const
+{
+    Json::Value root;
+    // format
+    if (HPGV_RAF == format)
+        root["format"] = "RAF";
+    else
+        root["format"] = "RGBA";
+    // type
+    if (HPGV_FLOAT == type)
+        root["type"] = "float";
+    else
+        root["type"] = "double";
+    // view
+    for (int i = 0; i < 16; ++i)
+    {
+        root["view"]["modelview"][i] = view.modelview[i];
+        root["view"]["projection"][i] = view.projection[i];
+    }
+    for (int i = 0; i < 4; ++i)
+        root["view"]["viewport"][i] = view.viewport[i];
+    root["view"]["width"] = view.width;
+    root["view"]["height"] = view.height;
+    root["view"]["angle"] = view.angle;
+    root["view"]["scale"] = view.scale;
+    // images
+    for (unsigned int i = 0; i < images.size(); ++i)
+    {
+        root["images"][i]["sampleSpacing"] = images[i].sampleSpacing;
+        for (int j = 0; j < HPGV_RAF_BIN_NUM + 1; ++j)
+            root["images"][i]["binTicks"][j] = images[i].binTicks[j];
+    }
+    // minmax
+    if (!autoMinmax)
+    {
+        root["minmax"][0] = minmax[0];
+        root["minmax"][1] = minmax[1];
+    }
+
+    return root;
+}
+
+bool Parameter::fromJSON(const Json::Value& root)
+{
+    // format
+    if ("RAF" == root["format"].asString())
+        format = HPGV_RAF;
+    else if ("RGBA" == root["format"].asString())
+        format = HPGV_RGBA;
+    // type
+    if ("float" == root["type"].asString())
+        type = HPGV_FLOAT;
+    else if ("double" == root["type"].asString())
+        type = HPGV_DOUBLE;
+    // view
+    for (int i = 0; i < 16; ++i)
+    {
+        view.modelview[i] = root["view"]["modelview"][i].asDouble();
+        view.projection[i] = root["view"]["projection"][i].asDouble();
+    }
+    for (int i = 0; i < 4; ++i)
+        view.viewport[i] = root["view"]["viewport"][i].asInt();
+    view.width = root["view"]["width"].asInt();
+    view.height = root["view"]["height"].asInt();
+    view.angle = root["view"]["angle"].asFloat();
+    view.angle = root["view"]["scale"].asFloat();
+    // images
+    images.resize(root["images"].size());
+    for (unsigned int i = 0; i < root["images"].size(); ++i)
+    {
+        images[i].volumes.resize(1);
+        images[i].sampleSpacing = root["images"][i]["sampleSpacing"].asFloat();
+        if (root["images"][i]["binTicks"].isNull())
+        { // standard binticks
+            images[i].binTicks[0] = 0.0;
+            images[i].binTicks[HPGV_RAF_BIN_NUM] = 1.0;
+            for (int j = 1; j < HPGV_RAF_BIN_NUM; ++j)
+                images[i].binTicks[j] = 1.0 / float(HPGV_RAF_BIN_NUM) * float(j);
+
+        } else
+        { // custom binticks
+            for (int j = 0; j < HPGV_RAF_BIN_NUM + 1; ++j)
+                images[i].binTicks[j] = root["images"][i]["binTicks"][j].asFloat();
+        }
+    }
+    // minmax
+    if (root["minmax"].isNull())
+    {
+        autoMinmax = true;
+    } else
+    {
+        autoMinmax = false;
+        minmax[0] = root["minmax"][0].asDouble();
+        minmax[1] = root["minmax"][1].asDouble();
+    }
+
+    return true;
 }
 
 } // namespace hpgv

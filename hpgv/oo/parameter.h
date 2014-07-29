@@ -3,6 +3,8 @@
 
 #include <vector>
 #include "boost/shared_ptr.hpp"
+#include "hpgv_gl.h"
+#include "json.h"
 
 namespace hpgv
 {
@@ -70,6 +72,7 @@ public:
         float sampleSpacing;
         boost::shared_ptr<float[tfSize * 4]> tf;
         std::vector<Volume> volumes;
+        float binTicks[HPGV_RAF_BIN_NUM + 1];
     };
 
 public:
@@ -90,6 +93,8 @@ public:
     std::vector<char>           serialize() const;
     bool                        deserialize(const char * head);
     bool                        deserialize(const std::vector<char>& buffer);
+    Json::Value                 toJSON() const;
+    bool                        fromJSON(const Json::Value &root);
     //
     //
     // Standard Accessors
@@ -105,6 +110,9 @@ public:
     void                        setFormat(const int& format) { this->format = format; }
     void                        setType(const int& type) { this->type = type; }
     void                        setImages(const std::vector<Image>& images) { this->images = images; }
+    bool                        isMinMaxAuto() const { return autoMinmax; }
+    double                      getMin() const { return minmax[0]; }
+    double                      getMax() const { return minmax[1]; }
     //
     //
     // Reference Accessors
@@ -125,6 +133,8 @@ private:
     int format;
     int type;
     std::vector<Image> images;
+    bool autoMinmax;
+    double minmax[2];
 };
 
 } // namespace hpgv

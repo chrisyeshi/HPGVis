@@ -5,9 +5,12 @@
 #include <QDir>
 #include <QStringList>
 #include <QTimer>
+#include <map>
+#include <string>
 #include "imagecache.h"
 
 class HPGVRender;
+class KeyFrame;
 
 namespace Ui {
 class MainWindow;
@@ -25,8 +28,11 @@ public slots:
     void open();
     void movie();
     void timeChanged(int);
+    void updateInfo();
+    void makeKeyFrame();
 
 protected:
+    void setKeyFrame(const KeyFrame& key);
 
 private:
     Ui::MainWindow *ui;

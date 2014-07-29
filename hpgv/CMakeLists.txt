@@ -17,7 +17,8 @@ set (SOURCES
         oo/image.cpp
         oo/imageraf.cpp
         oo/imagergba.cpp
-        oo/volume.h)
+        oo/volume.h
+        ${CMAKE_SOURCE_DIR}/jsoncpp/jsoncpp.cpp)
 
 #
 #

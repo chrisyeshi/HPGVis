@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <map>
 #include <string>
 #include <cassert>
@@ -7,6 +8,7 @@
 #include "hpgvis.h"
 #include "io/h5reader.h"
 #include "parameter.h"
+#include "json.h"
 
 std::map<std::string, std::string> suffixes;
 std::map<std::string, int> formats;
@@ -22,72 +24,40 @@ void initMaps()
 int main(int argc, char* argv[])
 {
 	MPI_Init(&argc, &argv);
-    assert(argc == 6);
+    // print usage
+    if (argc != 7)
+    {
+        std::cout << "Usage: ./par.sh X Y Z CONFIG VOLUME OUTPUT" << std::endl;
+        return 0;
+    }
     // two maps for inputs
     initMaps();
 	// Yay~ MPI
 	int rank; MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	int size; MPI_Comm_size(MPI_COMM_WORLD, &size);
-	int npx = atoi(argv[1]), npy = atoi(argv[2]), npz = atoi(argv[3]);
+    int npx = atoi(argv[1]), npy = atoi(argv[2]), npz = atoi(argv[3]);
 	assert(size == npx * npy * npz);
     int mypz = rank /(npx * npy);
     int mypx = (rank - mypz * npx * npy) % npx;
     int mypy = (rank - mypz * npx * npy) / npx;
- //    // parameter
-	// hpgv::Parameter para;
- //    assert(para.open("../../supernova_nocut.hp"));
-	// para.setFormat(formats[argv[4]]);
- //    para.rView().width = 1024;
- //    para.rView().height = 1024;
- //    para.rView().viewport[2] = 1024;
- //    para.rView().viewport[3] = 1024;
- //    para.rImages()[0].sampleSpacing = 1.0;
- //    // loop to read the same file XD
- //    HPGVis vis;
- //    vis.initialize();
- //    vis.setProcDims(npx, npy, npz);
- //    vis.setParameter(para);
- //    while (true)
- //    {
- //        // volume
- //        hpgv::H5Reader reader("/home/chrisyeshi/Dropbox/supernova_600_1580.h5", "/entropy");
- //        reader.configure(MPI_COMM_WORLD, mypx, mypy, mypz, npx, npy, npz);
- //        assert(reader.read());
- //        // render
- //        vis.setVolume(reader.volume());
- //        vis.render();
- //        if (rank == vis.getRoot())
- //        {
- //            static char c = '0';
- //            vis.getImage()->save(std::string(argv[5]) + c + suffixes[argv[4]]);
- //            c++;
- //        }
- //    }
-
     // volume
-    hpgv::H5Reader reader("/home/chrisyeshi/Dropbox/supernova_600_1580.h5", "/entropy");
-	reader.configure(MPI_COMM_WORLD, mypx, mypy, mypz, npx, npy, npz);
+    hpgv::H5Reader reader(argv[5], "/qcr");
+    reader.configure(MPI_COMM_WORLD, mypx, mypy, mypz, npx, npy, npz);
     if (!reader.read())
         exit(1);
 	// parameter
 	hpgv::Parameter para;
-    if (!para.open("../../supernova_nocut.hp"))
+    if (!para.open(argv[4]))
         exit(1);
-	para.setFormat(formats[argv[4]]);
-    para.rView().width = 1024;
-    para.rView().height = 1024;
-    para.rView().viewport[2] = 1024;
-    para.rView().viewport[3] = 1024;
-    para.rImages()[0].sampleSpacing = 1.0;
 	// vis
 	HPGVis vis;
 	vis.initialize();
 	vis.setProcDims(npx, npy, npz);
 	vis.setParameter(para);
-	vis.setVolume(reader.volume());
+    vis.setVolume(reader.volume());
 	vis.render();
 	if (rank == vis.getRoot())
-		vis.getImage()->save(std::string(argv[5]) + suffixes[argv[4]]);
+        vis.getImage()->save(std::string(argv[6]) + ".raf");
 
 	MPI_Finalize();
 	return 0;

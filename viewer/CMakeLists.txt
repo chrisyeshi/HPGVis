@@ -33,7 +33,11 @@ set(SHADERS
         shaders/normal.vert
         shaders/normal.frag
         shaders/aware.vert
-        shaders/aware.frag)
+        shaders/aware.frag
+        shaders/iso.vert
+        shaders/iso.frag
+        shaders/isoraf.vert
+        shaders/isoraf.frag)
 set(SOURCES
         TF.cpp
         TFEditor.cpp
@@ -43,7 +47,9 @@ set(SOURCES
         viewer.cpp
         featuretracker.cpp
         lightctrl.cpp
-        imagecache.cpp)
+        imagecache.cpp
+        markslider.cpp
+        keyframe.cpp)
 
 #
 #

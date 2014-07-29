@@ -10,6 +10,8 @@ class LightCtrl : public QWidget
 public:
     explicit LightCtrl(QWidget *parent = 0);
 
+    QVector3D getLightDir() const { return lightDir; }
+
 signals:
     void lightDirChanged(QVector3D);
 

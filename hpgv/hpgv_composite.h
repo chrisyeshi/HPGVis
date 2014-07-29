@@ -75,6 +75,7 @@ hpgv_composite(/* dimnsions of pixel rectangle */
         /* transfer function */
         float* tf,
         int tfsize,
+        const float binTicks[],
         float sampling_spacing,
         int segid,
 

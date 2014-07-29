@@ -11,8 +11,8 @@
 //
 //
 
-static double theValueMin = 0;
-static double theValueMax = 0;
+static double theValueMin = 0.0;
+static double theValueMax = 0.1;
 float data_quantize(float value, int varname)
 {
     float v = (value - theValueMin) / (theValueMax - theValueMin);
@@ -85,6 +85,11 @@ void HPGVis::setParameter(const hpgv::Parameter& para)
 {
 	this->para = para;
 	hpgv_vis_para(para);
+    if (!this->para.isMinMaxAuto())
+    {
+        theValueMin = this->para.getMin();
+        theValueMax = this->para.getMax();
+    }
 }
 
 void HPGVis::setVolume(const hpgv::Volume& volume)
@@ -102,8 +107,8 @@ void HPGVis::setVolume(const hpgv::Volume& volume)
 void HPGVis::render()
 {
     block_exchange_boundary(block, para.getImages()[0].volumes[0].id);
-	computeMinMax();
-//    std::cout << theValueMin << " :::: " << theValueMax << std::endl;
+    if (this->para.isMinMaxAuto())
+        computeMinMax();
     hpgv_vis_render(block, rank, comm, 0);
     updateImage();
 }
@@ -168,17 +173,18 @@ void HPGVis::updateImage()
     {
     	// raf
     	int nBins = HPGV_RAF_BIN_NUM;
-    	std::vector<float> alphas(nBins);
-        for (int i = 0; i < nBins; ++i)
-        {
-            float a = 0.f;
-            for (int j = i * hpgv::Parameter::tfSize / nBins; j < (i + 1) * hpgv::Parameter::tfSize / nBins; ++j)
-            {
-                a += para.getImages()[0].tf[4 * j + 3];
-            }
-            a /= (hpgv::Parameter::tfSize / nBins);
-            alphas[i] = a;
-        }
+        std::vector<float> alphas(nBins, 1.f/16.f);
+// Uncomment to reduce resolution of transfer function to 16 bins.
+//        for (int i = 0; i < nBins; ++i)
+//        {
+//            float a = 0.f;
+//            for (int j = i * hpgv::Parameter::tfSize / nBins; j < (i + 1) * hpgv::Parameter::tfSize / nBins; ++j)
+//            {
+//                a += para.getImages()[0].tf[4 * j + 3];
+//            }
+//            a /= (hpgv::Parameter::tfSize / nBins);
+//            alphas[i] = a;
+//        }
     	hpgv::ImageRAF* raf = new hpgv::ImageRAF;
     	raf->setSize(para.getView().width, para.getView().height);
     	raf->setNBins(nBins);
