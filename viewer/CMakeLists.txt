@@ -63,7 +63,14 @@ qt5_add_resources(SHADERS res.qrc)
 # Executable
 #
 #
-add_executable(viewer ${SOURCES} ${SHADERS})
-qt5_use_modules(viewer Core Widgets OpenGL)
+add_executable(hpgview ${SOURCES} ${SHADERS})
+qt5_use_modules(hpgview Core Widgets OpenGL)
 qt5_wrap_ui(ui_mainwindow.h mainwindow.ui)
-target_link_libraries(viewer hpgv ${HDF5_LIBRARIES} ${OPENGL_LIBRARIES})
+target_link_libraries(hpgview hpgv ${HDF5_LIBRARIES} ${OPENGL_LIBRARIES})
+
+#
+#
+# Install
+#
+#
+install(TARGETS hpgview DESTINATION bin)

@@ -1,0 +1,1 @@
+add_test(h5ren_supernova ${CMAKE_BINARY_DIR}/hpgv/h5ren/h5ren 1 1 1 super_config.json supernova75.h5 supernova)

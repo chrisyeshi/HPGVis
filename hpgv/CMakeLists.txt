@@ -18,7 +18,26 @@ set (SOURCES
         oo/imageraf.cpp
         oo/imagergba.cpp
         oo/volume.h
-        ${CMAKE_SOURCE_DIR}/jsoncpp/jsoncpp.cpp)
+        ${CMAKE_SOURCE_DIR}/libs/jsoncpp/jsoncpp.cpp)
+
+set (HEADERS
+        hpgv.h
+        hpgv_block.h
+        hpgv_composite.h
+        hpgv_error.h
+        hpgv_gl.h
+        hpgv_render.h
+        hpgv_socket.h
+        hpgv_tf.h
+        hpgv_util.h
+        hpgv_utilmath.h
+        hpgv_utiltiming.h
+        oo/hpgvis.h
+        oo/image.h
+        oo/imageraf.h
+        oo/imagergba.h
+        oo/parameter.h
+        oo/volume.h)
 
 #
 #
@@ -39,3 +58,18 @@ endif (MPI_COMPILE_FLAGS)
 if (MPI_LINK_FLAGS)
 	set_target_properties (hpgv PROPERTIES LINK_FLAGS "${MPI_LINK_FLAGS}")
 endif (MPI_LINK_FLAGS)
+
+#
+#
+# demo
+#
+#
+add_subdirectory(h5ren)
+
+#
+#
+# Install
+#
+#
+install(TARGETS hpgv DESTINATION libs)
+install(FILES ${HEADERS} DESTINATION include)
