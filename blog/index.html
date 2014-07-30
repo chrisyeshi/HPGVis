@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Explorable Image Progres</title>
+
+    <!-- Bootstrap -->
+    <link href="assets/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Ekko Lightbox -->
+    <link href='assets/bootstrap/css/ekko-lightbox.css' rel='stylesheet'>
+    <link href='assets/bootstrap/css/dark.css' rel='stylesheet'>
+    <!-- Mediaelement Video Player -->
+    <link href='assets/mediaelement/mediaelementplayer.min.css' rel='stylesheet'>
+    <!-- hightlight.js -->
+    <link href='assets/highlight/styles/tomorrow-night-eighties.css' rel='stylesheet'>
+    <!-- prism.js -->
+    <!-- <link href='assets/prism/prism.css' rel='stylesheet'> -->
+    <!-- MyCSS -->
+    <link href='assets/css/my.css' rel='stylesheet'>
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+
+    <!-- Header -->
+    <div class='myheader'>
+      <div class='container'>
+        <h1>Explorable Image</h1>
+      </div>
+    </div>
+
+    <div class='content-section'>
+      <div class='container'>
+
+        <!-- Status -->
+        <div class='summary'>
+          <h2>Paper submitted to LDAV 2014</h2>
+        </div>
+
+        <!-- Milestones -->
+        <div class='summary'>
+
+          <h2>Milestones <small style='text-decoration:line-through'>LDAV 5/14</small> <small>LDAV 5/26</small></h2>
+          <!-- The 3 Major Components -->
+          <div class='component'>
+            <h4>Explorable Image Renderer</h4>
+            <ul>
+              <li style='text-decoration:line-through'>Generate explorable image with Hongfeng's parallel renderer.</li>
+              <li>Implement Anna's version</li>
+              <ul>
+                <li style='text-decoration:line-through'>Relighting using depth proxy images</li>
+                <li>Attenuation clustering and model learning</li>
+              </ul>
+              <li style='text-decoration:line-through'>Parallel reading the data from Dr Ono's simulation.</li>
+            </ul>
+          </div>
+          <div class='component'>
+            <h4>Yang's Feature Tracking</h4>
+            <ul>
+              <li style='text-decoration:line-through'>Yang needs the depth proxy images.</li>
+              <li style='text-decoration:line-through'>Be able to extract features from a single explorable image.</li>
+              <li>Track features over time.</li>
+            </ul>
+          </div>
+          <div class='component'>
+            <h4 style='text-decoration:line-through'>Explorable Image Viewer</h4>
+            <ul>
+              <li style='text-decoration:line-through'>Incorporate depth proxy images to provide lighting.</li>
+              <li style='text-decoration:line-through'>Provide interface to specify parameters for the parallel renderer.</li>
+              <li style='text-decoration:line-through'>Provide interface to select feature from explorable image.</li>
+              <li style='text-decoration:line-through'>Interface design (timeline?)</li>
+            </ul>
+          </div>
+          <div class='component'>
+            <h4 style='text-decoration:line-through'>Write the Paper</h4>
+            <ul>
+              <li style='text-decoration:line-through'>We need at least a proof of concept demo before we can write the paper.</li>
+            </ul>
+          </div>
+
+        </div>
+
+        <!-- Updates -->
+        <div class='updates'>
+
+          <h2>Progress</h2>
+
+          <!-- 33 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>Yet Another New Video <small>July 25th</small></h3>
+            <!-- video -->
+            <div class='row'>
+              <div class='col-xs-12 col-sm-12'>
+                <video style='width:100%;height:100%' width='100%' height='100%'>
+                  <source src='contents/videos/supernova_18s.webm' type='video/webm' />
+                  <source src='contents/videos/supernova_18s.mp4' type='video/mp4'/>
+                  <source src='contents/videos/supernova_18s.ogv' type='video/ogg'/>
+                </video>
+              </div>
+            </div>
+            <!-- text -->
+            <p>The purpose of this video is for Kwan-Liu's presentation on July 28th.</p>
+            <p>The video starts with a bad transfer function, goes to an isosurface rendering, then becomes a volume rendering. After that it plays forward in time. At the end of the time sequence, it changes transfer function again, and finally plays backward in time to the initail frame.</p>
+          </div>
+
+          <!-- 32 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>JSON as Configuration Format <small>July 23rd</small></h3>
+            <!-- text -->
+            <p>Instead of using binary configuration file, I have changed to use JSON format. The benefit is that users are able to change the configurations easily by any text editors. The format is indicated below:</p>
+            <pre><code>{
+  // format has to be RAF (Ray Attenuation Function) at the moment<br>
+  "format" : "RAF",
+  // type is the floating number type, use float or double
+  "type" : "float",
+  // Specifies the data range. If "minmax" is not provided, the system will calculate it automatically.
+  "minmax" : [0.0, 0.1],
+  "images" : [
+    {
+      // Adaptive binning is specified here:
+      // It's an array of 17 floating point numbers, the first number is always 0.0, and the last number is always 1.0.
+      // If "binTicks" is not provided, the system will use a linear spaced array.
+      "binTicks" : [0.0, 0.25, 0.5, 0.625, 0.65626,
+                    0.6875, 0.71875, 0.75, 0.765625,
+                    0.78125, 0.796875, 0.8125, 0.8281,
+                    0.84375, 0.859375, 0.875, 1.0],
+      // "sampleSpacing" determines how fast the rays move forward.
+      "sampleSpacing" : 0.5
+    }
+  ],
+  "view" : {
+    // These determines the resolution of the output image. Usually the last two number of "viewport" are the same as "width" and "height".
+    "viewport" : [ 0, 0, 1024, 1024 ],
+    "width" : 1024,
+    "height" : 1024,
+    "angle" : 0,
+    "scale" : 0,
+    // The model, view, and projection matrix to specify the camera orientation.
+    "modelview" : [
+      -0.5036, 0.6476, -0.5717, 128.3415,
+      0.5741, -0.2436, -0.7816, 135.3691,
+      -0.6455, -0.7219, -0.2491, -415.0219,
+      0, 0, 0, 1
+    ],
+    "projection" : [
+      2.823912858963013, 0, 0, 0,
+      0, 2.823912858963013, 0, 0,
+      0, 0, -1.649572372436523, -939.01904296875,
+      0, 0, -1, 0
+    ]
+  }
+}</code></pre>
+            <p>This configuration file is used to generate the supernova (600x600x600) explorable images.</p>
+          </div>
+
+          <!-- 31 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>New Supernova Video (DAE + ISO) <small>July 17th</small></h3>
+            <!-- videos -->
+            <div class='row'>
+              <div class='col-xs-12 col-sm-12'>
+                <video style='width:100%;height:100%' width='100%' height='100%'>
+                  <source src='contents/videos/supernova_isodae.webm' type='video/webm' />
+                  <source src='contents/videos/supernova_isodae.mp4' type='video/mp4'/>
+                  <source src='contents/videos/supernova_isodae.ogv' type='video/ogg'/>
+                </video>
+              </div>
+            </div>
+            <!-- text -->
+            <p>This video is generated when we enable both isosurface rendering and depth-aware enhancment. The light is comming from the upper left corner.</p>
+            <p>Timestep 62, 63, 160, and 161 are generating some artifacts on the lower right of the image. You can spot the artifacts in the video (They flash for a split second). It seems that the files are partially corrupted since the min max values of these 4 timesteps are significantly different than the others.</p>
+            <p>To generate this video, I had to regenerate the explorable images with a fixed min max range.</p>
+          </div>
+
+          <!-- 30 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>Reduced Edge Emphasis <small>July 16th</small></h3>
+            <!-- images -->
+            <div class='row gallery-wrapper'>
+              <div class='col-sm-6 col-md-6'>
+                <a href='contents/images/edgeyes_iso_overview.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Emphasized edges. Overview of timestep 139. Isosurface of bin 7.'>
+                  <img src='contents/images/edgeyes_iso_overview.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-6'>
+                <a href='contents/images/edgeno_iso_overview.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Deemphasized edges. Overview of timestep 139. Isosurface of bin 7.'>
+                  <img src='contents/images/edgeno_iso_overview.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-6'>
+                <a href='contents/images/edgeyes_iso_zoom.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Emphasized edges. Zoomed in view of timestep 139. Isosurface of bin 7.'>
+                  <img src='contents/images/edgeyes_iso_zoom.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-6'>
+                <a href='contents/images/edgeno_iso_zoom.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Deemphasized edges. Zoomed in view of timestep 139. Isosurface of bin 7.'>
+                  <img src='contents/images/edgeno_iso_zoom.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-6'>
+                <a href='contents/images/edgeyes_dae_overview.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Emphasized edges. Overview of timestep 139. DAE(Depth-aware enhancement) + ISO(Isosurface).'>
+                  <img src='contents/images/edgeyes_dae_overview.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-6'>
+                <a href='contents/images/edgeno_dae_overview.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Deemphasized edges. Overview of timestep 139. DAE(Depth-aware enhancement) + ISO(Isosurface).'>
+                  <img src='contents/images/edgeno_dae_overview.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-6'>
+                <a href='contents/images/edgeyes_dae_zoom.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Emphasized edges. Zoomed in view of timestep 139. DAE(Depth-aware enhancement) + ISO(Isosurface).'>
+                  <img src='contents/images/edgeyes_dae_zoom.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-6'>
+                <a href='contents/images/edgeno_dae_zoom.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Deemphasized edges. Zoomed in view of timestep 139. DAE(Depth-aware enhancement) + ISO(Isosurface).'>
+                  <img src='contents/images/edgeno_dae_zoom.png'>
+                </a>
+              </div>
+            </div>
+            <!-- text -->
+            <p>I finally found the cause of those bright/black edges, so I fixed them. These images show a comparison between before and after fixing the edges. The images on the left column are the "before" images, which is with clear edges. The images on the right column are the "after" images, which are without clear edges. More detailed descriptions are given in the images.</p>
+            <p>It ends up I need to take the absolute value of the depth difference before comparing it to a constant cutoff value. Without the absolute operator, only one side of the edges were eliminated.</p>
+            <p>Note that this improvement is only affecting the isosurface rendering. Nothing is changed for the DAE(depth-aware enhancement) rendering.</p>
+          </div>
+
+          <!-- 29 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>Combining Isosurface and RAF Rendering <small>July 10th</small></h3>
+            <!-- images -->
+            <div class='row gallery-wrapper'>
+              <div class='col-sm-4 col-md-4'>
+                <a href='contents/images/isoraf_onlyraf.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Explorable image rendering with depth-aware enhancement. This image is going to be combined with isosurface rendering to create a better image.'>
+                  <img src='contents/images/isoraf_onlyraf.png'>
+                </a>
+              </div>
+              <div class='col-sm-4 col-md-4'>
+                <a href='contents/images/isoraf_onlyiso.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Isosurface rendering using the depth proxy images. The light source is coming from the upper left corner. What will happen if we combine this with the rendering of the previous image?'>
+                  <img src='contents/images/isoraf_onlyiso.png'>
+                </a>
+              </div>
+              <div class='col-sm-4 col-md-4'>
+                <a href='contents/images/isoraf_combine.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Combining the RAF rendering (1st image) and the isosurface rendering (2nd image) results in this image. On the left side, we can see the outer shell more clearly. Yet on the right side, there are these yellow edges created by the isosurface rendering due to the dramatic depth changes. The next images use two markers to show where I am refering to.'>
+                  <img src='contents/images/isoraf_combine.png'>
+                </a>
+              </div>
+              <div class='col-sm-4 col-md-4'>
+                <a href='contents/images/isoraf_onlyraf_spot.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='The left marker: we are unable to see the outer shell when only using RAF rendering. The right marker: no isosurface edges are rendered here.'>
+                  <img src='contents/images/isoraf_onlyraf_spot.png'>
+                </a>
+              </div>
+              <div class='col-sm-4 col-md-4'>
+                <a href='contents/images/isoraf_onlyiso_spot.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='The left marker: surfaces. The right marker: annoying isosurface edges due to dramatic depth changes.'>
+                  <img src='contents/images/isoraf_onlyiso_spot.png'>
+                </a>
+              </div>
+              <div class='col-sm-4 col-md-4'>
+                <a href='contents/images/isoraf_combine_spot.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='The left marker: when combined, we can see the outer shells more clearly. The right marker: the edges of the isosurface looks almost like artifacts.'>
+                  <img src='contents/images/isoraf_combine_spot.png'>
+                </a>
+              </div>
+            </div>
+            <!-- text -->
+            <p>I am trying to combine the RAF rendering (1st image) and the isosurface rendering (2nd image). The results can be seen from the above images. Image 3 is the final result.</p>
+            <p>I think the results are quite interesting. I won't say it's alot better with it, but it's certainly not worse.</p>
+          </div>
+
+          <!-- 28 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>More Translucent Isosurface Rendering <small>July 9th</small></h3>
+            <!-- images -->
+            <div class='row gallery-wrapper'>
+              <div class='col-sm-6 col-md-6'>
+                <a href='contents/images/iso_opaque.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='The isosurface in this image is like a 2D layer. When the isosurfaces stack up, the colors get blended in a weird way.'>
+                  <img src='contents/images/iso_opaque.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-6'>
+                <a href='contents/images/iso_translucent.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='By increasing the transparency when the normal is pointing to the camera, we are able to see more clearly behind the isosurfaces. The details on the right side of the yellow layer is not clear.'>
+                  <img src='contents/images/iso_translucent.png'>
+                </a>
+              </div>
+            </div>
+            <!-- text -->
+            <p>Previously, the problem with rendering the isosurfaces was that the colors get blended heavily. The result is that the colors of the deeper isosurfaces got altered to the color of the front isosurface. As a result, the colors seem to come from the same color scheme even though they should be completely different.</p>
+            <p>The way I am approaching this is to alter the opacity based on the normal. When the normal of the pixel is pointing to the camera, we decrease the opacity of the pixel. When the normal of the pixel is orthogonal to the camera, the opacity is higher to indicate there is a surface.</p>
+            <p>However, some details of the semi transparent isosurfaces can be hidden due to this feature.</p>
+            <p>The image titles now describe what the image means.</p>
+          </div>
+
+          <!-- 27 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>Plan for Lighting <small>June 26th</small></h3>
+            <!-- images -->
+            <div class='row gallery-wrapper'>
+              <div class='col-sm-6 col-md-6'>
+                <a href='contents/images/depth_aware.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='depth-aware enhancement'>
+                  <img src='contents/images/depth_aware.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-6'>
+                <a href='contents/images/better_lighting_isosurface.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='isosurface from depth proxy image'>
+                  <img src='contents/images/better_lighting_isosurface.png'>
+                </a>
+              </div>
+            </div>
+            <!-- text -->
+            <p>The tools we have for now: depth-aware enhancement using attenuation gradients and iso surfaces with depth proxy images. The plan is to combine them and provide better lighting.</p>
+            <p>Depth-aware enhancement is able to highlight the shapes of the features even when they are not the first surface. This enhancement is based on gradients of the attenuation values. The plan is to use these gradients to estimate the normals of these hidden features so that the rendering can react to the direction of lighting.</p>
+            <p>On the other hand, we have the depth proxy images. Also, for each depth proxy image, we know the intensity value of it. As a result, we essentially have isosurfaces. The plan is to render these depth proxy images the way we render isosurfaces. The point is to keep it separate from the attenuation values.</p>
+            <p>At the end, we then combine the two approaches above into a single image. The picture will contain semi transparent isosurfaces while the hidden features are highlighted by depth-aware enhancement.</p>
+          </div>
+
+          <!-- 26 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>Depth-aware Enhancement <small>June 26th</small></h3>
+            <!-- images -->
+            <div class='row gallery-wrapper'>
+              <div class='col-sm-6 col-md-6'>
+                <a href='contents/images/depth_unaware.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Unaware'>
+                  <img src='contents/images/depth_unaware.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-6'>
+                <a href='contents/images/depth_aware.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Aware'>
+                  <img src='contents/images/depth_aware.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-6'>
+                <a href='contents/images/depth_unaware_cut.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Aware'>
+                  <img src='contents/images/depth_unaware_cut.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-6'>
+                <a href='contents/images/depth_aware_cut.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Aware'>
+                  <img src='contents/images/depth_aware_cut.png'>
+                </a>
+              </div>
+            </div>
+            <!-- text -->
+            <p>I found in Anna's TVCG 2010 paper, there is a depth-aware enhancement equation that somehow fakes lighting, so I implemented it. First image is depth unaware and the second image is depth aware...</p>
+            <p>The depth-aware enhancement uses the 2d gradient of the bin attenuation values to enhance the depth perception but there is no ways to change the lighting parameters such as light directions.</p>
+            <p>It seems to me that with depth-aware enhancement, it brings out the edges.</p>
+            <p>I will take a look at whether it is possible to incorporate depth-aware enhancement with the lighting we did using the depth proxy images.</p>
+          </div>
+
+          <!-- 25 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>A Cache for Loading Images <small>June 24th</small></h3>
+            <!-- text -->
+            <p>After solving the performance issue of the normal map, the file I/O of the RAF files become the bottleneck. I am trying to use a buffer window to ease the pain of loading files. This will incorporate threading so the other benefit for me is to learn threading.</p>
+            <p>I choose to go with std::thread instead of Qt tread because std::thread can be used in more places.</p>
+            <p>Class ImageCache is created for this purpose. In this class we have two std::maps. First maps file index to loaded image, second maps file index to std::thread.</p>
+            <p>First implementation performs the cache operation when user changes the time slider, but that causes a problem which when user changes the time frequently, it will spawn a lot of threads and that freezes the program. Therefore, we should only allow caching to be perform on idle.</p>
+            <p>In QSlider, there is a tracking variable. When tracking is true, it means the slider to emit valueChanged on drag. When tracking is false, the slider will only emit valueChanged on mouse release.</p>
+            <p>The final implementation is to have only 1 extra thread to handle the buffering. When user interacts with the slider, the system delays 1 second before it tries to buffer. The cache operation first deletes the threads outsite of the buffer zone, then load the forward images and finally the backward images.</p>
+            <p>Some future work can be caching a rendered image so that it can immediately respond to user interaction without any delay, but I am happy with the speed for now.</p>
+          </div>
+
+          <!-- 24 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>Faster Normal Map <small>June 19th</small></h3>
+            <!-- text -->
+            <p>The speed of generating normal maps when loading a RAF file is drastically increased.</p>
+            <p>The normal estimation in the viewer has been a tricky question. At first, we compute the normal in the same pass with the rendering. The problem with that is we don't get the benefit of hardware interploation of the normal vectors.</p>
+            <p>Later on, we switched to a 2-pass approach. We generate the normal maps prior to the rendering pass. By doing this, we can offload the normal map generation routine to file loading time, which increases the rendering performance.</p>
+            <p>However, when we implement the 2-pass approach, it was right before LDAV submission, so we calculate the normals in the CPU, using OpenMP to accelerate. As a result, the speed was quite slow, it took approximately 3 seconds to generate 16 normal maps with 1024x1024 resolution. We can do a lot better than this.</p>
+            <p>Instead of using OpenMP to accelerate, we can of course use GLSL. The first try was to use a single framebuffer object. For each layer of the normal maps, we use glFramebufferTextureLayer() to bind the according texture to the GL_COLOR_ATTACHMENT0. It boosts the performance to about 200ms for generating all 16 normal maps, but it's still slow.</p>
+            <p>After some investigation, glFramebufferTextureLayer() is very slow, it took most of the time of the 200ms. As a result, we changed the configuration to have a framebuffer for each layer, and glFramebufferTextureLayer() is called before hand so when we load a new file, it avoids the time to call glFramebufferTextureLayer() over and over again. As a result, the time to compute all normal maps reduced to about 30ms.</p>
+            <p>The other bottleneck is the file loading time. Each RAF file in the Jet dataset is 134.2MB, and loading a file takes about 1800ms. If the page is already in the memory, it takes about 90ms.</p>
+          </div>
+
+          <!-- 23 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>LDAV Paper <small>June 4th</small></h3>
+            <!-- text -->
+            <p><a href='contents/yyb401.pdf'>In Situ Volumetric Data Visualization with Feature Tracking using Explorable Images</a></p>
+            <p>Big thanks to Bob and Yang.</p>
+          </div>
+
+          <!-- 22 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>Jet Simulation Video <small>June 4th</small></h3>
+            <!-- videos -->
+            <div class='row'>
+              <div class='col-xs-12 col-sm-6'>
+                <video style='width:100%;height:100%' width='100%' height='100%'>
+                  <source src='contents/videos/jet_after_ldav.webm' type='video/webm'/>
+                  <source src='contents/videos/jet_after_ldav.mp4' type='video/mp4'/>
+                  <source src='contents/videos/jet_after_ldav.ogv' type='video/ogg'/>
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            </div>
+            <!-- text -->
+            <p>This video is generated using explorable images. It is here to show how the jet simulation looks like.</p>
+          </div>
+
+          <!-- 21 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>Better Normal Map Approximation <small>June 4th</small></h3>
+            <!-- images -->
+            <!-- text -->
+            <p>I changed the normal map approximation again. Before we were generating the normals in the same phase as the actual rendering, but normal smoothing cannot be done with that approach. The new approach generates the normals before hand when the file is loaded. We then bind the normals to a texture and the fragment shader can query it.</p>
+            <p>The new normal approximation forms 8 triangles around the center sample, and the normal is the average of the normals of the 8 triangles.</p>
+          </div>
+
+          <!-- 20 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>Feature Extraction and Tracking <small>June 4th</small></h3>
+            <!-- images -->
+            <div class='row gallery-wrapper'>
+              <div class='col-sm-6 col-md-6'>
+                <a href='contents/images/fet1.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper'>
+                  <img src='contents/images/fet1.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-6'>
+                <a href='contents/images/fet2.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper'>
+                  <img src='contents/images/fet2.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-6'>
+                <a href='contents/images/fet3.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper'>
+                  <img src='contents/images/fet3.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-6'>
+                <a href='contents/images/fet4.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper'>
+                  <img src='contents/images/fet4.png'>
+                </a>
+              </div>
+              <div class='col-sm-12 col-md-12'>
+                <a href='contents/images/fet6.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper'>
+                  <img src='contents/images/fet6.png'>
+                </a>
+              </div>
+            </div>
+            <!-- text -->
+            <p>Feature extraction is done by enabling the FET mode in the viewer by pressing 'f', then clicking the left mouse button to select a feature. The current version of feature extraction only uses the 7th layer of the depth proxy images.</p>
+            <p>Feature tracking is a proof of concept at the moment.</p>
+          </div>
+
+          <!-- 19 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>Adaptive Binning <small>June 4th</small></h3>
+            <!-- images -->
+            <div class='row gallery-wrapper'>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/sn_best.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Uniform Bin Distribution'>
+                  <img src='contents/images/sn_best.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/as_best.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Adaptive Bin Distribution'>
+                  <img src='contents/images/as_best.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/adaptive_binning_bad.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Adaptive Bin Distribution'>
+                  <img src='contents/images/adaptive_binning_bad.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/adaptive_binning_good.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Adaptive Bin Distribution'>
+                  <img src='contents/images/adaptive_binning_good.png'>
+                </a>
+              </div>
+            </div>
+            <!-- text -->
+            <p>Using adaptive binning, we are able to reveal more layers in the interesting regions of the supernova dataset. Note that these images are rendered without lighting.</p>
+            <p>Because of the complex features in supernova, adding lighting is non trivial. For a single isovalue, the depth proxy image generated only shows the first layer of the isosurface. However, the isosurfaces in the supernova are like manifolds, which they wrap around multiple times. As a result, using a single layer of depth proxy image to approximate the normal map for such isosurface is wrong.</p>
+            <p>The last two images are generated using Dr. Ono's simulation. We can change the binning range to match the data distribution in the intensity domain so that more features can be shown.</p>
+          </div>
+
+          <!-- 18 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>All Possible Features in Supernova <small>May 25th</small></h3>
+            <!-- images -->
+            <div class='row gallery-wrapper'>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/snapshot_1.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper'>
+                  <img src='contents/images/snapshot_1.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/snapshot_2.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper'>
+                  <img src='contents/images/snapshot_2.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/snapshot_3.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper'>
+                  <img src='contents/images/snapshot_3.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/snapshot_4.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper'>
+                  <img src='contents/images/snapshot_4.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/snapshot_5.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper'>
+                  <img src='contents/images/snapshot_5.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/snapshot_6.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper'>
+                  <img src='contents/images/snapshot_6.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/snapshot_7.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper'>
+                  <img src='contents/images/snapshot_7.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/snapshot_8.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper'>
+                  <img src='contents/images/snapshot_8.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/snapshot_9.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper'>
+                  <img src='contents/images/snapshot_9.png'>
+                </a>
+              </div>
+            </div>
+            <!-- text -->
+            <p>By using the simplified default transfer function technique, these are the all possible isosurfaces that can be generated with the supernova dataset. Not much internal features are visualized.</p>
+          </div>
+
+          <!-- 17 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>First Image from In Situ <small>May 17th</small></h3>
+            <!-- images -->
+            <div class='row gallery-wrapper'>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/insitu_single.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper'>
+                  <img src='contents/images/insitu_single.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/insitu_multi.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper'>
+                  <img src='contents/images/insitu_multi.png'>
+                </a>
+              </div>
+            </div>
+            <!-- text -->
+            <p>These two images are explorable images generated in situ with Dr. Ono's simulation. This is the beginning of the simulation so only a small ring is visible at the entrance. The difference is that the first image is generated from a single process and the second image is generated using MPI with 8 processes.</p>
+            <p>The problem now is Dr. Ono's simulation order the domains differently than Hongfeng's parallel renderer, so I will need to figure out how to change the composition order. That is why the second image breaks the ring into four corners.</p>
+          </div>
+
+          <!-- 16 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>Probably the Final Revision of the Rendering Side <small>May 9th</small></h3>
+            <!-- images -->
+            <div class='row gallery-wrapper'>
+              <div class='col-sm-6 col-md-6'>
+                <a href='contents/images/iso.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Nearly Perfect'>
+                  <img src='contents/images/iso.png'>
+                </a>
+              </div>
+            </div>
+            <!-- text -->
+            <p>I fixed most of the artifacts, both from rendering and compositing. I changed the rendering equation slightly to accomodate to the depth buffers. The concept is to render isosurfaces instead of volume rendering according to the given transfer function. The reason is people tend to create small slabs in the opacity map to create these thin semi-transparent isosurfaces.</p>
+            <p>In terms of coding, it's actually a very small change from the previous revision. Now I am only testing if a ray segment cross the average value of a bin and attenuate if it does. Also, the attenuation is fixed to 1/16 if a ray segment cross the average value of a bin. It's sort of cheating, but we can argue that it looks better and the user doesn't need to provide a transfer function anymore.</p>
+            <p>Next I will be generating results using this revision. I will generate 2 sets, 1 with supernova and 1 with Dr. Ono's simulation. Then I will start writing the paper. Bob will work on the smoother normal implementation and then the interface to select feature. Yang, well, will continue to work on the feature tracking.</p>
+          </div>
+
+          <!-- 15 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>Simple Integration over Ray Segments <small>May 8th</small></h3>
+            <!-- images -->
+            <div class='row gallery-wrapper'>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/integrate_spot.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Without Integration'>
+                  <img src='contents/images/integrate_spot.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/integrate_avg.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Integration without Depth'>
+                  <img src='contents/images/integrate_avg.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/integrate_avg_depth.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Integration with Depth'>
+                  <img src='contents/images/integrate_avg_depth.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/integrate_no_2.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Without Integration'>
+                  <img src='contents/images/integrate_no_2.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/integrate_yes_2.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='With Integration'>
+                  <img src='contents/images/integrate_yes_2.png'>
+                </a>
+              </div>
+            </div>
+            <!-- text -->
+            <p>I implemented "preintegration" like feature. When a ray segment cross multiple bins, it should add the attenuation to each of the bins instead of the bin at the end of the ray segment. And of course the boundary artifacts come back for no reason...</p>
+            <p>Image 1: without "preintegration," Image 2: with "preintegration." The iso surfaces look alot better. Image 3: with depth. We can see the boundary artifacts again.</p>
+            <p>Bob is working on smoothing the normals.</p>
+            <p>Yang is working on tracking the features. He have a set of RAF files of Dr. Ono's simulation to work with.</p>
+          </div>
+
+          <!-- 14 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>Current Stage of Depths/Normals and Viewer <small>May 4th</small></h3>
+            <!-- images -->
+            <div class='row gallery-wrapper'>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/mpi_depth_bin_edge.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Depth at Bin Edge'>
+                  <img src='contents/images/mpi_depth_bin_edge.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/mpi_depth_bin_avg.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Depth at Bin Average'>
+                  <img src='contents/images/mpi_depth_bin_avg.png'>
+                </a>
+              </div>
+            </div>
+            <!-- text -->
+            <p>As Kwan-Liu pointed out, the images generated with MPI don't have lighting, so I was trying to fix it. The reason happens to be that the depth values are initialized to 0 for rays that are not intersecting the bounding box. As a result, when we composite the images from different processors, we use the smallest depth value, which is 0. It's fixed now, but there are other problems with depth.</p>
+            <p>I tried to compute depth with different intensity values. Image 1 is using the lowest intensity value of a bin and image 2 is using the average intensity of a bin. They don't differentiate much. I think we need a better method to compute the depth/normal so that we don't have those black lines.</p>
+            <p>We extracted the viewer from the original messy one. The current one is more robust and allows resizing the window. Bob will continue on extending this viewer to allow temporal exploration.</p>
+          </div>
+
+          <!-- 13 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>Boundary Artifacts Conquered <small>May 1st</small></h3>
+            <!-- images -->
+            <div class='row gallery-wrapper'>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/boundary_fixed.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Fixed'>
+                  <img src='contents/images/boundary_fixed.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/boundary_wo_early_ray_termination.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Wrong Equation, Not Clamped'>
+                  <img src='contents/images/boundary_wo_early_ray_termination.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/boundary_with_early_ray_termination.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Wrong Equation, Clamped'>
+                  <img src='contents/images/boundary_with_early_ray_termination.png'>
+                </a>
+              </div>
+            </div>
+            <!-- text -->
+            <p>I found the bug. It is a small but serious bug in the attenuation calculation. It was using</p>
+            <pre>accumulate_alpha += current_alpha</pre>
+            <p>and then clamp the accumulate_alpha to [0, 1], which is wrong but the image generated looked ok. After changing it to</p>
+            <pre>accumulate_alpha += (1.0 - accumulate_alpha) * current_alpha</pre>
+            <p>the boundary artifacts disappeared.</p>
+            <p>Image 1 is using the correct equation. Image 2 is using the wrong equation but not clamp to [0, 1]. Image 3 is using the wrong equation and clamp to [0, 1].</p>
+          </div>
+
+          <!-- 12 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>Found Some Artifacts at Boundary <small>May 1st</small></h3>
+            <!-- images -->
+            <div class='row gallery-wrapper'>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/boundary_png1.png' class='thumbnail' data-toggle='lightbox'
+                   data-gallery='multiimages' data-parent='.gallery-wrapper'>
+                  <img src='contents/images/boundary_png1.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/boundary_raf1.png' class='thumbnail' data-toggle='lightbox'
+                   data-gallery='multiimages' data-parent='.gallery-wrapper'>
+                  <img src='contents/images/boundary_raf1.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/boundary_raf2.png' class='thumbnail' data-toggle='lightbox'
+                   data-gallery='multiimages' data-parent='.gallery-wrapper'>
+                  <img src='contents/images/boundary_raf2.png'>
+                </a>
+              </div>
+            </div>
+            <!-- text -->
+            <p>I was trying to clean the codes and make it run in a cluster (thehead). When I make it to run in parallel, I found some artifacts at the process boundaries. As shown in image 2 and image 3.</p>
+            <ul>
+              <li>It seems that these artifacts only appears when we are generating RAF formats because image 1 (a static image) does not have the artifacts.</li>
+              <li>There is a function named "block_exchange_boundary()" in Hongfeng's codes. It is used to exchange boundary volume data and it fixed the boundary artifacts when we are generating static images. However, the situation is different when we are generating RAF images. If we enable "block_exchange_boundary()", it generates image 2. If we do not enable "block_exchange_boundary()", it generates image 3. That is, it fixes some of the artifacts.</li>
+            </ul>
+          </div>
+
+          <!-- 11 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>Smoother Supernova Video <small>April 28</small></h3>
+            <!-- video -->
+            <div class='row'>
+              <div class='col-xs-12 col-sm-6'>
+                <video style='width:100%;height:100%' width='100%' height='100%'>
+                <source src='contents/videos/supernova_2nd.webm' type='video/webm'/>
+                <source src='contents/videos/supernova_2nd.mp4' type='video/mp4'/>
+                <source src='contents/videos/supernova_2nd.ogv' type='video/ogg'/>
+                Your browser does not support the video tag.
+                </video>
+              </div>
+            </div>
+            <!-- text -->
+            <p>There are two jumps in the video:</p>
+            <ul>
+              <li>At 1/4 of the video: That is caused by 2 missing frames. I tried to smooth it out by editting the video. The video you are seeing now is the smoothed version.</li>
+              <li>About 1/2 of the video, where the core of the supernova suddenly becomes solid. Two reasons: 1) The data actually is moving very fast at that moment. Better temporal resolution? 2) My guess is a huge chunk of data crossed boundary of the intensity bins at that moment, which turns a lot of yellow into green.</li>
+            </ul>
+          </div>
+
+          <!-- 10 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>The First Supernova Video <small>April 27</small></h3>
+            <!-- video -->
+            <div class='row'>
+              <div class='col-xs-12 col-sm-6'>
+                <video style='width:100%;height:100%' width='100%' height='100%'>
+                  <source src='contents/videos/supernova_1st.webm' type='video/webm'/>
+                  <source src='contents/videos/supernova_1st.mp4' type='video/mp4'/>
+                  <source src='contents/videos/supernova_1st.ogv' type='video/ogg'/>
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            </div>
+            <!-- text -->
+            <p>Combined the images of supernova into a video. There are some jumps in the video. Two reasons: 1) The supernova dataset is missing 2 timesteps of data (1461 and 1462). 2) There were 4 timesteps that were unable to render for unknown reason. (1466, 1467, 1564 and 1565).</p>
+          </div>
+
+          <!-- 9 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>Fixed Normals <small>April 27</small></h3>
+            <!-- images -->
+            <div class='row'>
+              <a href='contents/images/supernova_fixed_normal_1403.png' class='col-sm-6 col-md-4' data-gallery='multiimages' data-toggle='lightbox'>
+                <div class='thumbnail'>
+                  <img src='contents/images/supernova_fixed_normal_1403.png' class='img-responsive'>
+                </div>
+              </a>
+              <a href='contents/images/supernova_fixed_normal_1440.png' class='col-sm-6 col-md-4' data-gallery='multiimages' data-toggle='lightbox'>
+                <div class='thumbnail'>
+                  <img src='contents/images/supernova_fixed_normal_1440.png'>
+                </div>
+              </a>
+              <a href='contents/images/supernova_fixed_normal_1470.png' class='col-sm-6 col-md-4' data-gallery='multiimages' data-toggle='lightbox'>
+                <div class='thumbnail'>
+                  <img src='contents/images/supernova_fixed_normal_1470.png'>
+                </div>
+              </a>
+              <a href='contents/images/supernova_fixed_normal_1540.png' class='col-sm-6 col-md-4' data-gallery='multiimages' data-toggle='lightbox'>
+                <div class='thumbnail'>
+                  <img src='contents/images/supernova_fixed_normal_1540.png'>
+                </div>
+              </a>
+              <a href='contents/images/supernova_fixed_normal_1580.png' class='col-sm-6 col-md-4' data-gallery='multiimages' data-toggle='lightbox'>
+                <div class='thumbnail'>
+                  <img src='contents/images/supernova_fixed_normal_1580.png'>
+                </div>
+              </a>
+            </div>
+            <!-- text -->
+            <p>I fixed an issue in the normal estimation process based on Bob's input. Images from left to right are from timestep 1403, 1440, 1470, 1540 and 1580. A few things:</p>
+            <ul>
+              <li>There are still visible artifacts (the black lines). Those are where the depth layers disjoint. We might be able to interpolate a more accurate depth value based on neighbor bins, but I don't think I can make the fix in time.</li>
+              <li>It was my mistake that used a viewport that only captures the first timestep entirely. It seems like the supernova moves around significantly.</li>
+              <li>Using one transfer function is not enough for the whole time span of this supernova dataset. When the transfer function looks good in 1580, it doesn't look interesting in 1403. That actually makes it more interesting because we can demonstrate how explorable images can deal with this problem.</li>
+            </ul>
+          </div>
+
+          <!-- 8 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>Need Input for Transfer Function <small>April 26</small></h3>
+            <!-- images -->
+            <div class='row'>
+              <div class='col-sm-6 col-md-6'>
+                <a href='contents/images/supernova_transferfunction.png' class='thumbnail' data-toggle='lightbox'>
+                  <img src='contents/images/supernova_transferfunction.png'>
+                </a>
+              </div>
+            </div>
+            <!-- text -->
+            <p>This image is generated using the transfer function on the left, also I hard coded it to cutaway the front part. There are artifacts which I do not understand why/how. I assume they are artifacts from the viewing stage. Generating such an image is time consuming, generating a image sequence can take hours, so we have 1 chance (tonight) to generate the video.</p>
+            <p>As long as the view angle and the opacity map is good enougth, we can change the colors later. And I hope I can fix the artifacts tomorrow.</p>
+            <p>Bob, do you have any idea where these artifacts might come from?</p>
+          </div>
+
+          <!-- 7 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>Video from Dr. Ono's Simulation Data <small>April 26</small></h3>
+            <!-- video -->
+            <div class='row'>
+              <div class='col-xs-12 col-sm-6'>
+                <video style='width:100%;height:100%' width='100%' height='100%'>
+                  <source src='contents/videos/jet_oblique_video.webm' type='video/webm'/>
+                  <source src='contents/videos/jet_oblique_video.mp4' type='video/mp4'/>
+                  <source src='contents/videos/jet_oblique_video.ogv' type='video/ogg'/>
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            </div>
+            <!-- text -->
+            <p>This is actually generated using ParaView. It is intended to be used by Yang to make a proof of concept video for feature tracking because making the actual feature tracking to work is time consuming and we don't have enough time at this stage.
+          </div>
+
+          <!-- 6 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>Lighting with Depth Proxy <small>April 25</small></h3>
+            <!-- images -->
+            <div class='row gallery-wrapper'>
+              <div class='col-sm-6 col-md-6'>
+                <a href='contents/images/lighting1.png' class='thumbnail' data-toggle='lightbox'
+                   data-gallery='multiimages' data-parent='.gallery-wrapper'>
+                  <img src='contents/images/lighting1.png'>
+                </a> 
+              </div>
+              <div class='col-sm-6 col-md-6'>
+                <a href='contents/images/lighting2.png' class='thumbnail' data-toggle='lightbox'
+                   data-gallery='multiimages' data-parent='.gallery-wrapper'>
+                  <img src='contents/images/lighting2.png'>
+                </a> 
+              </div>
+            </div>
+            <!-- text -->
+            <p>From Bob:</p>
+            <blockquote>
+              <p>I've added Phong lighting to Chris's viewer (Actually I was done with that at about 9PM).</p>
+              <p>What I've been experimenting with since then is: I don't understand the behavior I'm getting from the transfer function editor. I believe it's what Chris is complaining about with respect to the assumptions made within the structure of the RAFs. Color modulation works great, but opacity modulation is extremely finicky: If I even slightly raise the low intensity value opacity, the higher values are either completely hidden or oversaturate immediately. I confirmed that Chris's code conforms to the description in the paper, so there must be something Anna and the others felt to be trivial that's necessary to fix it. Chris: I think we can fix this issue now that we have the depths, by sorting the bins by depth before rendering. I'm tired for now, but I'll test my hypothesis tomorrow. My implementation is on our dropbox share.</p>
+              <p>The first attached image is just a quick demonstration with opacity disabled so that you can more clearly see the lighting changes. It's just the Phong model: The parameters are all configurable within the shader, and whenever we like we can expose them in the interface.</p>
+              <p>The second attached image is the same except with opacity enabled. I recognize the quality is bad: as I said, I really had to play around a lot with the opacities to get a half-decent picture...this needs to be fixed, so hopefully my idea will work.</p>
+            </blockquote>
+          </div>
+
+          <!-- 5 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>Wrong Lighting <small>April 20</small></h3>
+            <!-- images -->
+            <div class='row'>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/z10.png' class='thumbnail' data-toggle='lightbox'>
+                  <img src='contents/images/z10.png'>
+                </a> 
+              </div>
+            </div>
+            <!-- text -->
+            <p>As Hongfeng recommended, I used amb_diff as attenuation in the ray attenuation function, which is mathematically incorrect. Because by using amb_diff, we actually revealed the bins that should be occluded.</p>
+            <p>For example, we have slab A and slab B, where slab A is in front of slab B and slab A is fully opaque. If we are using alpha as attenuation, we will not be able to see slab B, which is correct, but if we use amb_diff as attenuation, we will be seeing slab B because slab A is no longer fully opaque.</p>
+          </div>
+
+          <!-- 4 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>First Image from Dr. Ono's Simulation <small>April 18</small></h3>
+            <!-- images -->
+            <div class='row'>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/z9.png' class='thumbnail' data-toggle='lightbox'>
+                  <img src='contents/images/z9.png'>
+                </a> 
+              </div>
+            </div>
+            <!-- text -->
+            <p>This image is rendered from Dr. Ono's simulation output data. This is not genereated in situ, rather I used the output data that Yang generated in the past. And this is not generated in parallel because the data is not stored in a parallel way.</p>
+          </div>
+
+          <!-- 3 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>Opacity Modulation <small>April 18</small></h3>
+            <!-- images -->
+            <div class='row gallery-wrapper'>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/z6.png' class='thumbnail' data-toggle='lightbox'
+                   data-gallery='multiimages' data-parent='.gallery-wrapper'>
+                  <img src='contents/images/z6.png'>
+                </a> 
+              </div>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/z7.png' class='thumbnail' data-toggle='lightbox'
+                   data-gallery='multiimages' data-parent='.gallery-wrapper'>
+                  <img src='contents/images/z7.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/z8.png' class='thumbnail' data-toggle='lightbox'
+                   data-gallery='multiimages' data-parent='.gallery-wrapper'>
+                  <img src='contents/images/z8.png'>
+                </a>
+              </div>
+            </div>
+            <!-- text -->
+            <p>Implemented opacity modulation as described in the paper. The 3 images are generated from a single explorable image.</p>
+            <p>We can change the opacity map to reveal internal structures, from image 1 to image 2.</p>
+            <p>They made a big assumption that a ray traverse from low intensity to high intensity. As a result, when we change the opacity value of a lower intensity bin, it affects the opacity of the higher intensity bins. In image 3, we lower the opacity value of some lower intensity bins, it amplifies the opacity values in the higher intensity bins, which makes them all white.</p>
+          </div>
+
+          <!-- 2 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>Rendered with Smaller Step Size <small>April 18</small></h3>
+            <!-- images -->
+            <div class='row gallery-wrapper'>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/z3.png' class='thumbnail' data-toggle='lightbox'
+                   data-gallery='multiimages' data-parent='.gallery-wrapper'>
+                  <img src='contents/images/z3.png'>
+                </a> 
+              </div>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/z4.png' class='thumbnail' data-toggle='lightbox'
+                   data-gallery='multiimages' data-parent='.gallery-wrapper'>
+                  <img src='contents/images/z4.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/z5.png' class='thumbnail' data-toggle='lightbox'
+                   data-gallery='multiimages' data-parent='.gallery-wrapper'>
+                  <img src='contents/images/z5.png'>
+                </a>
+              </div>
+            </div>
+            <!-- text -->
+            <p>These images are rendered with a ray step size 0.5, which eliminates the ring artifacts. Of course we can change the colors. I tried to incorporate opacity change in the third image. This opacity change doesn't have opacity modulation. I am going to implement it next.</p>
+          </div>
+
+          <!-- 1 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>First Images <small>April 17</small></h3>
+            <!-- images -->
+            <div class='row gallery-wrapper'>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/z1.png' class='thumbnail' data-toggle='lightbox'
+                   data-gallery='multiimages' data-parent='.gallery-wrapper'>
+                  <img src='contents/images/z1.png'>
+                </a> 
+              </div>
+              <div class='col-sm-6 col-md-4'>
+                <a href='contents/images/z2.png' class='thumbnail' data-toggle='lightbox'
+                   data-gallery='multiimages' data-parent='.gallery-wrapper'>
+                  <img src='contents/images/z2.png'>
+                </a>
+              </div>
+            </div>
+            <!-- text -->
+            <p>This is the first sets of explorable images generated using Hongfeng's codes. They are generated using a fairly big ray step size (2.0). That is why the ring like artifacts appear. I am using a big step size because it is slow since it is a software renderer. The two images demonstrate that we can change the colormap, but I still need to add the functonality in the viewer to be able to change the opaicty map.</p>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="assets/bootstrap/js/bootstrap.min.js"></script>
+    <!-- Ekko Lightbox -->
+    <script src='assets/bootstrap/js/ekko-lightbox.js'></script>
+    <!-- Ekko Lightbox Setup -->
+    <script type="text/javascript">
+      $(document).ready(function ($) {
+        $(document).delegate('*[data-toggle="lightbox"]', 'click', function(event) {
+          event.preventDefault();
+          return $(this).ekkoLightbox();
+        });
+      });
+    </script>
+    <!-- Mediaelement Video Player -->
+    <script src='assets/mediaelement/mediaelement-and-player.min.js'></script>
+    <!-- Mediaelement Setup -->
+    <script type='text/javascript'>
+      $(document).ready(function ($) {
+        $('video').mediaelementplayer({
+          loop: true,
+          features: ['playpause','progress','fullscreen'],
+          pauseOtherPlayers: false
+        });
+      });
+    </script>
+    <!-- highlight.js -->
+    <script src='assets/highlight/highlight.pack.js'></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <!-- prism.js -->
+    <!-- <script src='assets/prism/prism.js'></script> -->
+
+  </body>
+</html>

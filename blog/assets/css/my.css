@@ -1,0 +1,66 @@
+.myheader {
+	height: 150px;
+	background-color: rgb(33, 33, 33);
+	background-image: -webkit-linear-gradient(top, rgb(55, 55, 55), rgb(33, 33, 33));
+	padding-top: 60px;
+}
+
+.myheader h1 {
+	color: #eee;
+	font-family: 'Lucida Grande', Calibri, Helvetica, Arial, sans-serif;
+}
+
+.content-section {
+	background-color: rgb(242, 242, 242);
+}
+
+.summary {
+	border-bottom-width: 1px;
+	border-bottom-style: dashed;
+	border-bottom-color: rgb(150, 150, 150);
+}
+
+.entry {
+	border-bottom-width: 1px;
+	border-bottom-style: dashed;
+	border-bottom-color: rgb(150, 150, 150);
+}
+
+.container {
+	max-width: 640px;
+}
+
+.container h2 {
+	color: rgb(33, 33, 33);
+	font-family: 'Lucida Grande', Calibri, Helvetica, Arial, sans-serif;
+}
+
+.container h3 {
+	color: rgb(33, 33, 33);
+	font-family: 'Lucida Grande', Calibri, Helvetica, Arial, sans-serif;
+}
+
+.container h4 {
+	color: rgb(33, 33, 33);
+	font-family: 'Lucida Grande', Calibri, Helvetica, Arial, sans-serif;
+}
+
+.container li {
+	color: rgb(33, 33, 33);
+	font-family: 'Myriad Pro', Calibri, Helvetica, Arial, sans-serif;
+	font-size: 16px;
+	line-height: 24px;
+}
+
+.container p {
+	color: rgb(33, 33, 33);
+	font-family: 'Myriad Pro', Calibri, Helvetica, Arial, sans-serif;
+	font-size: 16px;
+	line-height: 24px;
+}
+
+pre code {
+	word-wrap: normal;
+	overflow-wrap: normal;
+	white-space: pre;
+}
