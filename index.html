@@ -6,7 +6,10 @@
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
     <meta name="description" content="HPGVis : ">
 
+    <link rel='stylesheet' type='text/css' href='blog/assets/bootstrap/css/bootstrap.min.css'>
     <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+    <!-- hightlight.js -->
+    <link href='blog/assets/highlight/styles/tomorrow.css' rel='stylesheet'>
 
     <title>HPGVis</title>
   </head>
@@ -31,37 +34,178 @@
     <!-- MAIN CONTENT -->
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
-        <h3>
-<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Welcome to GitHub Pages.</h3>
 
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
+        <!-- Blog -->
+        <h3><a name='blog' class="anchor" href="#blog"><span class="octicon octicon-link"></span></a>Blog</h3>
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
-</code></pre>
+        <p>A blog like report page was written to remember what has done to this project. Everything about the project, such as design decisions, authur's frustrations, bad images, and good images can be found in the blog. The blog can be found here: <a href='blog/index.html'>http://chrisyeshi.github.io/HPGVis/blog/</a></p>
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
+        <!-- Obtain the Codes -->
+        <h3><a name='obtain-code' class='anchor' href='#obtain-code'><span class='octicon octicon-link'></span></a>Obtaining the Codes</h3>
 
-<h3>
-<a name="designer-templates" class="anchor" href="#designer-templates"><span class="octicon octicon-link"></span></a>Designer Templates</h3>
+        <p>You can download the archived codes from the top right of this page, or you can clone the repository in the GitHub page. The commands I use to clone the repository is:</p>
 
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
+        <pre><code>$ cd /where/you/want/to/put/this/code/
+$ git clone https://github.com/chrisyeshi/HPGVis.git --single-branch</code></pre>
 
-<h3>
-<a name="rather-drive-stick" class="anchor" href="#rather-drive-stick"><span class="octicon octicon-link"></span></a>Rather Drive Stick?</h3>
+        <p>And of course you can use Git management softwares, the one I prefer is SourceTree. I have never tried the GitHub application, but I assume it is pretty good.</p>
 
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
+        <!-- Prerequisites -->
+        <h3><a name='prerequisites' class='anchor' href='#prerequisites'><span class='octicon octicon-link'></span></a>Prerequisites</h3>
 
-<h3>
-<a name="authors-and-contributors" class="anchor" href="#authors-and-contributors"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
+        <p>Most third party libraries are already included in the source code, including <code>boost/smart_ptr</code> and <code>jsoncpp</code>. We extract the smart pointer module from the huge boost library, so we are able to include a small portion of the boost library into the source code. The jsoncpp library contains only a header file and a source file, which is also very small.</p>
 
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
+        <p>The only third party library we need is Qt5. It is used only for the interface of the viewer. As a result, if you are not building the viewer, you don't need to have Qt5. Qt5 can be obtained here: <a href='http://qt-project.org/'>http://qt-project.org/</a></p>
 
-<h3>
-<a name="support-or-contact" class="anchor" href="#support-or-contact"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
+        <!-- Installation -->
+        <h3><a name='installation' class='anchor' href='#installation'><span class='octicon octicon-link'></span></a>Installation</h3>
 
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
+        <p>We use the best building system provided by CMake. It's a modern, elegant, and famous buliding system which is light years better than automake. If you have never heard of CMake, you should definitely check out their website: <a href='http://www.cmake.org/'>http://www.cmake.org/</a></p>
+
+        <p>The commands I use to build is:</p>
+
+        <pre><code>$ cd /the/root/directory/of/HPGVis/
+$ mkdir build
+$ cd build
+$ cmake ..
+$ make
+$ make install</code></pre>
+
+        <p>Instead of <code>cmake ..</code> we can also use <code>ccmake ..</code> which provides a command line interface for us to specify the build options. Here are the build options that are worth mentioning:</p>
+
+        <table class='table table-striped table-hover table-bordered' style='font-size:14px'>
+          <tbody>
+            <tr>
+              <td>BUILD_HPGV</td>
+              <td>ON/OFF</td>
+              <td>Whether to build HPGV library, which is the main module.</td>
+            </tr>
+            <tr>
+              <td>BUILD_TESTS</td>
+              <td>ON/OFF</td>
+              <td>Whether to build the test suite.</td>
+            </tr>
+            <tr>
+              <td>BUILD_VIEWER</td>
+              <td>ON/OFF</td>
+              <td>Whether to build the viewer of explorable images.</td>
+            </tr>
+            <tr>
+              <td>CMAKE_BUILD_TYPE</td>
+              <td>Release/Debug</td>
+              <td>Choose from release or debug build. Choose release for performance.</td>
+            </tr>
+            <tr>
+              <td>CMAKE_INSTALL_PREFIX</td>
+              <td>/path/you/prefer/</td>
+              <td><code>make install</code> will store the neccessary files in this path.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Using HPGV -->
+        <h3><a name='use-hpgv' class='anchor' href='#use-hpgv'><span class='octicon octicon-link'></span></a>Using HPGV</h3>
+
+        <p>The purpose of HPGV is to allow users to integrate into a simulation and perform in situ visualization. However, we also provide an executable that can render HDF5 volumetric datasets.</p>
+
+        <p>The executable is called h5ren, there is also a helper bash script called h5renpar.sh for parallel rendering using MPI. After <code>make install</code> they are under the <code>/your/install/path/bin/</code> directory. The arguments for h5ren and h5renpar.sh are</p>
+
+        <pre><code>$ ./h5ren [X] [Y] [Z] [CONFIG] [HDF5] [DATASET] [OUTPUT]
+$ ./h5renpar.sh [X] [Y] [Z] [CONFIG] [HDF5] [DATASET] [OUTPUT]</code></pre>
+
+        <p>where <code>[X] [Y] [Z]</code> specifies how many processors you want to use for parallel rendering. If using <code>h5ren</code>, <code>1 1 1</code> is the only option. <code>[CONFIG]</code> is a configuration file, which specifies how we want to render the volume. We will show the format of the file below. <code>[HDF5]</code> is the HDF5 volumetric file you want to render. <code>[DATASET]</code> is the specific dataset in the HDF5 file. <code>[OUTPUT]</code> is the name of the output file you prefer. Leave it without extension and the system will append .raf for ray attenuation function.</p>
+
+        <p>The h5ren also acts as a demo of how to integrate HPGV into a simulation. The following code snippet shows how to integrate with a simulation.</p>
+
+        <pre><code>// These are the include files the library needs.
+#include "hpgvis.h"
+#include "parameter.h"
+
+...
+
+// Setting up the parameter object.
+// "configure.json" is the configuration file used in this particular example, change to whatever file name you are using.
+// You can also setup the parameter object using codes, please refer to parameter.h and the sample configuration file below on what needs to be set.
+hpgv::Parameter para;
+if (!para.open("configure.json"))
+  return false;
+
+HPGVis vis;
+vis.initialize();
+vis.setProcDims(npx, npy, npz);
+vis.setParameter(para);
+vis.setVolume(volume);
+vis.render();
+if (rank == vis.getRoot())
+  vis.getImage()->save("output.raf");</code></pre>
+
+        <p>Upon this point, we haven't talked about the configuration file, which is essential because it directly determines the output image quality. The following json snippets shows the format of the configuration file.</p>
+
+        <pre><code>{
+  // format has to be RAF (Ray Attenuation Function) at the moment<br>
+  "format" : "RAF",
+  // type is the floating number type, use float or double
+  "type" : "float",
+  // Specifies the data range. If "minmax" is not provided, the system will calculate it automatically.
+  "minmax" : [0.0, 0.1],
+  "images" : [
+    {
+      // Adaptive binning is specified here:
+      // It's an array of 17 floating point numbers, the first number is always 0.0, and the last number is always 1.0.
+      // If "binTicks" is not provided, the system will use a linear spaced array.
+      "binTicks" : [0.0, 0.25, 0.5, 0.625, 0.65626,
+                    0.6875, 0.71875, 0.75, 0.765625,
+                    0.78125, 0.796875, 0.8125, 0.8281,
+                    0.84375, 0.859375, 0.875, 1.0],
+      // "sampleSpacing" determines how fast the rays move forward.
+      "sampleSpacing" : 0.5
+    }
+  ],
+  "view" : {
+    // These determines the resolution of the output image. Usually the last two number of "viewport" are the same as "width" and "height".
+    "viewport" : [ 0, 0, 1024, 1024 ],
+    "width" : 1024,
+    "height" : 1024,
+    "angle" : 0,
+    "scale" : 0,
+    // The model, view, and projection matrix to specify the camera orientation.
+    "modelview" : [
+      -0.5036, 0.6476, -0.5717, 128.3415,
+      0.5741, -0.2436, -0.7816, 135.3691,
+      -0.6455, -0.7219, -0.2491, -415.0219,
+      0, 0, 0, 1
+    ],
+    "projection" : [
+      2.823912858963013, 0, 0, 0,
+      0, 2.823912858963013, 0, 0,
+      0, 0, -1.649572372436523, -939.01904296875,
+      0, 0, -1, 0
+    ]
+  }
+}</code></pre>
+
+        <!-- Using HPGView -->
+        <h3><a name='use-hpgview' class='anchor' href='#use-hpgview'><span class='octicon octicon-link'></span></a>Using HPGView</h3>
+
+        <img src='blog/contents/images/interface.png' width='100%'>
+
+        <p>The image shown above is the interface of the HPGView. The main section on the top left shows the final rendering result. We support zoom and pan using the mouse wheel and left button.</p>
+
+        <p>On the bottom left, it is a slider for exploring the temporal dimension. The three numbers (0, 72, 197) are representing the (starting frame, current frame, end frame). Users can drag to any frame or use keyboard left/right arrow key to traverse the time.</p>
+
+        <p>On the top right, it's the control panel. From the top to bottom, they are transfer function editor, lighting editor, and generate information display. With transfer function, users can determine the colors and transparency of the different layers in explorable image. With the lighting editor, users can change the light direction by dragging the bright region of the sphere. The information panel shows the general information about the file, including file name, file size, image resolution, light direction, zoom level, and focal point.</p>
+
+        <p>Finally the bottom right has 3 buttons, from left to right, advanced settings, open button, and the exit button. The advanced settings is too advanced to be written down here. The open button is to open different files, and the exit button is ...</p>
+
+        <!-- Authors -->
+        <h3><a name="authors-and-contributors" class="anchor" href="#authors-and-contributors"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
+
+        <p>Chris Ye (<a href="https://github.com/chrisyeshi" class="user-mention">@chrisyeshi</a>), Yang Wang (<a href="https://github.com/gnavvy" class="user-mention">@gnavvy</a>), Bob Miller (<a href="https://github.com/dairukan" class="user-mention">@dairukan</a>), and Kwan-Liu Ma (<a href='http://www.cs.ucdavis.edu/~ma' class='user-mention'>@</a>)</p>
+
+        <h3><a name="support-or-contact" class="anchor" href="#support-or-contact"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
+
+        <p>Contact Chris Ye (<a href="https://github.com/chrisyeshi" class="user-mention">@chrisyeshi</a>) (<a href='mailto:chrisyeshi@gmail.com'>chrisyeshi@gmail.com</a>) if you have any questions.</p>
+
       </section>
     </div>
 
@@ -71,9 +215,11 @@ $ git checkout gh-pages
         <p class="copyright">HPGVis maintained by <a href="https://github.com/chrisyeshi">chrisyeshi</a></p>
         <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
       </footer>
-    </div>
+    </div>   
 
-    
+    <!-- highlight.js -->
+    <script src='blog/assets/highlight/highlight.pack.js'></script>
+    <script>hljs.initHighlightingOnLoad();</script>         
 
   </body>
 </html>
