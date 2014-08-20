@@ -346,14 +346,14 @@ bool Parameter::fromJSON(const Json::Value& root)
                 images[i].binTicks[j] = root["images"][i]["binTicks"][j].asFloat();
         }
         // transfer function
-        images[i].tf.resize(root["images"][i]["tf"].size() * 4);
-        for (unsigned int iTF = 0; iTF < root["images"][i]["tf"].size(); ++iTF)
-        {
-            images[i].tf[4 * iTF + 0] = root["images"][i]["tf"][iTF][0].asFloat();
-            images[i].tf[4 * iTF + 1] = root["images"][i]["tf"][iTF][1].asFloat();
-            images[i].tf[4 * iTF + 2] = root["images"][i]["tf"][iTF][2].asFloat();
-            images[i].tf[4 * iTF + 3] = root["images"][i]["tf"][iTF][3].asFloat();
-        }
+//        images[i].tf.resize(root["images"][i]["tf"].size() * 4);
+//        for (unsigned int iTF = 0; iTF < root["images"][i]["tf"].size(); ++iTF)
+//        {
+//            images[i].tf[4 * iTF + 0] = root["images"][i]["tf"][iTF][0].asFloat();
+//            images[i].tf[4 * iTF + 1] = root["images"][i]["tf"][iTF][1].asFloat();
+//            images[i].tf[4 * iTF + 2] = root["images"][i]["tf"][iTF][2].asFloat();
+//            images[i].tf[4 * iTF + 3] = root["images"][i]["tf"][iTF][3].asFloat();
+//        }
     }
     // minmax
     if (root["minmax"].isNull())

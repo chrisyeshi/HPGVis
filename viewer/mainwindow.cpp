@@ -62,12 +62,6 @@ void MainWindow::open()
 
 void MainWindow::movie()
 {
-//    for (int iFile = 0; iFile < imageCache.getImageCount(); ++iFile)
-//    {
-//        ui->viewer->renderRAF(imageCache.getImage(iFile));
-//        ui->viewer->updateGL();
-//        ui->viewer->screenCapture();
-//    }
     QString filename = QFileDialog::getOpenFileName(this, tr("Script File"), ".", tr("JSON Files (*.json)"));
     std::ifstream fin(filename.toUtf8().constData());
     Json::Value root;
