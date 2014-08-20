@@ -6,6 +6,9 @@ uniform sampler2DArray rafarr;
 uniform sampler2DArray deparr;
 uniform sampler2DArray nmlarr;
 uniform vec3 lightDir;
+uniform sampler2D features;
+uniform float featureID;
+uniform int featureEnable;
 
 in VertexData {
     vec2 texCoord;
@@ -152,6 +155,16 @@ void main()
     vec4 cIso = iso();
     vec4 cRaf = raf();
     fragColor = vec4(cIso.rgb + /*(1.0 - cIso.a) * */cRaf.rgb, 1.0);
-//    fragColor = isoraf();
+
+    // feature tracking
+    if (featureEnable == 1)
+    {
+        float id = texture(features, FragIn.texCoord).x;
+        if (abs(id - featureID) > 1.0 / 10000.0)
+            fragColor = vec4(fragColor.rgb, 0.4);
+        else
+            fragColor = vec4(fragColor.rg, 1.0, 1.0);
+    }
+
     return;
 }

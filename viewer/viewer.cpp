@@ -142,8 +142,8 @@ void Viewer::paintGL()
     if (texFeature) texFeature->bind(5);
 
     progRaf.setUniformValue("invVP", 1.f / float(imageRaf->getWidth()), 1.f / float(imageRaf->getHeight()));
-    progRaf.setUniformValue("selectedID", float(SelectedFeature)/nFeatures);
-    progRaf.setUniformValue("featureHighlight", int(HighlightFeatures ? 1 : 0));
+    progRaf.setUniformValue("featureID", float(SelectedFeature)/nFeatures);
+    progRaf.setUniformValue("featureEnable", int(HighlightFeatures ? 1 : 0));
 
     glDrawArrays(GL_TRIANGLE_FAN, 0, nVertsQuad);
 
@@ -321,7 +321,7 @@ void Viewer::updateProgram()
     progRaf.setUniformValue("rafarr", 2);
     progRaf.setUniformValue("nmlarr", 3);
     progRaf.setUniformValue("deparr", 4);
-    progRaf.setUniformValue("featureID", 5);
+    progRaf.setUniformValue("features", 5);
     progRaf.release();
 
     initTexNormalTools();
