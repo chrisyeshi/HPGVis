@@ -131,6 +131,8 @@ void MainWindow::updateInfo()
     QPointF focal = ui->viewer->getFocal();
     ss << "Zoom: " << zoom << std::endl;
     ss << "Focal: [" << focal.x() << ", " << focal.y() << "]" << std::endl;
+    // window size
+    ss << "Window: [" << ui->viewer->width() << ", " << ui->viewer->height() << "]" << std::endl;
 
     ui->info->setPlainText(ss.str().c_str());
 }
