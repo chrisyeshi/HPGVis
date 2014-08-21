@@ -12,11 +12,11 @@ bool Image::open(const std::string& filename)
     return this->read(fin);
 }
 
-void Image::save(const std::string& filename) const
-{
-	std::ofstream fout(filename.c_str(), std::ios::binary);
-	assert(fout);
-	this->write(fout);
-}
+//void Image::save(const std::string& filename) const
+//{
+//	std::ofstream fout(filename.c_str(), std::ios::binary);
+//	assert(fout);
+//	this->write(fout);
+//}
 
 } // namespace hpgv

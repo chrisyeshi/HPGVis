@@ -1,5 +1,5 @@
 {
-   "format" : "RGBA",
+   "format" : "RAF",
    "type" : "float",
    "minmax" : [0.0, 0.1],
    "images" : [

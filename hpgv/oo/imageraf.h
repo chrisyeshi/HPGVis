@@ -27,7 +27,8 @@ public:
     std::vector<float> getAlphas() const { return alphas; }
 
     virtual bool read(std::istream& in);
-    virtual void write(std::ostream& out) const;
+    virtual void save(const std::string& filename) const;
+//    virtual void write(std::ostream& out) const;
 
 protected:
 

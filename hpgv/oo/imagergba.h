@@ -18,7 +18,8 @@ public:
 	void set(int format, int type, const void* data);
 
 	virtual bool read(std::istream& in);
-	virtual void write(std::ostream& out) const;
+    virtual void save(const std::string& filename) const;
+//	virtual void write(std::ostream& out) const;
 
 protected:
 
