@@ -9,10 +9,6 @@
 
 #define nPerColor 4
 
-typedef struct tf_color_t {
-    float r, g, b, a;
-} tf_color_t;
-
 //
 //
 // Local Variables

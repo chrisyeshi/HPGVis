@@ -11,7 +11,9 @@ extern "C"
 #include "hpgv_utilmath.h"
 #include "hpgv_util.h"
 
-typedef struct tf_color_t tf_color_t;
+typedef struct tf_color_t {
+    float r, g, b, a;
+} tf_color_t;
 
 tf_color_t hpgv_tf_sample(const float* tf, int tfsize, float val);
 

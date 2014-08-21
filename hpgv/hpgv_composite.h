@@ -73,7 +73,7 @@ hpgv_composite(/* dimnsions of pixel rectangle */
         MPI_Comm comm,
 
         /* transfer function */
-        float* tf,
+        const float* tf,
         int tfsize,
         const float binTicks[],
         float sampling_spacing,

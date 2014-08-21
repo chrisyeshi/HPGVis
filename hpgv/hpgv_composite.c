@@ -1154,7 +1154,7 @@ swap_control_raf_float(swap_control_t *swapctrl, swap_schedule_t *schedule)
  */
 static void
 swap_control_rafseg_float(swap_control_t *swapctrl, swap_schedule_t *schedule,
-                          float* tf, int tfsize, const float binTicks[HPGV_RAF_BIN_NUM+1], float sampling_spacing, int segid)
+                          const float* tf, int tfsize, const float binTicks[HPGV_RAF_BIN_NUM+1], float sampling_spacing, int segid)
 {
     swap_message_t *inmessage;
     uint64_t offset, recordcount, i, k;
@@ -1550,7 +1550,7 @@ swap_control_gather(swap_control_t *swapctrl)
  *
  */
 static void
-swap_control_composite(swap_control_t *swapctrl, float* tf, int tfsize, const float binTicks[HPGV_RAF_BIN_NUM+1], float sampling_spacing, int segid)
+swap_control_composite(swap_control_t *swapctrl, const float* tf, int tfsize, const float binTicks[HPGV_RAF_BIN_NUM+1], float sampling_spacing, int segid)
 {
     
     uint32_t stage;
@@ -2015,9 +2015,9 @@ hpgv_composite_valid()
  *
  */
 int  
-hpgv_composite(int width, int height, int format, int type, 
+hpgv_composite(int width, int height, int format, int type,
                void *partialpixels, void *finalpixels, float depth,
-               int root, MPI_Comm mpicomm, float* tf, int tfsize,
+               int root, MPI_Comm mpicomm, const float *tf, int tfsize,
                const float binTicks[HPGV_RAF_BIN_NUM+1],
                float sampling_spacing, int segid,
                composite_t composite_type)
