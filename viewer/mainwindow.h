@@ -43,6 +43,8 @@ private slots:
 
     void on_animationHeader_toggled(bool checked);
 
+    void on_pushButton_toggled(bool checked);
+
 private:
     Ui::MainWindow *ui;
     QDir parentDir;

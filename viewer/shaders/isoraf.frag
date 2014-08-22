@@ -9,6 +9,8 @@ uniform vec3 lightDir;
 uniform sampler2D features;
 uniform float featureID;
 uniform int featureEnable;
+uniform int enableDepthaware;
+uniform int enableIso;
 
 in VertexData {
     vec2 texCoord;
@@ -86,8 +88,21 @@ vec4 raf()
     for (int i = 0; i < 16; ++i)
     {
         vec4 layerColor = vec4(vec3(colors[i].rgb) * binValues[i], binValues[i]);
-        float ro = 9.0 * pow(length(getGradient(i)), 0.5);
-        sum += (1.0 - ro) * (1.0 - colors[i].a) * layerColor;
+        if (enableDepthaware == 1 && enableIso == 1)
+        {
+            float ro = 9.0 * pow(length(getGradient(i)), 0.5);
+            sum += (1.0 - ro) * (1.0 - colors[i].a) * layerColor;
+        } else if (enableDepthaware == 1)
+        {
+            float ro = 9.0 * pow(length(getGradient(i)), 0.5);
+            sum += (1.0 - ro) * layerColor;
+        } else if (enableIso == 1)
+        {
+            sum += (1.0 - colors[i].a) * layerColor;
+        } else
+        {
+            sum += layerColor;
+        }
     }
     return sum;
 }
@@ -130,14 +145,12 @@ void main()
         if (normals[i].z < 0.0)
             colors[i] = vec4(0.0);
     }
-//    fragColor = vec4(normals[7], 1.0);
-//    return;
     // depths
     for (int i = 0; i < 16; ++i)
     {
         depths[i] = texture(deparr, vec3(FragIn.texCoord, float(i))).x;
-//        if (depths[i] < 0.001 || depths[i] > 0.999)
-//            colors[i] = vec4(0.0);
+        if (depths[i] < 0.001 || depths[i] > 0.999)
+            colors[i] = vec4(0.0);
     }
     // lights
     for (int i = 0; i < 16; ++i)
@@ -154,7 +167,10 @@ void main()
 
     vec4 cIso = iso();
     vec4 cRaf = raf();
-    fragColor = vec4(cIso.rgb + /*(1.0 - cIso.a) * */cRaf.rgb, 1.0);
+    if (enableIso == 1)
+        fragColor = vec4(cIso.rgb + /*(1.0 - cIso.a) * */cRaf.rgb, 1.0);
+    else
+        fragColor = vec4(cRaf.rgb, 1.0);
 
     // feature tracking
     if (featureEnable == 1)

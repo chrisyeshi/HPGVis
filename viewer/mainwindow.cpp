@@ -21,6 +21,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->tfHeader->setChecked(!true);
     ui->lightHeader->setChecked(!true);
     ui->animationHeader->setChecked(!false);
+    ui->animationHeader->setChecked(!false);
     ui->infoHeader->setChecked(!false);
     // connections
     QShortcut* shortcutClose = new QShortcut(tr("Ctrl+w"), this);
@@ -34,6 +35,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->viewer, SIGNAL(viewChanged()), this, SLOT(updateInfo()));
     connect(ui->movie, SIGNAL(clicked()), this, SLOT(movie()));
     connect(ui->keyframe, SIGNAL(clicked()), this, SLOT(makeKeyFrame()));
+    connect(ui->depthaware, SIGNAL(toggled(bool)), ui->viewer, SLOT(depthawareToggled(bool)));
+    connect(ui->iso, SIGNAL(toggled(bool)), ui->viewer, SLOT(isoToggled(bool)));
     updateInfo();
 }
 
@@ -181,4 +184,9 @@ void MainWindow::on_infoHeader_toggled(bool checked)
 void MainWindow::on_animationHeader_toggled(bool checked)
 {
     ui->animation->setVisible(!checked);
+}
+
+void MainWindow::on_pushButton_toggled(bool checked)
+{
+    ui->advanced->setVisible(!checked);
 }
