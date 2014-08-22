@@ -62,7 +62,6 @@ bool ImageRAF::read(std::istream& in)
     return true;
 }
 
-//void ImageRAF::write(std::ostream& out) const
 void ImageRAF::save(const std::string& filename) const
 {
     std::ofstream out((filename + ".raf").c_str(), std::ios::binary);

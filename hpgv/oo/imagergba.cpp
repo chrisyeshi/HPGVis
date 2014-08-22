@@ -69,7 +69,6 @@ bool ImageRGBA::read(std::istream& in)
 	return false;
 }
 
-//void ImageRGBA::write(std::ostream& out) const
 void ImageRGBA::save(const std::string& filename) const
 {
 	assert(data);

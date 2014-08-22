@@ -1089,12 +1089,6 @@ hpgv_vis_para(const hpgv::Parameter& para)
 {
     theVisControl->format = para.getFormat();
     int framenum = para.getImages().size();
-//    if (para.getFormat() != HPGV_RAF)
-//    { // HPGV_RAF doesn't need colormap.
-//        hpgv_vis_tf_para(para.getColormap().size,
-//                para.getColormap().format,
-//                para.getColormap().type);
-//    }
     hpgv_vis_framesize(para.getView().width,
             para.getView().height,
             para.getType(),

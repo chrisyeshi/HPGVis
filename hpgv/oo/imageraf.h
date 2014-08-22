@@ -28,7 +28,6 @@ public:
 
     virtual bool read(std::istream& in);
     virtual void save(const std::string& filename) const;
-//    virtual void write(std::ostream& out) const;
 
 protected:
 

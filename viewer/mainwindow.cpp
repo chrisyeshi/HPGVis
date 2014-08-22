@@ -17,6 +17,12 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    // default visible tools
+    ui->tfHeader->setChecked(!true);
+    ui->lightHeader->setChecked(!true);
+    ui->animationHeader->setChecked(!false);
+    ui->infoHeader->setChecked(!false);
+    // connections
     QShortcut* shortcutClose = new QShortcut(tr("Ctrl+w"), this);
     connect(shortcutClose, SIGNAL(activated()), this, SLOT(close()));
     connect(ui->tf, SIGNAL(tfChanged(const mslib::TF&)), ui->viewer, SLOT(tfChanged(const mslib::TF&)));
@@ -26,12 +32,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->light, SIGNAL(lightDirChanged(QVector3D)), ui->viewer, SLOT(lightDirChanged(QVector3D)));
     connect(ui->light, SIGNAL(lightDirChanged(QVector3D)), this, SLOT(updateInfo()));
     connect(ui->viewer, SIGNAL(viewChanged()), this, SLOT(updateInfo()));
-    QMenu* more = new QMenu(this);
-    more->addAction(ui->actionMovie);
-    more->addAction(ui->actionKeyFrame);
-    ui->more->setMenu(more);
-    connect(ui->actionMovie, SIGNAL(triggered()), this, SLOT(movie()));
-    connect(ui->actionKeyFrame, SIGNAL(triggered()), this, SLOT(makeKeyFrame()));
+    connect(ui->movie, SIGNAL(clicked()), this, SLOT(movie()));
+    connect(ui->keyframe, SIGNAL(clicked()), this, SLOT(makeKeyFrame()));
     updateInfo();
 }
 
@@ -160,3 +162,23 @@ void MainWindow::setKeyFrame(const KeyFrame &key)
 // Protected Methods
 //
 //
+
+void MainWindow::on_tfHeader_toggled(bool checked)
+{
+    ui->tf->setVisible(!checked);
+}
+
+void MainWindow::on_lightHeader_toggled(bool checked)
+{
+    ui->light->setVisible(!checked);
+}
+
+void MainWindow::on_infoHeader_toggled(bool checked)
+{
+    ui->info->setVisible(!checked);
+}
+
+void MainWindow::on_animationHeader_toggled(bool checked)
+{
+    ui->animation->setVisible(!checked);
+}
