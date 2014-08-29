@@ -59,10 +59,33 @@
 
           <h2>Progress</h2>
 
+          <!-- 38 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>1st Comparison <small>August 28th</small></h3>
+            <!-- images -->
+            <div class='row gallery-wrapper'>
+              <div class='col-sm-6 col-md-6'>
+                <a href='contents/images/gt_1layer_vr.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Ground truth generated using a step function style transfer function'>
+                  <img src='contents/images/gt_1layer_vr.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-6'>
+                <a href='contents/images/gt_1layer_explorable.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Image generated using explorable image, which is generated using the same transfer function as the ground truth'>
+                  <img src='contents/images/gt_1layer_explorable.png'>
+                </a>
+              </div>
+            </div>
+            <!-- text -->
+            <p>The purpose of this comparison is to analyze how transfer function affects uncertainty. Even though we provide the same transfer function to generate both the volume rendering image and the explorable image, the resulting images can be different because the explorable image reduces the transfer function resolution to number of bins.</p>
+            <p>In this comparison, we want to create identical images from both volume rendering and explorable image, and we want to first focus in a single bin (minimum transfer function for explorable image). As a result, we are setting the tranfer function of volume rendering to a step function, where only the opacities in the 11th bin are set to 0.25. Therefore, it mimics the behavior of explorable image.</p>
+            <p>The first image above is the volume rendering image using the step function style transfer function which only shows the 11th bin. The second image is visualized from the explorable image generated using the same transfer function as the volume rendering image. We can see that they are almost identical. From a zoomed in view, we can actually observe that the volume rendering image has more noise. I am not sure about why that happens.</p>
+          </div>
+
           <!-- 37 -->
           <div class='entry'>
             <!-- title -->
-            <h3>SC14 Visualization Showcase <small>8/19</small></h3>
+            <h3>SC14 Visualization Showcase <small>August 19th</small></h3>
             <!-- video -->
             <div class='video-container'>
               <iframe width='100%' src="//www.youtube.com/embed/1i2Qyv5A6cs?rel=0" frameborder="0" allowfullscreen></iframe>
