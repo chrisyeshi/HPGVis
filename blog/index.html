@@ -59,10 +59,41 @@
 
           <h2>Progress</h2>
 
+          <!-- 39 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>Using Smooth Transfer Function <small>Sep. 4th</small></h3>
+            <!-- images -->
+            <div class='row gallery-wrapper'>
+              <div class='col-sm-6 col-md-6'>
+                <a href='contents/images/smooth_rgba.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Ground truth generated using a smooth transfer function with resolution of 1024. Ground truth image is more smooth because of linear interpolation.'>
+                  <img src='contents/images/smooth_rgba.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-6'>
+                <a href='contents/images/smooth_raf.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Image generated using explorable image, which is generated using the same transfer function as the ground truth. The explorable image is not as smooth as the ground truth because the values are discretized into finite (16) bins.'>
+                  <img src='contents/images/smooth_raf.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-6'>
+                <a href='contents/images/smooth_spot_rgba.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Ground truth generated using a smooth transfer function with resolution of 1024. Zoomed in view to show that ground truth is more smooth.'>
+                  <img src='contents/images/smooth_spot_rgba.png'>
+                </a>
+              </div>
+              <div class='col-sm-6 col-md-6'>
+                <a href='contents/images/smooth_spot_raf.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Image generated using explorable image, which is generated using the same transfer function as the ground truth. Zoomed in view to show ground truth is more smooth.'>
+                  <img src='contents/images/smooth_spot_raf.png'>
+                </a>
+              </div>
+            </div>
+            <!-- text -->
+            <p>This comparison shows the weakness of explorable image because of the small number of bins. The ground truth images are generated using a high resolution (1024) transfer function with linear interpolation enabled. Although the explorable images are generated using the same transfer function, the attenuation values are discretized into a small amount (16) of bins. As a result, the color and opacity changes are more smooth in the ground truth images rather than the images generated from explorable images. We can see the smoothness difference clearly from the zoomed in images.</p>
+          </div>
+
           <!-- 38 -->
           <div class='entry'>
             <!-- title -->
-            <h3>1st Comparison <small>August 28th</small></h3>
+            <h3>Using Step-function Style Transfer Function <small>August 28th</small></h3>
             <!-- images -->
             <div class='row gallery-wrapper'>
               <div class='col-sm-6 col-md-6'>
