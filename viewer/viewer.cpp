@@ -15,8 +15,9 @@ Viewer::Viewer(QWidget *parent) :
     texTf(QOpenGLTexture::Target1D),
     texAlpha(QOpenGLTexture::Target1D),
     texArrRaf(NULL), texArrDep(NULL),
-    zoomFactor(1.f), texArrNml(NULL),
-    texFeature(NULL), HighlightFeatures(false), SelectedFeature(0)
+    zoomFactor(1.f), texArrNml(NULL), texFeature(NULL),
+    enableDepthaware(true), enableIso(true), enableOpaMod(true),
+    HighlightFeatures(false), SelectedFeature(0)
 {
     std::cout << "OpenGL Version: " << this->context()->format().majorVersion() << "." << this->context()->format().minorVersion() << std::endl;
     setFocusPolicy(Qt::StrongFocus);
@@ -93,6 +94,51 @@ void Viewer::screenCapture()
     std::stringstream ss;
     ss << "snapshot_" << i++ << ".png";
     this->snapshot(ss.str());
+}
+
+void Viewer::depthawareToggled(bool checked)
+{
+    enableDepthaware = checked;
+    if (!progRaf.isLinked())
+        return;
+    progRaf.bind();
+    progRaf.setUniformValue("enableDepthaware", enableDepthaware ? 1 : 0);
+    progRaf.release();
+
+    updateGL();
+}
+
+void Viewer::isoToggled(bool checked)
+{
+    enableIso = checked;
+    if (!progRaf.isLinked())
+        return;
+    progRaf.bind();
+    progRaf.setUniformValue("enableIso", enableIso ? 1 : 0);
+    progRaf.release();
+
+    updateGL();
+}
+
+void Viewer::opaModToggled(bool checked)
+{
+    enableOpaMod = checked;
+    if (!progRaf.isLinked())
+        return;
+    progRaf.bind();
+    progRaf.setUniformValue("enableOpacityMod", enableOpaMod ? 1 : 0);
+    progRaf.release();
+
+    updateGL();
+}
+
+void Viewer::viewReset()
+{
+    focal.rx() = 0.0;
+    focal.ry() = 0.0;
+    zoomFactor = 1.f;
+    updateShaderMVP();
+    updateGL();
 }
 
 void Viewer::snapshot(const std::string &filename)
@@ -322,6 +368,9 @@ void Viewer::updateProgram()
     progRaf.setUniformValue("nmlarr", 3);
     progRaf.setUniformValue("deparr", 4);
     progRaf.setUniformValue("features", 5);
+    progRaf.setUniformValue("enableDepthaware", enableDepthaware ? 1 : 0);
+    progRaf.setUniformValue("enableIso", enableIso ? 1 : 0);
+    progRaf.setUniformValue("enableOpacityMod", enableOpaMod ? 1 : 0);
     progRaf.release();
 
     initTexNormalTools();

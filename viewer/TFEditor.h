@@ -125,6 +125,7 @@ protected slots:
 
 public slots:
     void setBGColor(const QColor &color);
+    void enableDrawArea(bool checked);
 
 signals:
     void tfChanged();

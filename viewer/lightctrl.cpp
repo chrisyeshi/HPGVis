@@ -14,8 +14,10 @@ LightCtrl::LightCtrl(QWidget *parent) :
 
 void LightCtrl::paintEvent(QPaintEvent *e)
 {
-    float w = e->rect().width();
-    float h = e->rect().height();
+    float w = width();
+    float h = height();
+//    float w = e->rect().width();
+//    float h = e->rect().height();
     QPointF center(w / 2.f, h / 2.f);
     float r = w / 2.f - margin;
 

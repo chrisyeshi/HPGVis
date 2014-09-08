@@ -305,6 +305,12 @@ void TFEditor::setBGColor(const QColor &color)
     }
 }
 
+void TFEditor::enableDrawArea(bool checked)
+{
+    _drawArea->setEnabled(checked);
+    repaint();
+}
+
 void TFEditor::applyPresetColorMap()
 {
     _tf->clearColorControls();
@@ -577,7 +583,6 @@ void TFDrawArea::paintEvent(QPaintEvent *e)
     QPainter painter(this);
 
     painter.setRenderHint(QPainter::Antialiasing, true);
-//    painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
 
     // set origin at left-bottom corner
     painter.save();
@@ -710,6 +715,14 @@ void TFDrawArea::paintEvent(QPaintEvent *e)
         TFControlPoint wrCtrl = getGaussianWidthRightControl(i);
         painter.drawEllipse(QPointF(clamp(wlCtrl.pos.x(), 0.0, 1.0), wlCtrl.pos.y()), r.x(), r.y());
         painter.drawEllipse(QPointF(clamp(wrCtrl.pos.x(), 0.0, 1.0), wrCtrl.pos.y()), r.x(), r.y());
+    }
+
+    // grey out
+    if (!this->isEnabled())
+    {
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(QBrush(QColor(25, 25, 25, 150), Qt::SolidPattern));
+        painter.drawRect(QRectF(0.0, 0.0, 1.0, 1.0));
     }
 
     painter.restore();

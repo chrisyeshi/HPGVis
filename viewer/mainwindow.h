@@ -34,6 +34,19 @@ public slots:
 protected:
     void setKeyFrame(const KeyFrame& key);
 
+private slots:
+    void on_tfHeader_toggled(bool checked);
+
+    void on_lightHeader_toggled(bool checked);
+
+    void on_infoHeader_toggled(bool checked);
+
+    void on_animationHeader_toggled(bool checked);
+
+    void on_advancedHeader_toggled(bool checked);
+
+    void on_stepFunc_clicked();
+
 private:
     Ui::MainWindow *ui;
     QDir parentDir;

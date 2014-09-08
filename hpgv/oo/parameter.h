@@ -17,7 +17,7 @@ public:
     // Static Const Variables
     //
     //
-    static const int tfSize = 1024;
+    static const int tfSizeDefault = 1024;
     static const int colorSize = 4;
 
 public:
@@ -26,12 +26,6 @@ public:
     // Structs to store data
     //
     //
-    struct Colormap
-    {
-        int size;
-        int format;
-        int type;
-    };
     struct View
     {
         View() : modelview(16), projection(16), viewport(4),
@@ -56,7 +50,7 @@ public:
         int count;
         float radius;
         int volume;
-        boost::shared_ptr<float[tfSize * 4]> tf;
+        boost::shared_ptr<float[tfSizeDefault * 4]> tf;
         Light light;
     };
     struct Volume
@@ -70,7 +64,8 @@ public:
         Image() : sampleSpacing(1.f) {}
         Particle particle;
         float sampleSpacing;
-        boost::shared_ptr<float[tfSize * 4]> tf;
+//        boost::shared_ptr<float[tfSize * 4]> tf;
+        std::vector<float> tf;
         std::vector<Volume> volumes;
         float binTicks[HPGV_RAF_BIN_NUM + 1];
     };
@@ -100,12 +95,10 @@ public:
     // Standard Accessors
     //
     //
-    const Colormap&             getColormap() const { return colormap; }
     const View&                 getView() const { return view; }
     const int&                  getFormat() const { return format; }
     const int&                  getType() const { return type; }
     const std::vector<Image>&   getImages() const { return images; }
-    void                        setColormap(const Colormap& colormap) { this->colormap = colormap; }
     void                        setView(const View& view) { this->view = view; }
     void                        setFormat(const int& format) { this->format = format; }
     void                        setType(const int& type) { this->type = type; }
@@ -118,7 +111,6 @@ public:
     // Reference Accessors
     //
     //
-    Colormap&                   rColormap() { return colormap; }
     View&                       rView() { return view; }
     std::vector<Image>&         rImages() { return images; }
 
@@ -128,7 +120,6 @@ private:
     // Member Variables
     //
     //
-    Colormap colormap;
     View view;
     int format;
     int type;

@@ -43,6 +43,10 @@ public slots:
     void tfChanged(const mslib::TF& tf);
     void lightDirChanged(QVector3D lightDir);
     void screenCapture();
+    void depthawareToggled(bool checked);
+    void isoToggled(bool checked);
+    void opaModToggled(bool checked);
+    void viewReset();
 
 protected:
     //
@@ -105,6 +109,9 @@ private:
     std::vector<GLuint> fboArrNml;
     QOpenGLVertexArrayObject vaoArrNml;
     QOpenGLShaderProgram progArrNml;
+    bool enableDepthaware;
+    bool enableIso;
+    bool enableOpaMod;
 
     const hpgv::ImageRAF* imageRaf;
     bool HighlightFeatures;

@@ -1,5 +1,6 @@
 #include "imagergba.h"
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <cassert>
 #include <cstring>
@@ -68,9 +69,11 @@ bool ImageRGBA::read(std::istream& in)
 	return false;
 }
 
-void ImageRGBA::write(std::ostream& out) const
+void ImageRGBA::save(const std::string& filename) const
 {
 	assert(data);
+    std::ofstream out((filename + ".ppm").c_str(), std::ios::binary);
+    assert(out);
     int fsize = hpgv_formatsize(format);
     std::stringstream ss;
     ss << "P6\n" << width << " " << height << "\n255\n";

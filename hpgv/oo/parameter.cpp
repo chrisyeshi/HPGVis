@@ -65,13 +65,20 @@ void Parameter::save(const std::string& filename) const
     fout.write(vec.data(), vec.size());
 }
 
+///
+/// \brief Parameter::serialize
+///
+/// This function is obsolete. The new functions are toJSON() and fromJSON()
+///
+/// \return
+///
 std::vector<char> Parameter::serialize() const
 {
     int intSize = sizeof(int);
     int matSize = sizeof(double) * 16;
     int int4Size = intSize * 4;
     int floatSize = sizeof(float);
-    int tfMemSize = tfSize * sizeof(float) * 4;
+    int tfMemSize = tfSizeDefault * sizeof(float) * 4;
     int lightSize = sizeof(float) * 4;
     int charSize = sizeof(char);
     int uint64Size = sizeof(uint64_t);
@@ -105,9 +112,9 @@ std::vector<char> Parameter::serialize() const
     std::vector<char> buffer(bufferSize);
     char* ptr = &(buffer[0]);
     // colormap
-    memcpy(ptr, &colormap.size, intSize); ptr += intSize;
-    memcpy(ptr, &colormap.format, intSize); ptr += intSize;
-    memcpy(ptr, &colormap.type, intSize); ptr += intSize;
+    /*memcpy(ptr, &colormap.size, intSize); */ptr += intSize;
+    /*memcpy(ptr, &colormap.format, intSize); */ptr += intSize;
+    /*memcpy(ptr, &colormap.type, intSize); */ptr += intSize;
     // image format and type
     memcpy(ptr, &format, intSize); ptr += intSize;
     memcpy(ptr, &type, intSize); ptr += intSize;
@@ -165,6 +172,14 @@ std::vector<char> Parameter::serialize() const
     return buffer;
 }
 
+///
+/// \brief Parameter::deserialize
+/// \param head
+///
+/// This function is obsolete, the new functions are toJSON() and fromJSON().
+///
+/// \return
+///
 bool Parameter::deserialize(const char * head)
 {
     char const * ptr = head;
@@ -172,16 +187,16 @@ bool Parameter::deserialize(const char * head)
     int matSize = sizeof(double) * 16;
     int int4Size = intSize * 4;
     int floatSize = sizeof(float);
-    int tfMemSize = tfSize * sizeof(float) * 4;
+    int tfMemSize = tfSizeDefault * sizeof(float) * 4;
     int lightSize = sizeof(float) * 4;
     int charSize = sizeof(char);
     int uint64Size = sizeof(uint64_t);
     int binTicksSize = floatSize * (HPGV_RAF_BIN_NUM + 1);
 
     // colormap
-    memcpy(&colormap.size, ptr, intSize); ptr += intSize;
-    memcpy(&colormap.format, ptr, intSize); ptr += intSize;
-    memcpy(&colormap.type, ptr, intSize); ptr += intSize;
+    /*memcpy(&colormap.size, ptr, intSize); */ptr += intSize;
+    /*memcpy(&colormap.format, ptr, intSize); */ptr += intSize;
+    /*memcpy(&colormap.type, ptr, intSize); */ptr += intSize;
     // image format and type
     memcpy(&format, ptr, intSize); ptr += intSize;
     memcpy(&type, ptr, intSize); ptr += intSize;
@@ -207,7 +222,7 @@ bool Parameter::deserialize(const char * head)
         memcpy(&image.particle.volume, ptr, intSize); ptr += intSize;
         if (image.particle.count == 1)
         {
-            image.particle.tf = boost::shared_ptr<float[tfSize * 4]>(new float [tfSize * 4]);
+            image.particle.tf = boost::shared_ptr<float[tfSizeDefault * 4]>(new float [tfSizeDefault * 4]);
             memcpy(image.particle.tf.get(), ptr, tfMemSize); ptr += tfMemSize;
             char withlighting = 0;
             memcpy(&withlighting, ptr, charSize); ptr += charSize;
@@ -225,9 +240,8 @@ bool Parameter::deserialize(const char * head)
             std::vector<int> volIds(nVolumes);
             memcpy(&(volIds[0]), ptr, intSize * nVolumes); ptr += intSize * nVolumes;
             // tf
-            image.tf = boost::shared_ptr<float[tfSize * 4]>(new float [tfSize * 4]);
-            memcpy(image.tf.get(), ptr, tfMemSize);
-            
+            image.tf.resize(tfSizeDefault * 4);
+            memcpy(image.tf.data(), ptr, tfMemSize);
             ptr += tfMemSize;
             // light
             for (int i = 0; i < nVolumes; ++i)
@@ -292,6 +306,13 @@ Json::Value Parameter::toJSON() const
         root["images"][i]["sampleSpacing"] = images[i].sampleSpacing;
         for (int j = 0; j < HPGV_RAF_BIN_NUM + 1; ++j)
             root["images"][i]["binTicks"][j] = images[i].binTicks[j];
+        for (unsigned int iTF = 0; iTF < images[i].tf.size(); ++iTF)
+        {
+            root["images"][i]["tf"][iTF][0] = images[i].tf[4 * iTF + 0];
+            root["images"][i]["tf"][iTF][1] = images[i].tf[4 * iTF + 1];
+            root["images"][i]["tf"][iTF][2] = images[i].tf[4 * iTF + 2];
+            root["images"][i]["tf"][iTF][3] = images[i].tf[4 * iTF + 3];
+        }
     }
     // minmax
     if (!autoMinmax)
@@ -346,14 +367,32 @@ bool Parameter::fromJSON(const Json::Value& root)
                 images[i].binTicks[j] = root["images"][i]["binTicks"][j].asFloat();
         }
         // transfer function
-//        images[i].tf.resize(root["images"][i]["tf"].size() * 4);
-//        for (unsigned int iTF = 0; iTF < root["images"][i]["tf"].size(); ++iTF)
-//        {
-//            images[i].tf[4 * iTF + 0] = root["images"][i]["tf"][iTF][0].asFloat();
-//            images[i].tf[4 * iTF + 1] = root["images"][i]["tf"][iTF][1].asFloat();
-//            images[i].tf[4 * iTF + 2] = root["images"][i]["tf"][iTF][2].asFloat();
-//            images[i].tf[4 * iTF + 3] = root["images"][i]["tf"][iTF][3].asFloat();
-//        }
+        if (root["images"][i]["tf"].isNull())
+        { // standard transfer function (a flat line with alpha fixed at 1/16)
+            images[i].tf.resize(3 * 4);
+            images[i].tf[4 * 0 + 0] = 13.f/255.f;
+            images[i].tf[4 * 0 + 1] = 132.f/255.f;
+            images[i].tf[4 * 0 + 2] = 211.f/255.f;
+            images[i].tf[4 * 0 + 3] = 1.f/16.f;
+            images[i].tf[4 * 1 + 0] = 244.f/255.f;
+            images[i].tf[4 * 1 + 1] = 208.f/255.f;
+            images[i].tf[4 * 1 + 2] = 27.f/255.f;
+            images[i].tf[4 * 1 + 3] = 1.f/16.f;
+            images[i].tf[4 * 2 + 0] = 194.f/255.f;
+            images[i].tf[4 * 2 + 1] = 75.f/255.f;
+            images[i].tf[4 * 2 + 2] = 64.f/255.f;
+            images[i].tf[4 * 2 + 3] = 1.f/16.f;
+        } else
+        { // custom transfer function
+            images[i].tf.resize(root["images"][i]["tf"].size() * 4);
+            for (unsigned int iTF = 0; iTF < root["images"][i]["tf"].size(); ++iTF)
+            {
+                images[i].tf[4 * iTF + 0] = root["images"][i]["tf"][iTF][0].asFloat();
+                images[i].tf[4 * iTF + 1] = root["images"][i]["tf"][iTF][1].asFloat();
+                images[i].tf[4 * iTF + 2] = root["images"][i]["tf"][iTF][2].asFloat();
+                images[i].tf[4 * iTF + 3] = root["images"][i]["tf"][iTF][3].asFloat();
+            }
+        }
     }
     // minmax
     if (root["minmax"].isNull())

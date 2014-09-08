@@ -1,6 +1,7 @@
 #include "imageraf.h"
 #include <cstring>
 #include <iostream>
+#include <fstream>
 #include <sys/time.h>
 
 namespace hpgv
@@ -61,8 +62,10 @@ bool ImageRAF::read(std::istream& in)
     return true;
 }
 
-void ImageRAF::write(std::ostream& out) const
+void ImageRAF::save(const std::string& filename) const
 {
+    std::ofstream out((filename + ".raf").c_str(), std::ios::binary);
+    assert(out);
     out.write(reinterpret_cast<const char*>(&width),   sizeof(int));
     out.write(reinterpret_cast<const char*>(&height),  sizeof(int));
     int format = 0x201001;

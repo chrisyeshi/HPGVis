@@ -103,9 +103,9 @@ typedef struct vis_control_t {
     int             updateview;
     hpgv::Parameter para;
     float           sampling_spacing;
-    int             colormapsize;
-    int             colormapformat;
-    int             colormaptype;
+//    int             colormapsize;
+//    int             colormapformat;
+//    int             colormaptype;
     
     /* data */
     block_t         *block;
@@ -584,9 +584,7 @@ vis_render_pos(vis_control_t    *visctl,
     
 #else
     float sample, v;
-    int id;
     int vol;
-    float stepBase = 100.f;
     
     for (vol = 0; vol < num_vol; vol++) {
 
@@ -595,55 +593,77 @@ vis_render_pos(vis_control_t    *visctl,
         {
             continue;
         }
-
         sample = v;
 
-        v = visctl->colormapsize * v;
-        v = CLAMP(v, 0, visctl->colormapsize - 1);
-        
-        id = (int)v;
-        id *= 4;
-
         if (format == HPGV_RGBA) { 
-            partialcolor.red    = image.tf[id+0];
-            partialcolor.green  = image.tf[id+1];
-            partialcolor.blue   = image.tf[id+2];
-            partialcolor.alpha  = image.tf[id+3];
 
-            if (image.volumes[vol].light.enable && partialcolor.alpha > 0.01){
-                
-                float amb_diff, specular;
-                point_3d_t gradient;
-                
-                if (block_get_gradient(block, image.volumes[vol].id, 
-                                    pos->x3d, pos->y3d, pos->z3d, 
-                                    &gradient) == HPGV_FALSE)
-                {
-                    amb_diff = image.volumes[vol].light.parameter[0];
-                    specular = 0;
-                } else {
-                    vis_volume_lighting(block,
-                                        gradient,
-                                        &image.volumes[vol].light.parameter[0],
-                                        pos,
-                                        visctl->eye_obj,
-                                        &amb_diff,
-                                        &specular);
-                }
+            if (*prev_value < 0.0) {
+                partialcolor.red    = 0.0;
+                partialcolor.green  = 0.0;
+                partialcolor.blue   = 0.0;
+                partialcolor.alpha  = 0.0;
 
-                partialcolor.red   = partialcolor.red   * amb_diff +
-                                    specular * partialcolor.alpha;
-                partialcolor.green = partialcolor.green * amb_diff +
-                                    specular * partialcolor.alpha;
-                partialcolor.blue  = partialcolor.blue  * amb_diff +
-                                    specular * partialcolor.alpha;
+                *prev_value = sample;
+            } else {
+                float left_value, rite_value;
+                left_value = *prev_value;
+                rite_value = sample;
+
+                tf_color_t color = hpgv_tf_rgba_integrate(image.tf.data(), image.tf.size() / 4,
+                        left_value, rite_value, sampling_spacing);
+                partialcolor.red    = color.r;
+                partialcolor.green  = color.g;
+                partialcolor.blue   = color.b;
+                partialcolor.alpha  = color.a;
+
+                *prev_value = sample;
             }
+
+//            tf_color_t color = hpgv_tf_sample(image.tf.data(), image.tf.size() / 4, sample);
+//            partialcolor.red    = color.r;
+//            partialcolor.green  = color.g;
+//            partialcolor.blue   = color.b;
+//            partialcolor.alpha  = color.a;
+
+//            partialcolor.red    = image.tf[id+0];
+//            partialcolor.green  = image.tf[id+1];
+//            partialcolor.blue   = image.tf[id+2];
+//            partialcolor.alpha  = image.tf[id+3];
+
+//            if (image.volumes[vol].light.enable && partialcolor.alpha > 0.01){
+                
+//                float amb_diff, specular;
+//                point_3d_t gradient;
+                
+//                if (block_get_gradient(block, image.volumes[vol].id,
+//                                    pos->x3d, pos->y3d, pos->z3d,
+//                                    &gradient) == HPGV_FALSE)
+//                {
+//                    amb_diff = image.volumes[vol].light.parameter[0];
+//                    specular = 0;
+//                } else {
+//                    vis_volume_lighting(block,
+//                                        gradient,
+//                                        &image.volumes[vol].light.parameter[0],
+//                                        pos,
+//                                        visctl->eye_obj,
+//                                        &amb_diff,
+//                                        &specular);
+//                }
+
+//                partialcolor.red   = partialcolor.red   * amb_diff +
+//                                    specular * partialcolor.alpha;
+//                partialcolor.green = partialcolor.green * amb_diff +
+//                                    specular * partialcolor.alpha;
+//                partialcolor.blue  = partialcolor.blue  * amb_diff +
+//                                    specular * partialcolor.alpha;
+//            }
             
             // adjust to step size
-            partialcolor.alpha = 1.0 - pow(1.0 - partialcolor.alpha, sampling_spacing / stepBase);
-            partialcolor.red *= partialcolor.alpha;
-            partialcolor.green *= partialcolor.alpha;
-            partialcolor.blue *= partialcolor.alpha;
+//            partialcolor.alpha = 1.0 - pow(1.0 - partialcolor.alpha, sampling_spacing / stepBase);
+//            partialcolor.red *= partialcolor.alpha;
+//            partialcolor.green *= partialcolor.alpha;
+//            partialcolor.blue *= partialcolor.alpha;
 
             vis_color_comoposite(&partialcolor, (rgba_t *)pixel_data);
         } else if (format == HPGV_RAF) {
@@ -701,7 +721,7 @@ vis_render_pos(vis_control_t    *visctl,
                 left_depth = *prev_depth;
                 rite_depth = curr_depth;
 
-                hpgv_tf_raf_integrate(image.tf.get(), visctl->colormapsize,
+                hpgv_tf_raf_integrate(image.tf.data(), image.tf.size() / 4,
                         image.binTicks,
                         left_value, rite_value, left_depth, rite_depth,
                         sampling_spacing, histogram);
@@ -1073,29 +1093,6 @@ hpgv_vis_framesize(int width, int height, int type, int format, int framenum)
     
 }
 
-/**
- * hpgv_vis_tf_para
- *
- */
-void
-hpgv_vis_tf_para(int colormapsize, int format, int type)
-{    
-    if (!theVisControl) {
-        fprintf(stderr, "HPGV has not been initialized.\n");
-        return;
-    }
-
-    if (format != HPGV_RGBA || type != HPGV_FLOAT) {
-        fprintf(stderr,
-                "HPGV currently only supports the colormap with RGBA and float format.");
-        return;
-    }
-    
-    theVisControl->colormapformat = format;
-    theVisControl->colormaptype = type;
-    theVisControl->colormapsize = colormapsize;
-}
-
 
 /**
  * hpgv_vis_para
@@ -1106,12 +1103,6 @@ hpgv_vis_para(const hpgv::Parameter& para)
 {
     theVisControl->format = para.getFormat();
     int framenum = para.getImages().size();
-    if (para.getFormat() != HPGV_RAF)
-    { // HPGV_RAF doesn't need colormap.
-        hpgv_vis_tf_para(para.getColormap().size,
-                para.getColormap().format,
-                para.getColormap().type);
-    }
     hpgv_vis_framesize(para.getView().width,
             para.getView().height,
             para.getType(),
@@ -1402,7 +1393,7 @@ hpgv_vis_render_one_composite(block_t *block, int root, MPI_Comm comm)
             theVisControl->root,
             theVisControl->comm,
             NULL,
-            theVisControl->colormapsize,
+            theVisControl->para.getImages()[0].tf.size(),
             theVisControl->para.getImages()[0].binTicks,
             theVisControl->sampling_spacing,
             0,
@@ -1598,8 +1589,8 @@ hpgv_vis_render_multi_composite(block_t *block, int root, MPI_Comm comm)
                            theVisControl->block_depth,
                            theVisControl->root,
                            theVisControl->comm,
-                           image.tf.get(),
-                           theVisControl->colormapsize,
+                           image.tf.data(),
+                           image.tf.size() / 4,
                            image.binTicks,
                            theVisControl->sampling_spacing,
                            0,
@@ -1654,8 +1645,8 @@ hpgv_vis_render_multi_composite(block_t *block, int root, MPI_Comm comm)
                         theVisControl->block_depth,
                         theVisControl->root,
                         theVisControl->comm,
-                        image.tf.get(),
-                        theVisControl->colormapsize,
+                        image.tf.data(),
+                        image.tf.size() / 4,
                         image.binTicks,
                         theVisControl->sampling_spacing,
                         s,

@@ -44,7 +44,7 @@ int main(int argc, char* argv[])
     vis.setVolume(reader.volume());
 	vis.render();
 	if (rank == vis.getRoot())
-        vis.getImage()->save(std::string(argv[7]) + ".raf");
+        vis.getImage()->save(std::string(argv[7]));
 
 	MPI_Finalize();
 	return 0;
