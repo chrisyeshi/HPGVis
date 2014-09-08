@@ -19,6 +19,14 @@ static float stepBase = 10.f;
 
 //
 //
+// Forward Declarations
+//
+//
+
+tf_color_t hpgv_tf_sample(const float* tf, int tfsize, float val);
+
+//
+//
 // Local Functions
 //
 //
@@ -38,7 +46,7 @@ int getBinId(const float binTicks[HPGV_RAF_BIN_NUM+1], float value)
     return -1;
 }
 
-tf_color_t tf_raf_bin_integrate(const float* tf, int tfsize,
+tf_color_t tf_seg_integrate(const float* tf, int tfsize,
         float valbeg, float valend, float length)
 {
 //    // Default Simplified Transfer Function
@@ -65,16 +73,8 @@ tf_color_t tf_raf_bin_integrate(const float* tf, int tfsize,
 
     // Integrate over transfer function
     //=========================================================
-    tf_color_t colorbeg;
-    colorbeg.r = 1.f;
-    colorbeg.g = 1.f;
-    colorbeg.b = 1.f;
-    colorbeg.a = 1.f/16.f;
-    tf_color_t colorend;
-    colorend.r = 1.f;
-    colorend.g = 1.f;
-    colorend.b = 1.f;
-    colorend.a = 1.f/16.f;
+    tf_color_t colorbeg = hpgv_tf_sample(tf, tfsize, valbeg);
+    tf_color_t colorend = hpgv_tf_sample(tf, tfsize, valend);
     tf_color_t color;
     color.r = (colorbeg.r + colorend.r) * 0.5f;
     color.g = (colorbeg.g + colorend.g) * 0.5f;
@@ -166,7 +166,7 @@ void hpgv_tf_raf_integrate(const float* tf, int tfsize, const float binTicks[],
     if (binBeg == binEnd) {
         float valBeg = left_value;
         float valEnd = rite_value;
-        tf_color_t color = tf_raf_bin_integrate(tf, tfsize, valBeg, valEnd, sampling_spacing);
+        tf_color_t color = tf_seg_integrate(tf, tfsize, valBeg, valEnd, sampling_spacing);
         float attenuation = (1.f - histogram->attenuation) * color.a;
         histogram->attenuation += attenuation;
         histogram->raf[binBeg] += attenuation;
@@ -184,7 +184,7 @@ void hpgv_tf_raf_integrate(const float* tf, int tfsize, const float binTicks[],
         float length = 0.f;
         if (fabs(rite_value - left_value) > 0.0001)
             length = (valEnd - valBeg) / (rite_value - left_value) * sampling_spacing;
-        tf_color_t color  = tf_raf_bin_integrate(tf, tfsize, valBeg, valEnd, length);
+        tf_color_t color  = tf_seg_integrate(tf, tfsize, valBeg, valEnd, length);
         float attenuation = (1.f - histogram->attenuation) * color.a;
         histogram->attenuation += attenuation;
         histogram->raf[binBeg] += attenuation;
@@ -211,7 +211,7 @@ void hpgv_tf_raf_integrate(const float* tf, int tfsize, const float binTicks[],
         float length = 0.f;
         if (fabs(rite_value - left_value) > 0.0001)
             length = (valEnd - valBeg) / (rite_value - left_value) * sampling_spacing;
-        tf_color_t color = tf_raf_bin_integrate(tf, tfsize, valBeg, valEnd, length);
+        tf_color_t color = tf_seg_integrate(tf, tfsize, valBeg, valEnd, length);
         float attenuation = (1.f - histogram->attenuation) * color.a;
         histogram->attenuation += attenuation;
         histogram->raf[binId] += attenuation;
@@ -231,7 +231,7 @@ void hpgv_tf_raf_integrate(const float* tf, int tfsize, const float binTicks[],
         float length = 0.f;
         if (fabs(rite_value - left_value) > 0.0001)
             length = (valEnd - valBeg) / (rite_value - left_value) * sampling_spacing;
-        tf_color_t color  = tf_raf_bin_integrate(tf, tfsize, valBeg, valEnd, length);
+        tf_color_t color  = tf_seg_integrate(tf, tfsize, valBeg, valEnd, length);
         float attenuation = (1.f - histogram->attenuation) * color.a;
         histogram->attenuation += attenuation;
         histogram->raf[binEnd] += attenuation;
@@ -265,4 +265,9 @@ void hpgv_tf_raf_seg_integrate(const float* tf, int tfsize, const float binTicks
         if (histogram.depths[rafBin] < 1.f - seg->depths[segBin])
             seg->depths[segBin] = 1.f - histogram.depths[rafBin];
     }
+}
+
+tf_color_t hpgv_tf_rgba_integrate(const float *tf, int tfsize, float left_value, float rite_value, float sampling_spacing)
+{
+    return tf_seg_integrate(tf, tfsize, left_value, rite_value, sampling_spacing);
 }

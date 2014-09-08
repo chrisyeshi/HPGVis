@@ -45,6 +45,8 @@ public slots:
     void screenCapture();
     void depthawareToggled(bool checked);
     void isoToggled(bool checked);
+    void opaModToggled(bool checked);
+    void viewReset();
 
 protected:
     //
@@ -109,6 +111,7 @@ private:
     QOpenGLShaderProgram progArrNml;
     bool enableDepthaware;
     bool enableIso;
+    bool enableOpaMod;
 
     const hpgv::ImageRAF* imageRaf;
     bool HighlightFeatures;

@@ -11,6 +11,7 @@ uniform float featureID;
 uniform int featureEnable;
 uniform int enableDepthaware;
 uniform int enableIso;
+uniform int enableOpacityMod;
 
 in VertexData {
     vec2 texCoord;
@@ -159,10 +160,13 @@ void main()
     for (int i = 0; i < 16; ++i)
     {
         float K = 1.0;
-        float oldA = 1.0 / 128.0;
+        float oldA = 1.0 / 16.0;
         binValues[i] = texture(rafarr, vec3(FragIn.texCoord, float(i))).r;
-        binValues[i] = (colors[i].a + 1.0 - pow(1.0 - colors[i].a, K + 1.0))
-                     / (oldA + 1.0 - pow(1.0 - oldA, K + 1.0)) * binValues[i];
+        if (enableOpacityMod == 1)
+        {
+            binValues[i] = (colors[i].a + 1.0 - pow(1.0 - colors[i].a, K + 1.0))
+                         / (oldA + 1.0 - pow(1.0 - oldA, K + 1.0)) * binValues[i];
+        }
     }
 
     vec4 cIso = iso();

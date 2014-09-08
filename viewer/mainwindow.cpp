@@ -37,6 +37,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->keyframe, SIGNAL(clicked()), this, SLOT(makeKeyFrame()));
     connect(ui->depthaware, SIGNAL(toggled(bool)), ui->viewer, SLOT(depthawareToggled(bool)));
     connect(ui->iso, SIGNAL(toggled(bool)), ui->viewer, SLOT(isoToggled(bool)));
+    connect(ui->opaMod, SIGNAL(toggled(bool)), ui->viewer, SLOT(opaModToggled(bool)));
+    connect(ui->opaMod, SIGNAL(toggled(bool)), ui->tf, SLOT(enableDrawArea(bool)));
+    connect(ui->viewReset, SIGNAL(clicked()), ui->viewer, SLOT(viewReset()));
     updateInfo();
 }
 
@@ -186,7 +189,31 @@ void MainWindow::on_animationHeader_toggled(bool checked)
     ui->animation->setVisible(!checked);
 }
 
-void MainWindow::on_pushButton_toggled(bool checked)
+void MainWindow::on_advancedHeader_toggled(bool checked)
 {
     ui->advanced->setVisible(!checked);
+}
+
+void MainWindow::on_stepFunc_clicked()
+{
+    mslib::TF tf = ui->tf->getTF();
+    const float* colormap = tf.colorMap();
+    int size = tf.resolution();
+    const int resolution = 1024;
+    Json::Value json;
+    for (int iOri = 0; iOri < size; ++iOri)
+    {
+        int beg = double(resolution) / size * (iOri + 0) + 0.5;
+        int end = double(resolution) / size * (iOri + 1) + 0.5;
+        for (int i = beg; i < end; ++i)
+        {
+            json[i][0] = colormap[4 * iOri + 0];
+            json[i][1] = colormap[4 * iOri + 1];
+            json[i][2] = colormap[4 * iOri + 2];
+            json[i][3] = colormap[4 * iOri + 3];
+        }
+    }
+    Json::StyledWriter writer;
+    std::string out = writer.write(json);
+    std::cout << out << std::endl;
 }

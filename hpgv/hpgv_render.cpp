@@ -584,9 +584,7 @@ vis_render_pos(vis_control_t    *visctl,
     
 #else
     float sample, v;
-    int id;
     int vol;
-    float stepBase = 100.f;
     
     for (vol = 0; vol < num_vol; vol++) {
 
@@ -595,61 +593,77 @@ vis_render_pos(vis_control_t    *visctl,
         {
             continue;
         }
-
         sample = v;
 
-        v = image.tf.size() / 4 * v;
-        v = CLAMP(v, 0, image.tf.size() / 4 - 1);
-        
-        id = (int)v;
-        id *= 4;
-
         if (format == HPGV_RGBA) { 
-            tf_color_t color = hpgv_tf_sample(image.tf.data(), image.tf.size() / 4, sample);
-            partialcolor.red    = color.r;
-            partialcolor.green  = color.g;
-            partialcolor.blue   = color.b;
-            partialcolor.alpha  = color.a;
+
+            if (*prev_value < 0.0) {
+                partialcolor.red    = 0.0;
+                partialcolor.green  = 0.0;
+                partialcolor.blue   = 0.0;
+                partialcolor.alpha  = 0.0;
+
+                *prev_value = sample;
+            } else {
+                float left_value, rite_value;
+                left_value = *prev_value;
+                rite_value = sample;
+
+                tf_color_t color = hpgv_tf_rgba_integrate(image.tf.data(), image.tf.size() / 4,
+                        left_value, rite_value, sampling_spacing);
+                partialcolor.red    = color.r;
+                partialcolor.green  = color.g;
+                partialcolor.blue   = color.b;
+                partialcolor.alpha  = color.a;
+
+                *prev_value = sample;
+            }
+
+//            tf_color_t color = hpgv_tf_sample(image.tf.data(), image.tf.size() / 4, sample);
+//            partialcolor.red    = color.r;
+//            partialcolor.green  = color.g;
+//            partialcolor.blue   = color.b;
+//            partialcolor.alpha  = color.a;
 
 //            partialcolor.red    = image.tf[id+0];
 //            partialcolor.green  = image.tf[id+1];
 //            partialcolor.blue   = image.tf[id+2];
 //            partialcolor.alpha  = image.tf[id+3];
 
-            if (image.volumes[vol].light.enable && partialcolor.alpha > 0.01){
+//            if (image.volumes[vol].light.enable && partialcolor.alpha > 0.01){
                 
-                float amb_diff, specular;
-                point_3d_t gradient;
+//                float amb_diff, specular;
+//                point_3d_t gradient;
                 
-                if (block_get_gradient(block, image.volumes[vol].id, 
-                                    pos->x3d, pos->y3d, pos->z3d, 
-                                    &gradient) == HPGV_FALSE)
-                {
-                    amb_diff = image.volumes[vol].light.parameter[0];
-                    specular = 0;
-                } else {
-                    vis_volume_lighting(block,
-                                        gradient,
-                                        &image.volumes[vol].light.parameter[0],
-                                        pos,
-                                        visctl->eye_obj,
-                                        &amb_diff,
-                                        &specular);
-                }
+//                if (block_get_gradient(block, image.volumes[vol].id,
+//                                    pos->x3d, pos->y3d, pos->z3d,
+//                                    &gradient) == HPGV_FALSE)
+//                {
+//                    amb_diff = image.volumes[vol].light.parameter[0];
+//                    specular = 0;
+//                } else {
+//                    vis_volume_lighting(block,
+//                                        gradient,
+//                                        &image.volumes[vol].light.parameter[0],
+//                                        pos,
+//                                        visctl->eye_obj,
+//                                        &amb_diff,
+//                                        &specular);
+//                }
 
-                partialcolor.red   = partialcolor.red   * amb_diff +
-                                    specular * partialcolor.alpha;
-                partialcolor.green = partialcolor.green * amb_diff +
-                                    specular * partialcolor.alpha;
-                partialcolor.blue  = partialcolor.blue  * amb_diff +
-                                    specular * partialcolor.alpha;
-            }
+//                partialcolor.red   = partialcolor.red   * amb_diff +
+//                                    specular * partialcolor.alpha;
+//                partialcolor.green = partialcolor.green * amb_diff +
+//                                    specular * partialcolor.alpha;
+//                partialcolor.blue  = partialcolor.blue  * amb_diff +
+//                                    specular * partialcolor.alpha;
+//            }
             
             // adjust to step size
-            partialcolor.alpha = 1.0 - pow(1.0 - partialcolor.alpha, sampling_spacing / stepBase);
-            partialcolor.red *= partialcolor.alpha;
-            partialcolor.green *= partialcolor.alpha;
-            partialcolor.blue *= partialcolor.alpha;
+//            partialcolor.alpha = 1.0 - pow(1.0 - partialcolor.alpha, sampling_spacing / stepBase);
+//            partialcolor.red *= partialcolor.alpha;
+//            partialcolor.green *= partialcolor.alpha;
+//            partialcolor.blue *= partialcolor.alpha;
 
             vis_color_comoposite(&partialcolor, (rgba_t *)pixel_data);
         } else if (format == HPGV_RAF) {
