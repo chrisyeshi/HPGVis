@@ -21,6 +21,8 @@
 #include <stdint.h>
 #include <string.h>
 
+int hpgv_raf_bin_num = 16;
+
 /**
  * hpgv_rgba_t
  *
@@ -68,16 +70,16 @@ hpgv_gl_context_t *theGLContext = NULL;
  */
 void hpgv_raf_reset(hpgv_raf_t* raf)
 {
-    int i;
-    for (i = 0; i < HPGV_RAF_BIN_NUM; ++i) {
-        raf->raf[i] = 0.f;
-        raf->depths[i] = 1.f;
-    }
     raf->attenuation = 0.f;
     raf->val_head = -1.f;
     raf->val_tail = -1.f;
     raf->dep_head = 1.f;
     raf->dep_tail = 1.f;
+    int i;
+    for (i = 0; i < hpgv_raf_bin_num; ++i) {
+        raf->raf[i] = 0.f;
+        raf->depths[i] = 1.f;
+    }
 }
 
 
@@ -87,18 +89,35 @@ void hpgv_raf_reset(hpgv_raf_t* raf)
  */
 void hpgv_raf_seg_reset(hpgv_raf_seg_t* seg)
 {
-    int i;
-    for (i = 0; i < HPGV_RAF_SEG_NUM; ++i) {
-        seg->raf[i] = 0.f;
-        seg->depths[i] = 0.f;
-    }
     seg->attenuation = 0.f;
     seg->val_head = -1.f;
     seg->val_tail = -1.f;
     seg->dep_head = 0.f;
     seg->dep_tail = 0.f;
+    int i;
+    for (i = 0; i < HPGV_RAF_SEG_NUM; ++i) {
+        seg->raf[i] = 0.f;
+        seg->depths[i] = 0.f;
+    }
 }
 
+/**
+ * hpgv_raf_offset
+ *
+ */
+int hpgv_raf_offset()
+{
+    return sizeof(hpgv_raf_t) / sizeof(float);
+}
+
+/**
+ * hpgv_raf_offset_byte
+ *
+ */
+int hpgv_raf_offset_byte()
+{
+    return sizeof(hpgv_raf_t);
+}
 
 /**
  * hpgv_gl_init
@@ -407,7 +426,7 @@ int hpgv_gl_clear_databuf()
     // memset(theGLContext->databuf, 0,
     //        sizeof(hpgv_raf_t) * theGLContext->framebuf_size);
 
-    int i, j;
+    int i;
     for (i = 0; i < theGLContext->framebuf_size; ++i)
     {
         int formatsize = hpgv_formatsize(theGLContext->databuf_format);
@@ -746,27 +765,45 @@ int hpgv_gl_fragdata(int x, int y, int format, void *data)
     
     if (y < 0 && y >= theGLContext->framebuf_size_y) {
         return HPGV_FALSE;
-    }    
+    }
     
     HPGV_ASSERT(theGLContext->databuf, "The databuf doesn't exist",
                 HPGV_ERR_MEM);
     
     int offset = x + y * theGLContext->framebuf_size_x;
+    int formatsize = hpgv_formatsize(theGLContext->databuf_format);
+    int typesize = hpgv_typesize(theGLContext->databuf_type);
     
-    if (format == HPGV_RAF) {  
-        hpgv_raf_t * raf = (hpgv_raf_t *)(theGLContext->databuf);
-        hpgv_raf_t * in  = (hpgv_raf_t *)(data);
+    if (format == HPGV_RAF) {
+        memcpy(theGLContext->databuf + offset * formatsize * typesize, data, formatsize * typesize);
+        float* ptr = (float*)(theGLContext->databuf + offset * formatsize * typesize);
+        hpgv_raf_t* raf = (hpgv_raf_t*)ptr;
+        raf->raf = &ptr[hpgv_raf_offset()];
+        raf->depths = &ptr[hpgv_raf_offset() + hpgv_raf_bin_num];
+
+//        if (x == 512 && y == 512) {
+//            hpgv_raf_t* raf = (hpgv_raf_t*)(theGLContext->databuf + offset * formatsize * typesize);
+//            printf("Atten: %lf\n", raf->attenuation);
+//            printf("512,512: [");
+//            int i = 0;
+//            for (i = 0; i < hpgv_raf_bin_num; ++i)
+//                printf("%lf,", raf->raf[i]);
+//            printf("]\n");
+//        }
+
+//        hpgv_raf_t * raf = (hpgv_raf_t *)(theGLContext->databuf);
+//        hpgv_raf_t * in  = (hpgv_raf_t *)(data);
         
-        int i = 0;
-        for (i = 0; i < HPGV_RAF_BIN_NUM; i++) {
-            raf[offset].raf[i] = in->raf[i];
-            raf[offset].depths[i] = in->depths[i];
-        }
-        raf[offset].attenuation = in->attenuation;
-        raf[offset].val_head = in->val_head;
-        raf[offset].val_tail = in->val_tail;
-        raf[offset].dep_head = in->dep_head;
-        raf[offset].dep_tail = in->dep_tail;
+//        int i = 0;
+//        for (i = 0; i < HPGV_RAF_BIN_NUM; i++) {
+//            raf[offset].raf[i] = in->raf[i];
+//            raf[offset].depths[i] = in->depths[i];
+//        }
+//        raf[offset].attenuation = in->attenuation;
+//        raf[offset].val_head = in->val_head;
+//        raf[offset].val_tail = in->val_tail;
+//        raf[offset].dep_head = in->dep_head;
+//        raf[offset].dep_tail = in->dep_tail;
     }
     return HPGV_TRUE;        
 }
@@ -930,11 +967,12 @@ int hpgv_formatsize(int format)
     switch (format) {        
         case HPGV_RGB : return 3;
         case HPGV_RGBA : return 4;   
-        case HPGV_RAF : return HPGV_RAF_BIN_NUM * 2 + 5;
+//        case HPGV_RAF : return hpgv_raf_bin_num * 2 + 5;
+        case HPGV_RAF : return sizeof(hpgv_raf_t) / sizeof(float) + hpgv_raf_bin_num * 2;
         case HPGV_RAF_SEG : return HPGV_RAF_SEG_NUM * 2 + 5;
         default : HPGV_ABORT("Unsupported format!", HPGV_ERROR);
     }    
-    return 0;    
+    return 0;
 }
 
 

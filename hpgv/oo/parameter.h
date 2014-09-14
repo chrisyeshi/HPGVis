@@ -3,7 +3,6 @@
 
 #include <vector>
 #include "boost/shared_ptr.hpp"
-#include "hpgv_gl.h"
 #include "json.h"
 
 namespace hpgv
@@ -61,13 +60,13 @@ public:
     };
     struct Image
     {
-        Image() : sampleSpacing(1.f) {}
+        Image() : sampleSpacing(1.f), binTicks(17) {}
         Particle particle;
         float sampleSpacing;
-//        boost::shared_ptr<float[tfSize * 4]> tf;
         std::vector<float> tf;
         std::vector<Volume> volumes;
-        float binTicks[HPGV_RAF_BIN_NUM + 1];
+//        float binTicks[HPGV_RAF_BIN_NUM + 1];
+        std::vector<float> binTicks;
     };
 
 public:
@@ -98,6 +97,7 @@ public:
     const View&                 getView() const { return view; }
     const int&                  getFormat() const { return format; }
     const int&                  getType() const { return type; }
+    const int&                  getNBins() const { return nBins; }
     const std::vector<Image>&   getImages() const { return images; }
     void                        setView(const View& view) { this->view = view; }
     void                        setFormat(const int& format) { this->format = format; }
@@ -123,6 +123,7 @@ private:
     View view;
     int format;
     int type;
+    int nBins;
     std::vector<Image> images;
     bool autoMinmax;
     double minmax[2];

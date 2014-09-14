@@ -31,10 +31,10 @@ tf_color_t hpgv_tf_sample(const float* tf, int tfsize, float val);
 //
 //
 
-int getBinId(const float binTicks[HPGV_RAF_BIN_NUM+1], float value)
+int getBinId(const float* binTicks, float value)
 {
     int binId = -1;
-    for (binId = 0; binId < 16; ++binId)
+    for (binId = 0; binId < hpgv_raf_bin_num; ++binId)
     {
         float lower = binTicks[binId];
         float upper = binTicks[binId+1];
@@ -245,26 +245,32 @@ void hpgv_tf_raf_integrate(const float* tf, int tfsize, const float binTicks[],
     }
 }
 
-void hpgv_tf_raf_seg_integrate(const float* tf, int tfsize, const float binTicks[HPGV_RAF_BIN_NUM + 1],
+void hpgv_tf_raf_seg_integrate(const float* tf, int tfsize, const float* binTicks,
         float left_value, float rite_value, float left_depth, float rite_depth,
         float sampling_spacing, hpgv_raf_seg_t* seg, int segid)
 {
-    hpgv_raf_t histogram;
-    hpgv_raf_reset(&histogram);
-    histogram.attenuation = seg->attenuation;
+    float* data = (float*)malloc(hpgv_formatsize(HPGV_RAF) * sizeof(float));
+    hpgv_raf_t* histogram = (hpgv_raf_t*)data;
+    histogram->raf = &data[hpgv_raf_offset()];
+    histogram->depths = &data[hpgv_raf_offset() + hpgv_raf_bin_num];
+
+    hpgv_raf_reset(histogram);
+    histogram->attenuation = seg->attenuation;
     hpgv_tf_raf_integrate(tf, tfsize, binTicks,
             left_value, rite_value, 1.f - left_depth, 1.f - rite_depth,
-            sampling_spacing, &histogram);
+            sampling_spacing, histogram);
     // composite
-    seg->attenuation = histogram.attenuation;
+    seg->attenuation = histogram->attenuation;
     int segBin;
     for (segBin = 0; segBin < HPGV_RAF_SEG_NUM; ++segBin)
     {
         int rafBin = segBin + segid * HPGV_RAF_SEG_NUM;
-        seg->raf[segBin] += histogram.raf[rafBin];
-        if (histogram.depths[rafBin] < 1.f - seg->depths[segBin])
-            seg->depths[segBin] = 1.f - histogram.depths[rafBin];
+        seg->raf[segBin] += histogram->raf[rafBin];
+        if (histogram->depths[rafBin] < 1.f - seg->depths[segBin])
+            seg->depths[segBin] = 1.f - histogram->depths[rafBin];
     }
+
+    free(data);
 }
 
 tf_color_t hpgv_tf_rgba_integrate(const float *tf, int tfsize, float left_value, float rite_value, float sampling_spacing)
