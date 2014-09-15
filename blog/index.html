@@ -59,6 +59,33 @@
 
           <h2>Progress</h2>
 
+          <!-- 40 -->
+          <div class='entry'>
+            <!-- title -->
+            <h3>Custom Number of Bins <small>Sep. 14th</small></h3>
+            <!-- images -->
+            <div class='row gallery-wrapper'>
+              <div class='col-sm-12 col-md-4'>
+                <a href='contents/images/smooth_spot_rgba.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Ground truth generated using a smooth transfer function with resolution of 1024. Ground truth image is more smooth because of linear interpolation.'>
+                  <img src='contents/images/smooth_spot_rgba.png'>
+                </a>
+              </div>
+              <div class='col-sm-12 col-md-4'>
+                <a href='contents/images/smooth_spot_16.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Image generated using explorable image with 16 bins, which is generated using the same transfer function as the ground truth. The explorable image is not as smooth as the ground truth because the values are discretized into finite (16) bins.'>
+                  <img src='contents/images/smooth_spot_16.png'>
+                </a>
+              </div>
+              <div class='col-sm-12 col-md-4'>
+                <a href='contents/images/smooth_spot_32.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Image generated using explorable image with 32 bins, which is generated using the same transfer function as the ground truth. The explorable image is not as smooth as the ground truth because the values are discretized into finite (32) bins.'>
+                  <img src='contents/images/smooth_spot_32.png'>
+                </a>
+              </div>
+            </div>
+            <!-- text -->
+            <p>Basically, I finally am able to generate explorable images with different number of bins. These 3 images are the same zoom in spot as the last post. We can see the image is smoother with 32 bins than 16 bins, but less smooth than the ground truth. (As expected).</p>
+            <p>But, we can generate explorable images with different number of bins now! Some clean up of the codes might be necessary but the functionality is there.</p>
+          </div>
+
           <!-- 39 -->
           <div class='entry'>
             <!-- title -->
@@ -71,8 +98,8 @@
                 </a>
               </div>
               <div class='col-sm-6 col-md-6'>
-                <a href='contents/images/smooth_raf.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Image generated using explorable image, which is generated using the same transfer function as the ground truth. The explorable image is not as smooth as the ground truth because the values are discretized into finite (16) bins.'>
-                  <img src='contents/images/smooth_raf.png'>
+                <a href='contents/images/smooth_16.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Image generated using explorable image, which is generated using the same transfer function as the ground truth. The explorable image is not as smooth as the ground truth because the values are discretized into finite (16) bins.'>
+                  <img src='contents/images/smooth_16.png'>
                 </a>
               </div>
               <div class='col-sm-6 col-md-6'>
@@ -81,8 +108,8 @@
                 </a>
               </div>
               <div class='col-sm-6 col-md-6'>
-                <a href='contents/images/smooth_spot_raf.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Image generated using explorable image, which is generated using the same transfer function as the ground truth. Zoomed in view to show ground truth is more smooth.'>
-                  <img src='contents/images/smooth_spot_raf.png'>
+                <a href='contents/images/smooth_spot_16.png' class='thumbnail' data-toggle='lightbox' data-gallery='multiimages' data-parent='.gallery-wrapper' data-title='Image generated using explorable image, which is generated using the same transfer function as the ground truth. Zoomed in view to show ground truth is more smooth.'>
+                  <img src='contents/images/smooth_spot_16.png'>
                 </a>
               </div>
             </div>
