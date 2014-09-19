@@ -855,8 +855,6 @@ vis_render_volume(vis_control_t *visctl, const hpgv::Parameter::Image& image)
     rgba_t      color;
 
     void *pixel_data = NULL;
-//    float* data = (float*)malloc(formatsize * sizeof(float));
-//    std::vector<float> data(formatsize);
 
     /* clear the color buffer */
     hpgv_vis_clear_color(visctl);
@@ -865,8 +863,6 @@ vis_render_volume(vis_control_t *visctl, const hpgv::Parameter::Image& image)
 #pragma omp parallel for private(index, ray, firstpos, lastpos, pixel, color) firstprivate(pixel_data)
     for (index = 0; index < visctl->castcount; index++) {
 
-//        float* data = (float*)malloc(formatsize * sizeof(float));
-//        float* data = new float [formatsize];
         std::vector<float> data(formatsize);
         hpgv_raf_t* pRaf = (hpgv_raf_t*)&data[0];
         pRaf->raf = &data[hpgv_raf_offset()];
