@@ -862,7 +862,7 @@ vis_render_volume(vis_control_t *visctl, const hpgv::Parameter::Image& image)
     hpgv_vis_clear_color(visctl);
     hpgv_gl_clear_databuf();
 
-//#pragma omp parallel for private(index, ray, firstpos, lastpos, pixel, color, data) firstprivate(pixel_data)
+#pragma omp parallel for private(index, ray, firstpos, lastpos, pixel, color) firstprivate(pixel_data)
     for (index = 0; index < visctl->castcount; index++) {
 
 //        float* data = (float*)malloc(formatsize * sizeof(float));
@@ -1499,14 +1499,6 @@ hpgv_vis_render_multi_composite(block_t *block, int root, MPI_Comm comm)
             timeval end; gettimeofday(&end, NULL);
             time_raycast = (end.tv_sec - start.tv_sec) * 1000.0 + (end.tv_usec - start.tv_usec) / 1000.0;
         }
-
-//        float* data = (float*)theVisControl->databuf;
-//        float* mid = &data[512 * hpgv_gl_get_framewidth() * hpgv_formatsize(HPGV_RAF) + 512 * hpgv_formatsize(HPGV_RAF)];
-//        hpgv_raf_t* midraf = (hpgv_raf_t*)mid;
-//        std::cout << "midraf: [";
-//        for (int i = 0; i < theVisControl->para.getNBins(); ++i)
-//            std::cout << midraf->raf[i] << ",";
-//        std::cout << "]" << std::endl;
         
         HPGV_TIMING_END(MY_STEP_MULTI_VOLREND_TIME);
         
