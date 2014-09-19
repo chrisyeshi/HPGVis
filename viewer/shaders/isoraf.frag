@@ -1,5 +1,6 @@
 #version 330
 
+uniform int nBins;
 uniform vec2 invVP;
 uniform sampler1D tf;
 uniform sampler2DArray rafarr;
@@ -19,13 +20,12 @@ in VertexData {
 
 layout(location = 0, index = 0) out vec4 fragColor;
 
-int nBins;
 float stepp;
-vec4 colors[16];
-vec3 normals[16];
-float depths[16];
-float litFactors[16];
-float binValues[16];
+vec4 colors[64];
+vec3 normals[64];
+float depths[64];
+float litFactors[64];
+float binValues[64];
 
 //
 //
@@ -72,7 +72,7 @@ vec2 getGradient(int layer)
 vec4 iso()
 {
     vec4 final = vec4(0.0);
-    for (int i = 0; i < 16; ++i)
+    for (int i = 0; i < nBins; ++i)
     {
         float l = litFactors[i];
         vec4 c = colors[i];
@@ -86,7 +86,7 @@ vec4 iso()
 vec4 raf()
 {
     vec4 sum = vec4(0.0);
-    for (int i = 0; i < 16; ++i)
+    for (int i = 0; i < nBins; ++i)
     {
         vec4 layerColor = vec4(vec3(colors[i].rgb) * binValues[i], binValues[i]);
         if (enableDepthaware == 1 && enableIso == 1)
@@ -108,23 +108,23 @@ vec4 raf()
     return sum;
 }
 
-vec4 isoraf()
-{
-    vec4 final = vec4(0.0);
-    for (int i = 0; i < 16; ++i)
-    {
-        float l = litFactors[i];
-        vec4 cIso = colors[i];
-        cIso.a = alphaModify(cIso.a, normals[i]);
-        cIso.rgb = cIso.rgb * l * cIso.a;
-        vec4 layerColor = vec4(vec3(colors[i].rgb) * binValues[i], 1.0);
-        float ro = 9.0 * pow(length(getGradient(i)), 0.5);
-        vec4 cRaf = (1.0 - ro) * layerColor;
-        vec4 c = vec4(cIso.rgb + (1.0 - colors[i].a) * cRaf.rgb, cIso.a);
-        final += (1.0 - final.a) * c;
-    }
-    return final;
-}
+//vec4 isoraf()
+//{
+//    vec4 final = vec4(0.0);
+//    for (int i = 0; i < nBins; ++i)
+//    {
+//        float l = litFactors[i];
+//        vec4 cIso = colors[i];
+//        cIso.a = alphaModify(cIso.a, normals[i]);
+//        cIso.rgb = cIso.rgb * l * cIso.a;
+//        vec4 layerColor = vec4(vec3(colors[i].rgb) * binValues[i], 1.0);
+//        float ro = 9.0 * pow(length(getGradient(i)), 0.5);
+//        vec4 cRaf = (1.0 - ro) * layerColor;
+//        vec4 c = vec4(cIso.rgb + (1.0 - colors[i].a) * cRaf.rgb, cIso.a);
+//        final += (1.0 - final.a) * c;
+//    }
+//    return final;
+//}
 
 //
 //
@@ -134,33 +134,33 @@ vec4 isoraf()
 
 void main()
 {
-    nBins = 16;
+
     stepp = 1.0 / nBins;
     // colors
-    for (int i = 0; i < 16; ++i)
+    for (int i = 0; i < nBins; ++i)
         colors[i] = texture(tf, stepp * (float(i) + 0.5));
     // normals
-    for (int i = 0; i < 16; ++i)
+    for (int i = 0; i < nBins; ++i)
     {
         normals[i] = normalize(texture(nmlarr, vec3(FragIn.texCoord, float(i))).xyz * 2.f - 1.f);
         if (normals[i].z < 0.0)
             colors[i] = vec4(0.0);
     }
     // depths
-    for (int i = 0; i < 16; ++i)
+    for (int i = 0; i < nBins; ++i)
     {
         depths[i] = texture(deparr, vec3(FragIn.texCoord, float(i))).x;
         if (depths[i] < 0.001 || depths[i] > 0.999)
             colors[i] = vec4(0.0);
     }
     // lights
-    for (int i = 0; i < 16; ++i)
+    for (int i = 0; i < nBins; ++i)
         litFactors[i] = computeLighting(normals[i]);
     // bin values
-    for (int i = 0; i < 16; ++i)
+    for (int i = 0; i < nBins; ++i)
     {
         float K = 1.0;
-        float oldA = 1.0 / 16.0;
+        float oldA = 1.0 / float(nBins);
         binValues[i] = texture(rafarr, vec3(FragIn.texCoord, float(i))).r;
         if (enableOpacityMod == 1)
         {

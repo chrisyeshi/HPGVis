@@ -1339,8 +1339,6 @@ hpgv_vis_render_one_composite(block_t *block, int root, MPI_Comm comm)
         
         /* processing each image */
         const hpgv::Parameter::Image& image = theVisControl->para.getImages()[img];
-        // para_image_t  *para_image
-            // = &(theVisControl->para.getImages()[img]);
 
         if (image.volumes.size() > 0) {
             hpgv_vis_set_rendervolume(HPGV_TRUE);

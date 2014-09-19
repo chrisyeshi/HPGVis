@@ -74,7 +74,7 @@ protected:
     void updateProgram();
     void updateShaderMVP();
     void updateVAO();
-    void initTF();
+    void updateTexTF();
     void updateTexRAF();
     void initTexNormalTools();
     void updateTexNormal();
@@ -89,7 +89,7 @@ private:
     //
     static const int nVertsQuad = 4;
     static const int nFloatsPerVertQuad = 2;
-    static const int nBins = 16;
+//    static const int nBins = 16;
 
     //
     //
@@ -98,7 +98,7 @@ private:
     //
     QMatrix4x4 matModel, matView, matProj;
     QOpenGLBuffer vboQuad;
-    QOpenGLTexture texTf, texAlpha;
+    QOpenGLTexture *texTf, *texAlpha;
     QOpenGLTexture *texArrRaf, *texArrDep, *texFeature;
     QOpenGLShaderProgram progRaf;
     QOpenGLVertexArrayObject vao;
@@ -129,6 +129,7 @@ private:
     //
     int nBytesQuad() const { return nVertsQuad * nFloatsPerVertQuad * sizeof(GLfloat); }
     QMatrix4x4 mvp() const { return matProj * matView * matModel; }
+    int nBins() const { return imageRaf ? imageRaf->getNBins() : 16; }
 };
 
 #endif // VIEWER_H
