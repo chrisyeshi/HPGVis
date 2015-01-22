@@ -33,16 +33,6 @@ void ImageRAF::setRafs(const void *buffer, int nBytes)
                     = inBuf[(nBins() * 2 + 10) * i + 10 + nBins() * 1 + sliceId];
         }
     }
-
-//    int index = 512 * width + 512;
-//    std::cout << "inbuff: [";
-//    for (int i = 0; i < nBins(); ++i)
-//        std::cout << inBuf[(nBins() * 2 + 10) * index + 10 + i] << ",";
-//    std::cout << "]" << std::endl;
-//    std::cout << "midraf: [";
-//    for (int i = 0; i < nBins(); ++i)
-//        std::cout << rafs[i * nFloatsSlice() + index] << ",";
-//    std::cout << "]" << std::endl;
 }
 
 void ImageRAF::setAlphas(const std::vector<float> &a)

@@ -1628,7 +1628,6 @@ hpgv_vis_render_multi_composite(block_t *block, int root, MPI_Comm comm)
             /* ============================================================= */
             // allocate memory
             assert(framebuf_size == framebuf_size_x * framebuf_size_y);
-//            std::cout << framebuf_size << std::endl;
             hpgv_raf_seg_t* raf_seg = new hpgv_raf_seg_t [framebuf_size];
             hpgv_raf_seg_t* raf_collect = NULL;
             if (theVisControl->id == theVisControl->root)
@@ -1674,15 +1673,6 @@ hpgv_vis_render_multi_composite(block_t *block, int root, MPI_Comm comm)
                     }
                 }
             }
-
-//            float* data = (float*)theVisControl->databuf_collect;
-//            float* mid = &data[512 * hpgv_gl_get_framewidth() * hpgv_formatsize(HPGV_RAF) + 512 * hpgv_formatsize(HPGV_RAF)];
-//            hpgv_raf_t* midraf = (hpgv_raf_t*)mid;
-//            assert(mid[hpgv_raf_offset()] == midraf->raf[0]);
-//            std::cout << "midraf: [";
-//            for (int i = 0; i < theVisControl->para.getNBins(); ++i)
-//                std::cout << midraf->raf[i] << ",";
-//            std::cout << "]" << std::endl;
 
             // clean up
             delete [] raf_seg;
