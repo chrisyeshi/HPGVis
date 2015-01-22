@@ -9,6 +9,8 @@
 namespace hpgv
 {
 
+#define MATRIX4X4 16
+
 //
 //
 // Constructor / Destructor
@@ -82,7 +84,6 @@ std::vector<char> Parameter::serialize() const
     int lightSize = sizeof(float) * 4;
     int charSize = sizeof(char);
     int uint64Size = sizeof(uint64_t);
-    int binTicksSize = floatSize * (HPGV_RAF_BIN_NUM + 1);
     // buffer size
     int bufferSize = 0;
     bufferSize += intSize * 3;  // colormap
@@ -191,7 +192,6 @@ bool Parameter::deserialize(const char * head)
     int lightSize = sizeof(float) * 4;
     int charSize = sizeof(char);
     int uint64Size = sizeof(uint64_t);
-    int binTicksSize = floatSize * (HPGV_RAF_BIN_NUM + 1);
 
     // colormap
     /*memcpy(&colormap.size, ptr, intSize); */ptr += intSize;
@@ -289,7 +289,7 @@ Json::Value Parameter::toJSON() const
     else
         root["type"] = "double";
     // view
-    for (int i = 0; i < 16; ++i)
+    for (int i = 0; i < MATRIX4X4; ++i)
     {
         root["view"]["modelview"][i] = view.modelview[i];
         root["view"]["projection"][i] = view.projection[i];
@@ -300,11 +300,14 @@ Json::Value Parameter::toJSON() const
     root["view"]["height"] = view.height;
     root["view"]["angle"] = view.angle;
     root["view"]["scale"] = view.scale;
+    // nBins
+    root["nBins"] = nBins;
     // images
     for (unsigned int i = 0; i < images.size(); ++i)
     {
         root["images"][i]["sampleSpacing"] = images[i].sampleSpacing;
-        for (int j = 0; j < HPGV_RAF_BIN_NUM + 1; ++j)
+        assert(nBins == images[i].binTicks.size() - 1);
+        for (int j = 0; j < nBins + 1; ++j)
             root["images"][i]["binTicks"][j] = images[i].binTicks[j];
         for (unsigned int iTF = 0; iTF < images[i].tf.size(); ++iTF)
         {
@@ -337,7 +340,7 @@ bool Parameter::fromJSON(const Json::Value& root)
     else if ("double" == root["type"].asString())
         type = HPGV_DOUBLE;
     // view
-    for (int i = 0; i < 16; ++i)
+    for (int i = 0; i < MATRIX4X4; ++i)
     {
         view.modelview[i] = root["view"]["modelview"][i].asDouble();
         view.projection[i] = root["view"]["projection"][i].asDouble();
@@ -348,23 +351,34 @@ bool Parameter::fromJSON(const Json::Value& root)
     view.height = root["view"]["height"].asInt();
     view.angle = root["view"]["angle"].asFloat();
     view.angle = root["view"]["scale"].asFloat();
+    // nBins
+    if (root["nBins"].isNull())
+        nBins = 16;
+    else
+        nBins = root["nBins"].asInt();
     // images
     images.resize(root["images"].size());
     for (unsigned int i = 0; i < root["images"].size(); ++i)
     {
         images[i].volumes.resize(1);
         images[i].sampleSpacing = root["images"][i]["sampleSpacing"].asFloat();
-        if (root["images"][i]["binTicks"].isNull())
+        // use standard binticks if nBins doesn't equal to the size of binTicks
+        const Json::Value& jBinTicks = root["images"][i]["binTicks"];
+        if (jBinTicks.isNull() || (!jBinTicks.isNull() && nBins != jBinTicks.size() - 1))
         { // standard binticks
+            images[i].binTicks.resize(nBins + 1);
             images[i].binTicks[0] = 0.0;
-            images[i].binTicks[HPGV_RAF_BIN_NUM] = 1.0;
-            for (int j = 1; j < HPGV_RAF_BIN_NUM; ++j)
-                images[i].binTicks[j] = 1.0 / float(HPGV_RAF_BIN_NUM) * float(j);
+            images[i].binTicks[nBins] = 1.0;
+            for (int j = 1; j < nBins; ++j)
+                images[i].binTicks[j] = 1.0 / float(nBins) * float(j);
+            if (!jBinTicks.isNull() && nBins != jBinTicks.size() - 1)
+                std::cout << "nBins doesn't match binTicks, overriding with standard bin ticks." << std::endl;
 
         } else
         { // custom binticks
-            for (int j = 0; j < HPGV_RAF_BIN_NUM + 1; ++j)
-                images[i].binTicks[j] = root["images"][i]["binTicks"][j].asFloat();
+            images[i].binTicks.resize(jBinTicks.size());
+            for (unsigned int j = 0; j < images[i].binTicks.size(); ++j)
+                images[i].binTicks[j] = jBinTicks[j].asFloat();
         }
         // transfer function
         if (root["images"][i]["tf"].isNull())

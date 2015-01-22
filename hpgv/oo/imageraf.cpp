@@ -17,7 +17,7 @@ ImageRAF::~ImageRAF()
 
 void ImageRAF::setRafs(const void *buffer, int nBytes)
 {
-    assert(nBytes == nBytesRafs() + nBytesDepths() + 5 * nBytesSlice());
+    assert(nBytes == nBytesRafs() + nBytesDepths() + 10 * nBytesSlice());
     const float* inBuf = reinterpret_cast<const float*>(buffer);
     rafs = boost::shared_ptr<float[]>(new float [nFloatsRafs()]);
     depths = boost::shared_ptr<float[]>(new float [nFloatsDepths()]);
@@ -27,10 +27,10 @@ void ImageRAF::setRafs(const void *buffer, int nBytes)
         {
             // raf
             rafs[sliceId * nFloatsSlice() + i]
-                    = inBuf[(nBins() * 2 + 5) * i + nBins() * 0 + sliceId];
+                    = inBuf[(nBins() * 2 + 10) * i + 10 + nBins() * 0 + sliceId];
             // depth
             depths[sliceId * nFloatsSlice() + i]
-                    = inBuf[(nBins() * 2 + 5) * i + nBins() * 1 + sliceId];
+                    = inBuf[(nBins() * 2 + 10) * i + 10 + nBins() * 1 + sliceId];
         }
     }
 }
@@ -43,8 +43,6 @@ void ImageRAF::setAlphas(const std::vector<float> &a)
 
 bool ImageRAF::read(std::istream& in)
 {
-    this->setNBins(16);
-
     in.read(reinterpret_cast<char*>(&width), sizeof(int));
     in.read(reinterpret_cast<char*>(&height), sizeof(int));
     int format;
@@ -53,6 +51,9 @@ bool ImageRAF::read(std::istream& in)
     in.read(reinterpret_cast<char*>(&type), sizeof(int));
     int realnum;
     in.read(reinterpret_cast<char*>(&realnum), sizeof(int));
+    int nbins;
+    in.read(reinterpret_cast<char*>(&nbins), sizeof(int));
+    alphas.resize(nbins);
     in.read(reinterpret_cast<char*>(alphas.data()), alphas.size() * sizeof(float));
     rafs = boost::shared_ptr<float[]>(new float [nFloatsRafs()]);
     in.read(reinterpret_cast<char*>(rafs.get()), nBytesRafs());
@@ -69,11 +70,13 @@ void ImageRAF::save(const std::string& filename) const
     out.write(reinterpret_cast<const char*>(&width),   sizeof(int));
     out.write(reinterpret_cast<const char*>(&height),  sizeof(int));
     int format = 0x201001;
-    out.write(reinterpret_cast<const char*>(&format),  sizeof(int));  // HPGV_RAF
+    out.write(reinterpret_cast<const char*>(&format),  sizeof(int)); // HPGV_RAF
     int type = 0x1406;
-    out.write(reinterpret_cast<const char*>(&type),    sizeof(int));    // HPGV_FLOAT
+    out.write(reinterpret_cast<const char*>(&type),    sizeof(int)); // HPGV_FLOAT
     int realnum = 1;
     out.write(reinterpret_cast<const char*>(&realnum), sizeof(int));
+    int nbins = alphas.size();
+    out.write(reinterpret_cast<const char*>(&nbins), sizeof(int));
     out.write(reinterpret_cast<const char*>(alphas.data()), alphas.size() * sizeof(float));
     out.write(reinterpret_cast<const char*>(rafs.get()), nBytesRafs());
     out.write(reinterpret_cast<const char*>(depths.get()), nBytesDepths());

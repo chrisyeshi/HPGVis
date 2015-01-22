@@ -73,6 +73,7 @@ public:
     const TF &getTF() const { return *_tf; }
     void setTF(const TF &tf);
 
+    void setResolution(int resolution);
     int getTFResolution() const { return _tf->resolution(); }
     float *getTFColorMap() { return _tf->colorMap(); }
 

@@ -172,7 +172,7 @@ void HPGVis::updateImage()
 	if (para.getFormat() == HPGV_RAF)
     {
     	// raf
-    	int nBins = HPGV_RAF_BIN_NUM;
+        int nBins = para.getNBins();
         std::vector<float> alphas(nBins, 1.f/16.f);
 // Uncomment to reduce resolution of transfer function to 16 bins.
 //        for (int i = 0; i < nBins; ++i)
@@ -188,7 +188,7 @@ void HPGVis::updateImage()
     	hpgv::ImageRAF* raf = new hpgv::ImageRAF;
     	raf->setSize(para.getView().width, para.getView().height);
     	raf->setNBins(nBins);
-    	raf->setAlphas(alphas);
+        raf->setAlphas(alphas);
         raf->setRafs(hpgv_vis_get_databufptr(),
                 para.getView().width * para.getView().height
                 * hpgv_formatsize(para.getFormat()) * sizeof(float));

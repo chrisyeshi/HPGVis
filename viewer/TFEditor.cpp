@@ -231,6 +231,17 @@ void TFEditor::setTF(const TF &tf)
     emit tfChanged(*_tf);
 }
 
+void TFEditor::setResolution(int resolution)
+{
+    if (_tf)
+    {
+        delete _tf;
+        _tf = NULL;
+    }
+    _tf = new TF(resolution, resolution);
+    updateTF(true, true);
+}
+
 void TFEditor::setHistogram(const Histogram &histogram)
 {
     *_histogram = histogram;

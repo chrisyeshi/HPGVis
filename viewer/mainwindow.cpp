@@ -64,7 +64,11 @@ void MainWindow::open()
     ui->timeSlider->setRange(0, imageCache.getImageCount() - 1);
     ui->timeSlider->setValue(iImage);
     if (!ui->timeSlider->getSlider()->hasTracking())
-        ui->viewer->renderRAF(imageCache.getImage(iImage));
+    {
+        const hpgv::ImageRAF* image = imageCache.getImage(iImage);
+        ui->tf->setResolution(image->getNBins());
+        ui->viewer->renderRAF(image);
+    }
     updateInfo();
 }
 
@@ -106,7 +110,9 @@ void MainWindow::timeChanged(int val)
 {
     if(val < 0 || val >= imageCache.getImageCount())
         return;
-    ui->viewer->renderRAF(imageCache.getImage(val));
+    const hpgv::ImageRAF* image = imageCache.getImage(val);
+    ui->tf->setResolution(image->getNBins());
+    ui->viewer->renderRAF(image);
     updateInfo();
 }
 

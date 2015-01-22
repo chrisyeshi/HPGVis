@@ -12,12 +12,11 @@ using namespace std;
 Viewer::Viewer(QWidget *parent) :
     QGLWidget(parent),
     vboQuad(QOpenGLBuffer::VertexBuffer),
-    texTf(QOpenGLTexture::Target1D),
-    texAlpha(QOpenGLTexture::Target1D),
+    texTf(NULL), texAlpha(NULL),
     texArrRaf(NULL), texArrDep(NULL),
     zoomFactor(1.f), texArrNml(NULL), texFeature(NULL),
     enableDepthaware(true), enableIso(true), enableOpaMod(true),
-    HighlightFeatures(false), SelectedFeature(0)
+    imageRaf(NULL), HighlightFeatures(false), SelectedFeature(0)
 {
     std::cout << "OpenGL Version: " << this->context()->format().majorVersion() << "." << this->context()->format().minorVersion() << std::endl;
     setFocusPolicy(Qt::StrongFocus);
@@ -27,6 +26,8 @@ Viewer::Viewer(QWidget *parent) :
 
 Viewer::~Viewer()
 {
+    if (texTf) delete texTf;
+    if (texAlpha) delete texAlpha;
     if (texArrRaf) delete texArrRaf;
     if (texArrDep) delete texArrDep;
     if (texFeature) delete texFeature;
@@ -43,6 +44,12 @@ void Viewer::renderRAF(const hpgv::ImageRAF *image)
     makeCurrent();
     imageRaf = image;
     std::cout << "Image: Width: " << imageRaf->getWidth() << " Height: " << imageRaf->getHeight() << std::endl;
+    // update nBins in program RAF
+    progRaf.bind();
+    progRaf.setUniformValue("nBins", imageRaf->getNBins());
+    progRaf.release();
+    // update textures
+    updateTexTF();
     updateTexRAF();
     updateTexNormal();
     updateFeatureMap();
@@ -72,8 +79,8 @@ void Viewer::screenCapture(int frame)
 
 void Viewer::tfChanged(const mslib::TF& tf)
 {
-    assert(tf.resolution() == nBins);
-    texTf.setData(QOpenGLTexture::RGBA, QOpenGLTexture::Float32, tf.colorMap());
+    assert(tf.resolution() == (imageRaf ? imageRaf->getNBins() : 16));
+    texTf->setData(QOpenGLTexture::RGBA, QOpenGLTexture::Float32, tf.colorMap());
 
     updateGL();
 }
@@ -164,7 +171,7 @@ void Viewer::initializeGL()
     initQuadVbo();
     updateProgram();
     updateVAO();
-    initTF();
+    updateTexTF();
     initTexNormalTools();
     qglClearColor(QColor(0, 0, 0, 0));
     glEnable(GL_BLEND);
@@ -180,8 +187,8 @@ void Viewer::paintGL()
 
     progRaf.bind();
     vao.bind();
-    texTf.bind(0);
-    texAlpha.bind(1);
+    texTf->bind(0);
+    texAlpha->bind(1);
     texArrRaf->bind(2);
     texArrNml->bind(3);
     texArrDep->bind(4);
@@ -197,8 +204,8 @@ void Viewer::paintGL()
     texArrDep->release();
     texArrNml->release();
     texArrRaf->release();
-    texAlpha.release();
-    texTf.release();
+    texAlpha->release();
+    texTf->release();
     vao.release();
     progRaf.release();
 
@@ -359,7 +366,7 @@ void Viewer::updateProgram()
     progRaf.addShaderFromSourceFile(QOpenGLShader::Fragment, "../../viewer/shaders/isoraf.frag");
     progRaf.link();
     progRaf.bind();
-    progRaf.setUniformValue("nBins", nBins);
+    progRaf.setUniformValue("nBins", nBins());
     progRaf.setUniformValue("mvp", mvp());
     progRaf.setUniformValue("lightDir", QVector3D(0.0, 0.0, -1.0));
     progRaf.setUniformValue("tf", 0);
@@ -403,23 +410,38 @@ void Viewer::updateVAO()
     vao.release();
 }
 
-void Viewer::initTF()
+void Viewer::updateTexTF()
 {
-    mslib::TF tf(nBins,nBins);
-    // QOpenGLTexture
-    texTf.setSize(tf.resolution());
-    texTf.setFormat(QOpenGLTexture::RGBA32F);
-    texTf.allocateStorage();
-    texTf.setData(QOpenGLTexture::RGBA, QOpenGLTexture::Float32, tf.colorMap());
-    texTf.setWrapMode(QOpenGLTexture::ClampToEdge);
-    texTf.setMinMagFilters(QOpenGLTexture::Nearest, QOpenGLTexture::Nearest);
+    // texture was initialized and nBins is not changed
+    if (texTf && texAlpha && nBins() == texTf->width() && nBins() == texAlpha->width())
+        return;
+    // texture was initialized but nBins is changed, delete the textures
+    if (texTf && texAlpha
+     && nBins() != texTf->width()
+     && nBins() != texAlpha->width())
+    {
+        assert(!texTf->isBound() && !texAlpha->isBound());
+        delete texTf; texTf = NULL;
+        delete texAlpha; texAlpha = NULL;
+    }
+    // initialize the textures
+    mslib::TF tf(nBins(),nBins());
+    // texTF
+    texTf = new QOpenGLTexture(QOpenGLTexture::Target1D);
+    texTf->setSize(tf.resolution());
+    texTf->setFormat(QOpenGLTexture::RGBA32F);
+    texTf->allocateStorage();
+    texTf->setData(QOpenGLTexture::RGBA, QOpenGLTexture::Float32, tf.colorMap());
+    texTf->setWrapMode(QOpenGLTexture::ClampToEdge);
+    texTf->setMinMagFilters(QOpenGLTexture::Nearest, QOpenGLTexture::Nearest);
     // texAlpha
-    texAlpha.setSize(tf.resolution());
-    texAlpha.setFormat(QOpenGLTexture::R32F);
-    texAlpha.allocateStorage();
-    texAlpha.setData(QOpenGLTexture::Red, QOpenGLTexture::Float32, tf.alphaArray());
-    texAlpha.setWrapMode(QOpenGLTexture::ClampToEdge);
-    texAlpha.setMinMagFilters(QOpenGLTexture::Nearest, QOpenGLTexture::Nearest);
+    texAlpha = new QOpenGLTexture(QOpenGLTexture::Target1D);
+    texAlpha->setSize(tf.resolution());
+    texAlpha->setFormat(QOpenGLTexture::R32F);
+    texAlpha->allocateStorage();
+    texAlpha->setData(QOpenGLTexture::Red, QOpenGLTexture::Float32, tf.alphaArray());
+    texAlpha->setWrapMode(QOpenGLTexture::ClampToEdge);
+    texAlpha->setMinMagFilters(QOpenGLTexture::Nearest, QOpenGLTexture::Nearest);
 }
 
 void Viewer::updateTexRAF()
@@ -434,12 +456,12 @@ void Viewer::updateTexRAF()
     // new texture array
     texArrRaf = new QOpenGLTexture(QOpenGLTexture::Target2DArray);
     texArrRaf->setSize(imageRaf->getWidth(), imageRaf->getHeight());
-    texArrRaf->setLayers(imageRaf->getNBins());
+    texArrRaf->setLayers(nBins());
     texArrRaf->setFormat(QOpenGLTexture::R32F);
     texArrRaf->allocateStorage();
     texArrRaf->setWrapMode(QOpenGLTexture::ClampToEdge);
     texArrRaf->setMinMagFilters(QOpenGLTexture::Linear, QOpenGLTexture::Linear);
-    for (unsigned int layer = 0; layer < imageRaf->getNBins(); ++layer)
+    for (unsigned int layer = 0; layer < nBins(); ++layer)
     {
         texArrRaf->setData(0, layer, QOpenGLTexture::Red, QOpenGLTexture::Float32,
                 &(imageRaf->getRafs().get()[layer * imageRaf->getWidth() * imageRaf->getHeight()]));
@@ -454,12 +476,12 @@ void Viewer::updateTexRAF()
     // new texture array
     texArrDep = new QOpenGLTexture(QOpenGLTexture::Target2DArray);
     texArrDep->setSize(imageRaf->getWidth(), imageRaf->getHeight());
-    texArrDep->setLayers(imageRaf->getNBins());
+    texArrDep->setLayers(nBins());
     texArrDep->setFormat(QOpenGLTexture::R32F);
     texArrDep->allocateStorage();
     texArrDep->setWrapMode(QOpenGLTexture::ClampToEdge);
     texArrDep->setMinMagFilters(QOpenGLTexture::Linear, QOpenGLTexture::Linear);
-    for (unsigned int layer = 0; layer < imageRaf->getNBins(); ++layer)
+    for (unsigned int layer = 0; layer < nBins(); ++layer)
     {
         texArrDep->setData(0, layer, QOpenGLTexture::Red, QOpenGLTexture::Float32,
                 &(imageRaf->getDepths().get()[layer * imageRaf->getWidth() * imageRaf->getHeight()]));
@@ -506,7 +528,7 @@ void Viewer::updateTexNormal()
 
     // calculate normal in GPU -- Yeah!~ I will keep the equivalent CPU code in comment below. We shall compare the performance difference.
     progArrNml.bind();
-    progArrNml.setUniformValue("nBins", nBins);
+    progArrNml.setUniformValue("nBins", imageRaf->getNBins());
     progArrNml.setUniformValue("vp", imageRaf->getWidth(), imageRaf->getHeight());
     progArrNml.setUniformValue("invVP", 1.f / float(imageRaf->getWidth()), 1.f / float(imageRaf->getHeight()));
     vaoArrNml.bind();
@@ -652,7 +674,7 @@ void Viewer::updateFeatureMap()
     // depths
     std::vector<float*> deps;
     deps.push_back(imageRaf->getDepths().get());
-    for (int i = 1; i < nBins; ++i)
+    for (int i = 1; i < nBins(); ++i)
         deps.push_back(deps.front() + w*h*i);
     // mask
     mask = std::vector<float>(w*h, 0.f);

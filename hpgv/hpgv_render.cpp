@@ -669,7 +669,7 @@ vis_render_pos(vis_control_t    *visctl,
         } else if (format == HPGV_RAF) {
             hpgv_raf_t * histogram = (hpgv_raf_t *)(pixel_data);
 
-            int binsize = HPGV_RAF_BIN_NUM;
+            int binsize = hpgv_raf_bin_num;
             int bin = (int)(binsize * sample);
             if (bin > binsize) {
                 bin = binsize;
@@ -722,7 +722,7 @@ vis_render_pos(vis_control_t    *visctl,
                 rite_depth = curr_depth;
 
                 hpgv_tf_raf_integrate(image.tf.data(), image.tf.size() / 4,
-                        image.binTicks,
+                        image.binTicks.data(),
                         left_value, rite_value, left_depth, rite_depth,
                         sampling_spacing, histogram);
 
@@ -846,28 +846,32 @@ vis_render_volume(vis_control_t *visctl, const hpgv::Parameter::Image& image)
 
     int num_vol = image.volumes.size();
     float sampling_spacing = visctl->sampling_spacing;
+    int formatsize = hpgv_formatsize(HPGV_RAF);
     
-    uint64_t index;
-    ray_t *ray;
-    int32_t firstpos, lastpos;
-    pixel_t *pixel;    
-    rgba_t color;
-    
-    hpgv_raf_t  raf;
-    
+    uint64_t    index;
+    ray_t       *ray;
+    int32_t     firstpos, lastpos;
+    pixel_t     *pixel;
+    rgba_t      color;
+
     void *pixel_data = NULL;
 
     /* clear the color buffer */
     hpgv_vis_clear_color(visctl);
     hpgv_gl_clear_databuf();
 
-#pragma omp parallel for private(index, ray, firstpos, lastpos, pixel, color, raf) firstprivate(pixel_data)
+#pragma omp parallel for private(index, ray, firstpos, lastpos, pixel, color) firstprivate(pixel_data)
     for (index = 0; index < visctl->castcount; index++) {
+
+        std::vector<float> data(formatsize);
+        hpgv_raf_t* pRaf = (hpgv_raf_t*)&data[0];
+        pRaf->raf = &data[hpgv_raf_offset()];
+        pRaf->depths = &data[hpgv_raf_offset() + hpgv_raf_bin_num];
 
         if (visctl->format == HPGV_RAF)
         {
-            hpgv_raf_reset(&raf);
-            pixel_data = (void *)(&raf);
+            hpgv_raf_reset(pRaf);
+            pixel_data = (void *)(pRaf);
         } else
         {
             color.red = color.green = color.blue = color.alpha = 0.0;
@@ -894,13 +898,9 @@ vis_render_volume(vis_control_t *visctl, const hpgv::Parameter::Image& image)
                                  image);
         
         if (visctl->format == HPGV_RGBA) {
-            hpgv_gl_fragcolor(pixel->x, pixel->y, 
-                              color.red, color.green, color.blue, color.alpha);
+            hpgv_gl_fragcolor(pixel->x, pixel->y, color.red, color.green, color.blue, color.alpha);
         } else if (visctl->format == HPGV_RAF) {
-//            printf("val: {%lf, %lf}\n", raf.val_head, raf.val_tail);
-//            std::cout << "val: {" << raf.val_head << ", " << raf.val_tail << "} ";
-//            std::cout << "dep: {" << raf.dep_head << ", " << raf.dep_tail << "}" << std::endl;
-            hpgv_gl_fragdata(pixel->x, pixel->y, visctl->format, &raf);
+            hpgv_gl_fragdata(pixel->x, pixel->y, visctl->format, (void*)pRaf);
         } else {
             HPGV_ABORT("Unsupported format", HPGV_ERROR);
         }
@@ -1018,8 +1018,7 @@ hpgv_vis_framesize(int width, int height, int type, int format, int framenum)
     
     int framesize = hpgv_gl_get_framesize();
 
-    assert(hpgv_typesize(type) * hpgv_formatsize(format) == sizeof(hpgv_raf_t));
-    int bytenum = framesize * sizeof(hpgv_raf_t);
+    int bytenum = framesize * hpgv_typesize(type) * hpgv_formatsize(format);
 
     int realnum = 1;
     if (framenum > 1) {
@@ -1036,19 +1035,18 @@ hpgv_vis_framesize(int width, int height, int type, int format, int framenum)
         theVisControl->databuf_type = type;
         theVisControl->databuf_format = format;
         theVisControl->databuf_size = framesize;
-        
-        theVisControl->databuf
-            = (void *)realloc(theVisControl->databuf, 
-                              bytenum * realnum);
 
-        // for (int i = 0; i < framesize; ++i)
-        // {
-        //     int formatsize = hpgv_formatsize(format);
-        //     for (int j = 0; j < formatsize; ++j)
-        //     {
-        //         reinterpret_cast<float*>(theVisControl->databuf)[formatsize * i + j] = 1.f;
-        //     }
-        // }
+        theVisControl->databuf
+            = (void *)realloc(theVisControl->databuf, bytenum * realnum);
+        for (int img = 0; img < realnum; ++img)
+        for (int iPixel = 0; iPixel < framesize; ++iPixel)
+        {
+            float* buf = (float*)theVisControl->databuf;
+            float* curr = &buf[img * framesize * hpgv_formatsize(format) + iPixel * hpgv_formatsize(format)];
+            hpgv_raf_t* raf = (hpgv_raf_t*)curr;
+            raf->raf = &curr[hpgv_raf_offset()];
+            raf->depths = &curr[hpgv_raf_offset() + hpgv_raf_bin_num];
+        }
         
         HPGV_ASSERT_P(theVisControl->id, theVisControl->databuf,
                       "Out of memory.", HPGV_ERR_MEM);
@@ -1081,6 +1079,15 @@ hpgv_vis_framesize(int width, int height, int type, int format, int framenum)
             theVisControl->databuf_collect
             = (void *)realloc(theVisControl->databuf_collect, 
                               bytenum * realnum);
+            for (int img = 0; img < realnum; ++img)
+            for (int iPixel = 0; iPixel < framesize; ++iPixel)
+            {
+                float* buf = (float*)theVisControl->databuf_collect;
+                float* curr = &buf[img * framesize * hpgv_formatsize(format) + iPixel * hpgv_formatsize(format)];
+                hpgv_raf_t* raf = (hpgv_raf_t*)curr;
+                raf->raf = &curr[hpgv_raf_offset()];
+                raf->depths = &curr[hpgv_raf_offset() + hpgv_raf_bin_num];
+            }
             
             HPGV_ASSERT_P(theVisControl->id, theVisControl->databuf_collect,
                           "Out of memory.", HPGV_ERR_MEM);
@@ -1101,6 +1108,9 @@ hpgv_vis_framesize(int width, int height, int type, int format, int framenum)
 void
 hpgv_vis_para(const hpgv::Parameter& para)
 {
+    // set RAF bin num
+    hpgv_raf_bin_num = para.getNBins();
+    // other parameters
     theVisControl->format = para.getFormat();
     int framenum = para.getImages().size();
     hpgv_vis_framesize(para.getView().width,
@@ -1325,8 +1335,6 @@ hpgv_vis_render_one_composite(block_t *block, int root, MPI_Comm comm)
         
         /* processing each image */
         const hpgv::Parameter::Image& image = theVisControl->para.getImages()[img];
-        // para_image_t  *para_image
-            // = &(theVisControl->para.getImages()[img]);
 
         if (image.volumes.size() > 0) {
             hpgv_vis_set_rendervolume(HPGV_TRUE);
@@ -1394,7 +1402,7 @@ hpgv_vis_render_one_composite(block_t *block, int root, MPI_Comm comm)
             theVisControl->comm,
             NULL,
             theVisControl->para.getImages()[0].tf.size(),
-            theVisControl->para.getImages()[0].binTicks,
+            theVisControl->para.getImages()[0].binTicks.data(),
             theVisControl->sampling_spacing,
             0,
             HPGV_TTSWAP);
@@ -1591,7 +1599,7 @@ hpgv_vis_render_multi_composite(block_t *block, int root, MPI_Comm comm)
                            theVisControl->comm,
                            image.tf.data(),
                            image.tf.size() / 4,
-                           image.binTicks,
+                           image.binTicks.data(),
                            theVisControl->sampling_spacing,
                            0,
                            HPGV_TTSWAP);
@@ -1604,18 +1612,19 @@ hpgv_vis_render_multi_composite(block_t *block, int root, MPI_Comm comm)
 
         } else if (format == HPGV_RAF) {
             int framebuf_size = theVisControl->databuf_size;
+            int formatsize = hpgv_formatsize(theVisControl->databuf_format);
 
             long offset = img *
                     framebuf_size *
                     hpgv_typesize(theVisControl->databuf_type) *
-                    hpgv_formatsize(theVisControl->databuf_format);
+                    formatsize;
 
             char *desimage = ((char *)theVisControl->databuf) + offset;
 
             HPGV_TIMING_BARRIER(theVisControl->comm);
             HPGV_TIMING_BEGIN(MY_STEP_MULTI_COMPOSE_TIME);
 
-            /* === split RAF into 4 segments and composite them individually */
+            /* === split RAF into segments and composite them individually */
             /* ============================================================= */
             // allocate memory
             assert(framebuf_size == framebuf_size_x * framebuf_size_y);
@@ -1624,15 +1633,16 @@ hpgv_vis_render_multi_composite(block_t *block, int root, MPI_Comm comm)
             if (theVisControl->id == theVisControl->root)
                 raf_collect = new hpgv_raf_seg_t [framebuf_size];
             // local raf
-            hpgv_raf_t* raf_local = (hpgv_raf_t*)desimage;
+            float* raf_local = (float*)desimage;
             // split raf_local into raf_seg;
-            int nSeg = HPGV_RAF_BIN_NUM / HPGV_RAF_SEG_NUM;
+            int nSeg = hpgv_raf_bin_num / HPGV_RAF_SEG_NUM;
             for (int s = 0; s < nSeg; ++s)
             { // for each raf_seg
 #pragma omp parallel for
                 for (int m = 0; m < framebuf_size; ++m)
                 {
-                    vis_raf_to_seg(s, &raf_local[m], &raf_seg[m]);
+                    hpgv_raf_t* raf = (hpgv_raf_t*)(&raf_local[m * formatsize]);
+                    vis_raf_to_seg(s, raf, &raf_seg[m]);
                 }
                 // composite with others
                 hpgv_composite(
@@ -1647,19 +1657,23 @@ hpgv_vis_render_multi_composite(block_t *block, int root, MPI_Comm comm)
                         theVisControl->comm,
                         image.tf.data(),
                         image.tf.size() / 4,
-                        image.binTicks,
+                        image.binTicks.data(),
                         theVisControl->sampling_spacing,
                         s,
                         HPGV_TTSWAP);
                 // collect if I'm root
                 if (theVisControl->id == theVisControl->root)
                 {
-                    hpgv_raf_t* raf_global = (hpgv_raf_t*)theVisControl->databuf_collect;
+                    float* raf_global = (float*)theVisControl->databuf_collect;
 #pragma omp parallel for
                     for (int m = 0; m < framebuf_size; ++m)
-                        vis_seg_to_raf(s, &raf_collect[m], &raf_global[m]);
+                    {
+                        hpgv_raf_t* raf = (hpgv_raf_t*)(&raf_global[m * formatsize]);
+                        vis_seg_to_raf(s, &raf_collect[m], raf);
+                    }
                 }
             }
+
             // clean up
             delete [] raf_seg;
             raf_seg = NULL;
