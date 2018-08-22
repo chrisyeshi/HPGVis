@@ -1,5 +1,4 @@
-XImage: Volume Visualization
-======
+# XImage: Explorable Images for In Situ Volume Visualization
 
 ### Blog ###
 
