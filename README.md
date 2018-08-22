@@ -1,9 +1,9 @@
-HPGVis
+XImage: Volume Visualization
 ======
 
 ### Blog ###
 
-A blog like report page was written to remember what has done to this project. Everything about the project, such as design decisions, authur's frustrations, bad images, and good images can be found in the blog. The blog can be found here: [http://chrisyeshi.github.io/HPGVis/blog/](http://chrisyeshi.github.io/HPGVis/blog/)
+A blog like report page was written to remember what has done to this project. Everything about the project, such as design decisions, authur's frustrations, bad images, and good images can be found in the blog. The blog can be found here: [http://chrisyeshi.github.io/ximage-scalar/blog/](http://chrisyeshi.github.io/ximage-scalar/blog/)
 
 ### Obtaining the Codes ###
 
@@ -11,7 +11,7 @@ You can download the archived codes from the top right of this page, or you can 
 
 ```
 $ cd /where/you/want/to/put/this/code/
-$ git clone https://github.com/chrisyeshi/HPGVis.git --single-branch
+$ git clone https://github.com/chrisyeshi/ximage-scalar.git --single-branch
 ```
 
 And of course you can use Git management softwares, the one I prefer is SourceTree. I have never tried the GitHub application, but I assume it is pretty good.
@@ -30,7 +30,7 @@ We use the best building system provided by CMake. It's a modern, elegant, and f
 The commands I use to build is:
 
 ```
-$ cd /the/root/directory/of/HPGVis/
+$ cd /the/root/directory/of/ximage-scalar/
 $ mkdir build
 $ cd build
 $ cmake ..
@@ -134,7 +134,7 @@ Upon this point, we haven't talked about the configuration file, which is essent
 
 ### Using HPGView ###
 
-![Interface](http://chrisyeshi.github.io/HPGVis/blog/contents/images/interface.png)
+![Interface](http://chrisyeshi.github.io/ximage-scalar/blog/contents/images/interface.png)
 
 The image shown above is the interface of the HPGView. The main section on the top left shows the final rendering result. We support zoom and pan using the mouse wheel and left button.
 
