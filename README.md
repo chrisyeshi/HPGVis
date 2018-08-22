@@ -1,5 +1,9 @@
 # XImage: Explorable Images for In Situ Volume Visualization
 
+Parallel numerical simulation is a powerful tool used by scientists to study complex problems. It has been a common practice to save the simulation output to disk and then conduct post-hoc in-depth analyses of the saved data. System I/O capabilities have not kept pace as simulations have scaled up over time, so a common approach has been to output only subsets of the data to reduce I/O. However, as we are entering the era of peta- and exa-scale computing, this sub-sampling approach is no longer acceptable because too much valuable information is lost. In situ visualization has been shown a promising approach to the data problem at extreme-scale. We present a novel in situ solution using depth maps to enable post-hoc image-based visualization and feature extraction and tracking. An interactive interface is provided to allow for fine-tuning the generation of depth maps during the course of a simulation run to better capture the features of interest. We use several applications including one actual simulation run on a Cray XE6 supercomputer to demonstrate the effectiveness of our approach.
+
+The XImage library for vector field pathtube visualization: https://chrisyeshi.github.io/ximage-vector
+
 ### Blog ###
 
 A blog like report page was written to remember what has done to this project. Everything about the project, such as design decisions, authur's frustrations, bad images, and good images can be found in the blog. The blog can be found here: [http://chrisyeshi.github.io/ximage-scalar/blog/](http://chrisyeshi.github.io/ximage-scalar/blog/)
